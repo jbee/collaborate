@@ -2,6 +2,8 @@ package vizio;
 
 import static java.lang.Math.max;
 import static java.lang.System.currentTimeMillis;
+import static vizio.VIZIO.days;
+import static vizio.VIZIO.today;
 
 public class User {
 
@@ -24,14 +26,16 @@ public class User {
 	}
 
 	public boolean canVote() {
-		//FIXME check for a new day...
 		return currentTimeMillis() - millisVoted > votingDelay()
-			&& votesToday < votesPerDay();
+			&& (votesToday < votesPerDay() || today() > days(millisVoted));
 	}
 
 	public void vote() {
-		//FIXME check for a new day...
+		if (today() > days(millisVoted)) {
+			votesToday = 1;
+		} else {
+			votesToday++;
+		}
 		millisVoted = currentTimeMillis();
-		votesToday++;
 	}
 }

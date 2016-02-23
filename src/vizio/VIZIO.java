@@ -1,5 +1,6 @@
 package vizio;
 
+import static java.lang.System.currentTimeMillis;
 import static vizio.Status.absolved;
 import static vizio.Status.dissolved;
 import static vizio.Status.resolved;
@@ -55,5 +56,13 @@ public class VIZIO {
 	public static void connect(Task step1, Task step2) {
 		step2.origin = step1.id;
 		step2.chronicle = step1.chronicle != null ? step1.chronicle : step1.id;
+	}
+
+	public static int days(long millis) {
+		return (int) (millis / (1000*60*60*24));
+	}
+
+	static int today() {
+		return days(currentTimeMillis());
 	}
 }

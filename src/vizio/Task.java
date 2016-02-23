@@ -2,7 +2,6 @@ package vizio;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static java.lang.System.currentTimeMillis;
 
 public class Task {
 
@@ -38,14 +37,6 @@ public class Task {
 	}
 
 	public int age() {
-		return today() - start;
-	}
-
-	private int today() {
-		return days(currentTimeMillis());
-	}
-
-	private static int days(long millis) {
-		return (int) (millis / (1000*60*60*24));
+		return VIZIO.today() - start;
 	}
 }
