@@ -19,8 +19,8 @@ public class Task {
 	public int product;
 	public int area;
 	public int version;
-	public Users started;
 	public Users marked;
+	public Users started;
 
 	/**
 	 * {@link Heat} is aggregated temperature. When {@link User} vote on
