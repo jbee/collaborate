@@ -62,8 +62,8 @@ public class Tracker {
 	}
 
 	public static void chain(Task step1, Task step2) {
-		step2.origin = step1.num;
-		step2.chronicle = step1.chronicle != null ? step1.chronicle : step1.num;
+		step2.origin = step1.id;
+		step2.chronicle = step1.chronicle != null ? step1.chronicle : step1.id;
 	}
 
 	/* User voting */

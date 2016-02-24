@@ -6,9 +6,9 @@ import static vizio.Date.today;
 
 public class Task {
 
-	public Num num;
-	public Num chronicle;
-	public Num origin;
+	public IDN id;
+	public IDN chronicle;
+	public IDN origin;
 	public ID creator;
 	public String summary;
 	public Stimulus stimulus;

@@ -1,10 +1,10 @@
 package vizio;
 
-public final class Num {
+public final class IDN {
 
 	public final int num;
 
-	public Num(int num) {
+	public IDN(int num) {
 		super();
 		this.num = num;
 	}
