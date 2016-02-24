@@ -1,12 +1,11 @@
 package vizio;
 
-public final class ID {
+public class ID {
 
-	public final int num;
+	public final int id;
 
-	public ID(int num) {
+	public ID(int id) {
 		super();
-		this.num = num;
+		this.id = id;
 	}
-
 }

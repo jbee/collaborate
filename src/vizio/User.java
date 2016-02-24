@@ -2,40 +2,44 @@ package vizio;
 
 import static java.lang.Math.max;
 import static java.lang.System.currentTimeMillis;
-import static vizio.VIZIO.days;
-import static vizio.VIZIO.today;
+import static vizio.Date.date;
+import static vizio.Date.today;
 
 public class User {
 
-	public int id;
+	public ID id;
+	// account
 	public String email;
+	public boolean confirmed;
+	// activity statistics
+	public Date lastActive;
 	public int xp;
 	public int absolved;
 	public int resolved;
 	public int dissolved;
-	// voting
-	public long millisVoted;
-	public int votesToday;
+	// lifting tasks
+	public long millisLifted;
+	public int liftedToday;
 
-	public int votingDelay() {
+	public int liftingDelay() {
 		return max(60000, (int)( 3600000f / (1f+(xp/50f))));
 	}
 
-	public int votesPerDay() {
+	public int liftsPerDay() {
 		return 10 + (xp/5);
 	}
 
-	public boolean canVote() {
-		return currentTimeMillis() - millisVoted > votingDelay()
-			&& (votesToday < votesPerDay() || today() > days(millisVoted));
+	public boolean canLift() {
+		return currentTimeMillis() - millisLifted > liftingDelay()
+			&& (liftedToday < liftsPerDay() || today().after(date(millisLifted)));
 	}
 
-	public void vote() {
-		if (today() > days(millisVoted)) {
-			votesToday = 1;
+	public void lift() {
+		if (today().after(date(millisLifted))) {
+			liftedToday = 1;
 		} else {
-			votesToday++;
+			liftedToday++;
 		}
-		millisVoted = currentTimeMillis();
+		millisLifted = currentTimeMillis();
 	}
 }

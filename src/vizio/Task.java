@@ -2,24 +2,27 @@ package vizio;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static vizio.Date.today;
 
 public class Task {
 
-	public ID id;
+	public Num num;
+	public Num chronicle;
+	public Num origin;
+	public ID creator;
 	public String summary;
-	public ID chronicle;
-	public ID origin;
 	public Stimulus stimulus;
 	public Goal goal;
 	public Status status;
 	public int heat;
-	public int start; // days from ms
-	public int end = -1; // days from ms
-	public int product;
-	public int area;
+	public Date start = Date.today();
+	public Date end;
+	public Product product;
+	public Area area;
 	public int version;
 	public Users marked;
 	public Users started;
+	public boolean exploitable;
 
 	/**
 	 * {@link Heat} is aggregated temperature. When {@link User} vote on
@@ -36,7 +39,11 @@ public class Task {
 		return min(100, heat / age());
 	}
 
+	public Temp temerature() {
+		return Temp.fromNumeric(temp());
+	}
+
 	public int age() {
-		return VIZIO.today() - start;
+		return today().daysSince(start) + 1;
 	}
 }

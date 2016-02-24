@@ -4,51 +4,52 @@ import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static vizio.VIZIO.vote;
+import static vizio.Tracker.lift
+;
 
 import org.junit.Test;
 
-public class TestVIZIO {
+public class TestTracker {
 
 	@Test
 	public void heatAddsHalfOfWhatIsMissing() {
 		User user = new User();
 		Task task = new Task();
 
-		vote(user, task);
+		lift(task, user);
 
 		long before = currentTimeMillis();
 		assertEquals(50, task.temp());
-		assertEquals(1, user.votesToday);
-		assertTrue(user.millisVoted >= before);
-		assertFalse(user.canVote());
+		assertEquals(1, user.liftedToday);
+		assertTrue(user.millisLifted >= before);
+		assertFalse(user.canLift());
 
 		user = new User();
-		vote(user, task);
+		lift(task, user);
 		assertEquals(75, task.temp());
 
 		user = new User();
-		vote(user, task);
+		lift(task, user);
 		assertEquals(87, task.temp());
 
 		user = new User();
-		vote(user, task);
+		lift(task, user);
 		assertEquals(93, task.temp());
 
 		user = new User();
-		vote(user, task);
+		lift(task, user);
 		assertEquals(96, task.temp());
 
 		user = new User();
-		vote(user, task);
+		lift(task, user);
 		assertEquals(98, task.temp());
 
 		user = new User();
-		vote(user, task);
+		lift(task, user);
 		assertEquals(99, task.temp());
 
 		user = new User();
-		vote(user, task);
+		lift(task, user);
 		assertEquals(100, task.temp());
 	}
 }
