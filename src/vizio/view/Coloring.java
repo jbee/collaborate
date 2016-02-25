@@ -2,5 +2,5 @@ package vizio.view;
 
 public enum Coloring {
 
-	temp, status, goal, stimulus
+	temp, status, goal, stimulus, same_x
 }

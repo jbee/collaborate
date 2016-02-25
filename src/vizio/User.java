@@ -3,11 +3,10 @@ package vizio;
 import static java.lang.Math.max;
 import static java.lang.System.currentTimeMillis;
 import static vizio.Date.date;
-import static vizio.Date.today;
 
 public class User {
 
-	public ID id;
+	public Name name;
 	// account
 	public String email;
 	public boolean confirmed;
@@ -29,13 +28,13 @@ public class User {
 		return 10 + (xp/5);
 	}
 
-	public boolean canLift() {
+	public boolean canLift(Date today) {
 		return currentTimeMillis() - millisLifted > liftingDelay()
-			&& (liftedToday < liftsPerDay() || today().after(date(millisLifted)));
+			&& (liftedToday < liftsPerDay() || today.after(date(millisLifted)));
 	}
 
-	public void lift() {
-		if (today().after(date(millisLifted))) {
+	public void lift(Date today) {
+		if (today.after(date(millisLifted))) {
 			liftedToday = 1;
 		} else {
 			liftedToday++;

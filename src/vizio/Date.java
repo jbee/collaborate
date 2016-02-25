@@ -1,8 +1,10 @@
 package vizio;
 
-import static java.lang.System.currentTimeMillis;
+import static java.lang.Integer.compare;
 
-public final class Date {
+public final class Date implements Comparable<Date> {
+
+	private static final int MS_PER_DAY = 1000*60*60*24;
 
 	public final int daysSinceEra;
 
@@ -11,12 +13,8 @@ public final class Date {
 		this.daysSinceEra = daysSinceEra;
 	}
 
-	static Date today() {
-		return date(currentTimeMillis());
-	}
-
 	public static Date date(long millisSinceEra) {
-		return new Date( (int) (millisSinceEra / (1000*60*60*24)));
+		return new Date( (int) (millisSinceEra / MS_PER_DAY));
 	}
 
 	public boolean after(Date other) {
@@ -25,6 +23,11 @@ public final class Date {
 
 	public int daysSince(Date other) {
 		return daysSinceEra - other.daysSinceEra;
+	}
+
+	@Override
+	public int compareTo(Date other) {
+		return compare(daysSinceEra, other.daysSinceEra);
 	}
 
 }

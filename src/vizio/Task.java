@@ -2,26 +2,25 @@ package vizio;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static vizio.Date.today;
 
 public class Task {
 
 	public IDN id;
-	public IDN chronicle;
+	public IDN cause;
 	public IDN origin;
-	public ID creator;
+	public Name creator;
+	public Date start;
 	public String summary;
-	public Stimulus stimulus;
+	public Motive motive;
 	public Goal goal;
 	public Status status;
-	public int heat;
-	public Date start = Date.today();
 	public Date end;
-	public Product product;
+	public int heat;
+	public Name product;
 	public Area area;
-	public int version;
-	public Users marked;
-	public Users started;
+	public Name version;
+	public Names usersMarked;
+	public Names usersStarted;
 	public boolean exploitable;
 
 	/**
@@ -29,21 +28,25 @@ public class Task {
 	 * {@link Task}s the task receives some heat. The actual amount depends on
 	 * the current heat of the {@link Task} and its age.
 	 */
-	public void heat() {
-		int age = age();
+	public void heat(Date today) {
+		int age = age(today);
 		int left = 100 * age - heat;
 		heat += max(age, left/2);
 	}
 
-	public int temp() {
-		return min(100, heat / age());
+	public int temp(Date today) {
+		return min(100, heat / age(today));
 	}
 
-	public Temp temerature() {
-		return Temp.fromNumeric(temp());
+	public Temp temerature(Date today) {
+		return Temp.fromNumeric(temp(today));
 	}
 
-	public int age() {
-		return today().daysSince(start) + 1;
+	public int age(Date today) {
+		return today.daysSince(start) + 1;
+	}
+
+	public int users() {
+		return usersMarked.count() + usersStarted.count();
 	}
 }

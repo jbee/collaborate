@@ -1,8 +1,22 @@
 
 
-.scheme-temp .temp-cold    td { background-color: #ffffcc; } 
-.scheme-temp .temp-tepid   td { background-color: #ffffbb; } 
-.scheme-temp .temp-warm    td { background-color: #ffddaa; } 
-.scheme-temp .temp-hot     td { background-color: #ffccaa; } 
-.scheme-temp .temp-burning td { background-color: #ffbbbb; } 
+.scheme-temp .temp-cold          td { background-color: #ffffcc; } 
+.scheme-temp .temp-tepid         td { background-color: #ffffbb; } 
+.scheme-temp .temp-warm          td { background-color: #ffddaa; } 
+.scheme-temp .temp-hot           td { background-color: #ffccaa; } 
+.scheme-temp .temp-burning       td { background-color: #ffbbbb; } 
+
+.scheme-goal .goal-clarification td { background-color: #ffddff; } 
+.scheme-goal .goal-modification  td { background-color: #ffffbb; } 
+.scheme-goal .goal-verification  td { background-color: #bbddff; } 
+.scheme-goal .goal-publication   td { background-color: #bbffcc; } 
+
+.scheme-status .status-unsolved  td { background-color: #eeeeee; } 
+.scheme-status .status-absolved  td { background-color: #ddbbcc; } 
+.scheme-status .status-resolved  td { background-color: #ffffbb; } 
+.scheme-status .status-dissolved td { background-color: #aaffcc; } 
+
+.scheme-motive .motive-defect    td { background-color: #ffaabb; } 
+.scheme-motive .motive-proposal  td { background-color: #bbddff; } 
+.scheme-motive .motive-idea      td { background-color: #ffffbb; } 
 

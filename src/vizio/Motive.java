@@ -1,6 +1,6 @@
 package vizio;
 
-public enum Stimulus {
+public enum Motive {
 
 	defect, proposal, idea
 }

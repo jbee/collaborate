@@ -6,9 +6,9 @@ public class Vote {
 
 	public Matter matter;
 	public Area area;
-	public ID initiator;
-	public ID affected;
-	public Users consenting;
-	public Users dissenting;
+	public Name initiator;
+	public Name affected;
+	public Names consenting;
+	public Names dissenting;
 	public Date expiry;
 }
