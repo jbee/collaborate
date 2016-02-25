@@ -16,7 +16,7 @@ public final class Name implements CharSequence, Comparable<Name> {
 		this.symbols = symbols;
 	}
 
-	public static Name nameOf(String name) {
+	public static Name named(String name) {
 		if (VALID.matcher(name).matches()) {
 			return new Name(name.getBytes());
 		}
@@ -57,5 +57,10 @@ public final class Name implements CharSequence, Comparable<Name> {
 		if (this == other)
 			return 0;
 		return new String(symbols).compareTo(new String(other.symbols));
+	}
+
+	@Override
+	public String toString() {
+		return new String(symbols);
 	}
 }

@@ -6,9 +6,11 @@ import static java.util.Arrays.copyOfRange;
 
 public class Names {
 
+	private static final Name[] EMPTY = new Name[0];
+
 	private Name[] names;
 
-	public Names(Name[] names) {
+	public Names(Name... names) {
 		super();
 		this.names = names;
 	}
@@ -53,6 +55,10 @@ public class Names {
 
 	public boolean contains(User user) {
 		return indexOf(user) >= 0;
+	}
+
+	public static Names empty() {
+		return new Names(EMPTY);
 	}
 
 }

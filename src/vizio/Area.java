@@ -4,4 +4,5 @@ public class Area {
 
 	public Name name;
 	public Names maintainers;
+	public Name product;
 }

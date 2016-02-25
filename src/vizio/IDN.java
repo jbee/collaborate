@@ -9,4 +9,8 @@ public final class IDN {
 		this.num = num;
 	}
 
+	@Override
+	public String toString() {
+		return ""+num;
+	}
 }

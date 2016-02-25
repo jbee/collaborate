@@ -40,10 +40,11 @@ public class Tracker {
 		return p;
 	}
 
-	public Area structure(Name area, User initiator) {
+	public Area structure(Name product, Name area, User initiator) {
 		Area a = new Area();
 		a.name = area;
-		a.maintainers.add(initiator);
+		a.product = product;
+		a.maintainers=new Names(initiator.name);
 		touch(initiator);
 		return a;
 	}
@@ -56,6 +57,8 @@ public class Tracker {
 		task.status = Status.unsolved;
 		task.motive = motive;
 		task.goal = goal;
+		task.usersMarked = Names.empty();
+		task.usersStarted = Names.empty();
 		touch(initiator);
 		return task;
 	}
@@ -63,8 +66,9 @@ public class Tracker {
 	/* User initiated entity changes */
 
 	public void relocate(Task task, Area to, User initiator) {
-		if (task.area.maintainers.contains(initiator)) {
+		if (task.area == null || task.area.maintainers.contains(initiator)) {
 			task.area = to;
+			task.product = to.product;
 			touch(initiator);
 		}
 	}

@@ -29,7 +29,7 @@ public class HTMLRenderer {
 		out.append("<tr class='");
 		out.append(" status-").append(task.status.name());
 		out.append(" goal-").append(task.goal.name());
-		out.append(" stimulus-").append(task.motive.name());
+		out.append(" motive-").append(task.motive.name());
 		out.append(" temp-").append(task.temerature(today).name());
 		out.append("'");
 		out.append(" data-heat='").append(String.valueOf(task.heat)).append("'");
