@@ -62,7 +62,7 @@ public class HTMLRenderer {
 		out.append("</td><td>");
 		if (task.area != null) {
 			renderAreaLink(task);
-			out.append(" <span title='").append(task.area.maintainers.toString()).append("'> :").append(String.valueOf(task.area.maintainers.count())).append("</span>");
+			out.append("<span title='").append(task.area.maintainers.toString()).append("'>.").append(String.valueOf(task.area.maintainers.count())).append("</span>");
 		}
 		if (task.version != null) {
 			out.append("<div>");

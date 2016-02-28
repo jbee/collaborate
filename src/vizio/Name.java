@@ -12,7 +12,7 @@ public final class Name implements CharSequence, Comparable<Name> {
 	private static final Name ANONYMOUS = named("anonymous");
 
 	public static final Name ORIGIN = new Name(new byte[] {'*'});
-	public static final Name UNKNOWN = new Name(new byte[] {'~'});;
+	public static final Name UNKNOWN = new Name(new byte[] {'~'});
 
 	private final byte[] symbols;
 

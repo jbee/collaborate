@@ -6,6 +6,7 @@ import static vizio.Goal.publication;
 import static vizio.Motive.defect;
 import static vizio.Motive.idea;
 import static vizio.Motive.proposal;
+import static vizio.Motive.sharing;
 import static vizio.Status.absolved;
 import static vizio.Status.dissolved;
 import static vizio.Status.resolved;
@@ -99,12 +100,14 @@ public final class Tracker {
 		return compart(product.name, area, originator);
 	}
 	
-	public Area compart(Area basis, Name partition, User originator) {
+	public Area compart(Area basis, Name partition, User originator, boolean subarea) {
 		extend(cluster, originator);
 		expectMaintainer(basis, originator);
 		Area area = compart(basis.product, partition, originator);
 		area.basis=basis.name;
-		//TODO copy the maintainers? might be useful sometimes...
+		if (subarea) {
+			area.maintainers = basis.maintainers;
+		}
 		return area;
 	}
 	
@@ -159,6 +162,12 @@ public final class Tracker {
 	public Task reportDefect(Product product, String summay, User reporter, Area area, Version version, boolean exploitable) {
 		return report(product, defect, clarification, summay, reporter, area, version, exploitable);
 	}
+	
+	public Task reportSharing(Product product, String summary, User reporter, Version version, Names changeset) {
+		Task task = report(product, sharing, publication, summary, reporter, product.origin, version, false);
+		task.changeset = changeset;
+		return task;
+	}
 
 	public Task reportSequel(Task cause, Goal goal, String summary, User reporter) {
 		Task task = report(cause.product, cause.motive, goal, summary, reporter, cause.area, cause.version, cause.exploitable);
@@ -167,7 +176,7 @@ public final class Tracker {
 		return task;
 	}
 	
-	private Task report(Product product, Motive motive, Goal goal, String summay, User reporter, Area area, Version version, boolean exploitable) {
+	private Task report(Product product, Motive motive, Goal goal, String summary, User reporter, Area area, Version version, boolean exploitable) {
 		if (!area.name.isUnknown()) {
 			expectMaintainer(area, reporter);
 		}
@@ -186,7 +195,7 @@ public final class Tracker {
 		task.version = version;
 		task.reporter = reporter.name;
 		task.start = date(now);
-		task.summary = summay;
+		task.summary = summary;
 		task.motive = motive;
 		task.goal = goal;
 		task.status = Status.unsolved;
@@ -201,13 +210,6 @@ public final class Tracker {
 	public void confirm(Product product, Task task) {
 		task.confirmed = true;
 		product.unconfirmedTasks--;
-	}
-	
-	public void release(Task task, Names changeset, User initiator) {
-		expectUnsolved(task);
-		expectPublsihing(task);
-		task.changeset = changeset;
-		touch(initiator);
 	}
 	
 	/* task resolution */

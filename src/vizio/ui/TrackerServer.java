@@ -66,7 +66,7 @@ public class TrackerServer extends AbstractHandler {
 		Version v0_1= new Version(named("v0.1"));
 		tasks[0] = tracker.reportDefect(product, "Something is wrong with...", user, area, Version.UNKNOWN, false);
 		tasks[1] = tracker.reportDefect(product, "Regression for 0.1 showed bug...", user, area, v0_1, true);
-		tasks[2] = tracker.reportProposal(product, "We should count ...", user, area);
+		tasks[2] = tracker.reportProposal(product, "We should count ...", user, product.origin);
 		tasks[3] = tracker.reportIdea(product, "Maybe make everything...", user, product.unknown);
 		tasks[4] = tracker.reportProposal(product, "Use bold text for everything important", user, ui);
 		tracker.mark(tasks[1], user);
