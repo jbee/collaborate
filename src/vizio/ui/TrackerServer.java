@@ -52,19 +52,22 @@ public class TrackerServer extends AbstractHandler {
 	private TrackerServer() {
 	}
 	
+	private long now;
+	
 	private Task[] testTasks() {
-		Tracker tracker = new Tracker(() -> currentTimeMillis());
+		now = currentTimeMillis();
+		Tracker tracker = new Tracker(() -> { now += 70000; return now; } );
 		Task[] tasks = new Task[5];
 		User user = tracker.register(named("tester"), "test@example.com", "xxx");
-		user.name = named("moss");
+		tracker.activate(user);
 		Product product = tracker.initiate(named("vizio"), user);
 		Area area = tracker.compart(product, named("core"), user);
 		Area ui = tracker.compart(product, named("ui"), user);
 		Version v0_1= new Version(named("v0.1"));
-		tasks[0] = tracker.reportDefect(product, "Something is wrong with...", user, area, null, false);
+		tasks[0] = tracker.reportDefect(product, "Something is wrong with...", user, area, Version.UNKNOWN, false);
 		tasks[1] = tracker.reportDefect(product, "Regression for 0.1 showed bug...", user, area, v0_1, true);
 		tasks[2] = tracker.reportProposal(product, "We should count ...", user, area);
-		tasks[3] = tracker.reportIdea(product, "Maybe make everything...", user, null);
+		tasks[3] = tracker.reportIdea(product, "Maybe make everything...", user, product.unknown);
 		tasks[4] = tracker.reportProposal(product, "Use bold text for everything important", user, ui);
 		tracker.mark(tasks[1], user);
 		tracker.start(tasks[2], user);

@@ -7,8 +7,9 @@ package vizio;
  */
 public class Area {
 
-	public Name name;
-	public Names maintainers;
 	public Name product;
+	public Name name;
+	public Name basis;
+	public Names maintainers;
 	public boolean exclusive;
 }

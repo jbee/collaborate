@@ -23,11 +23,10 @@ public class TestTracker {
 	public void heatAddsHalfOfWhatIsMissing() {
 		long now = currentTimeMillis();
 		Date today = date(now);
-		Product product = new Product();
-		product.name = named("test");
 		User user = tracker.register(named("moos"), "moos@example.com", "xxx");
 		tracker.activate(user);
-		Task task = tracker.reportDefect(product, "A problem", user, null, null, false);
+		Product product = tracker.initiate(named("test"), user);
+		Task task = tracker.reportDefect(product, "A problem", user, product.unknown, Version.UNKNOWN, false);
 
 		tracker.emphasize(task, user);
 

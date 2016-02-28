@@ -2,6 +2,7 @@ package vizio;
 
 import static vizio.Date.date;
 import static vizio.Goal.clarification;
+import static vizio.Goal.publication;
 import static vizio.Motive.defect;
 import static vizio.Motive.idea;
 import static vizio.Motive.proposal;
@@ -33,17 +34,17 @@ public final class Tracker {
 
 	private void extend(Cluster cluster, User originator) {
 		long now = clock.time();
-		ensureExtendable(cluster, now);
-		ensureRegisteredUser(originator);
+		expectExtendable(cluster, now);
+		expectRegistered(originator);
 		cluster.extended(now);
 	}	
 	
 	/* Users + Accounts */
 
 	public User register(Name name, String email, String unsaltedMd5) {
-		ensureExternal(name);
+		expectExternal(name);
 		long now = clock.time();
-		ensureCanRegister(cluster, now);
+		expectCanRegister(cluster, now);
 		cluster.registered(now);
 		User user = new User();
 		user.name = name;
@@ -54,7 +55,7 @@ public final class Tracker {
 	}
 	
 	public void activate(User user) {
-		ensureNotActivated(user);
+		expectNotActivated(user);
 		user.activated = true;
 		cluster.unconfirmedRegistrationsToday--;
 	}
@@ -84,24 +85,29 @@ public final class Tracker {
 		extend(cluster, originator);
 		Product p = new Product();
 		p.name = product;
-		p.star = compart(p, Name.STAR, originator);
+		p.origin = compart(p.name, Name.STAR, originator);
+		p.unknown = compart(p.name, Name.UNKNOWN, originator);
 		return p;
 	}
 	
 	/* Areas */
 	
 	public Area compart(Product product, Name area, User originator) {
-		ensureCanInitiate(product, originator);
+		extend(cluster, originator);
+		expectOriginMaintainer(product, originator);
 		return compart(product.name, area, originator);
 	}
 	
-	public Area compart(Area area, Name subarea, User originator) {
-		ensureIsMaintainer(area, originator);
-		return compart(area.product, subarea, originator);
+	public Area compart(Area basis, Name partition, User originator) {
+		extend(cluster, originator);
+		expectMaintainer(basis, originator);
+		Area area = compart(basis.product, partition, originator);
+		area.basis=basis.name;
+		//TODO copy the maintainers? might be useful sometimes...
+		return area;
 	}
 	
 	private Area compart(Name product, Name area, User originator) {
-		extend(cluster, originator);
 		Area a = new Area();
 		a.name = area;
 		a.product = product;
@@ -119,12 +125,12 @@ public final class Tracker {
 	}
 
 	public void relocate(Task task, Area to, User originator) {
-		if (task.area == null) {
-			ensureIsMaintainer(to, originator);
+		if (task.area.name.isUnknown()) {
+			expectMaintainer(to, originator);
 		} else {
-			ensureIsMaintainer(task.area, originator);
-			if (to != null) {
-				ensureIsMaintainer(to, originator);
+			expectMaintainer(task.area, originator);
+			if (!to.name.isUnknown()) {
+				expectMaintainer(to, originator);
 			}
 		}
 		task.area = to;
@@ -133,16 +139,20 @@ public final class Tracker {
 	
 	/* Versions */
 	
-	//TODO
+	public Version tag(Product product, Name version, User originator) {
+		extend(cluster, originator);
+		expectOriginMaintainer(product, originator);
+		return new Version(version);
+	}
 	
 	/* Tasks */
 
 	public Task reportIdea(Product product, String summay, User reporter, Area area) {
-		return report(product, idea, clarification, summay, reporter, area, null, false);
+		return report(product, idea, clarification, summay, reporter, area, Version.UNKNOWN, false);
 	}
 
 	public Task reportProposal(Product product, String summay, User reporter, Area area) {
-		return report(product, proposal, clarification, summay, reporter, area, null, false);
+		return report(product, proposal, clarification, summay, reporter, area, Version.UNKNOWN, false);
 	}
 	
 	public Task reportDefect(Product product, String summay, User reporter, Area area, Version version, boolean exploitable) {
@@ -157,15 +167,15 @@ public final class Tracker {
 	}
 	
 	private Task report(Product product, Motive motive, Goal goal, String summay, User reporter, Area area, Version version, boolean exploitable) {
-		if (area != null) {
-			ensureIsMaintainer(area, reporter);
+		if (!area.name.isUnknown()) {
+			expectMaintainer(area, reporter);
 		}
 		long now = clock.time();
 		if (reporter.name.isInternal()) {
-			ensureCanReportAnonymously(product);
+			expectCanReportAnonymously(product);
 			product.unconfirmedTasks++;
 		}
-		ensureCanReport(reporter, now);
+		expectCanReport(reporter, now);
 		reporter.reports(now);
 		Task task = new Task();
 		product.tasks++;
@@ -192,11 +202,18 @@ public final class Tracker {
 		product.unconfirmedTasks--;
 	}
 	
+	public void release(Task task, Names changeset, User initiator) {
+		expectUnsolved(task);
+		expectPublsihing(task);
+		task.changeset = changeset;
+		touch(initiator);
+	}
+	
 	/* task resolution */
 
 	public void absolve(Task task, User user) {
-		if (task.area != null) { // no change is a resolution even if no area has been specified before
-			ensureIsMaintainer(task.area, user);
+		if (!task.area.name.isUnknown()) { // no change is a resolution even if no area has been specified before
+			expectMaintainer(task.area, user);
 		}
 		solve(task, user);
 		task.status = absolved;
@@ -205,17 +222,20 @@ public final class Tracker {
 	}
 
 	public void resolve(Task task, User user) {
-		ensureIsMaintainer(task.area, user);
+		expectMaintainer(task.area, user);
 		solve(task, user);
 		task.status = resolved;
 		user.xp += 2;
 		user.resolved++;
 		touch(user);
+		if (task.changeset != null) { // publishing is something that is resolved
+			task.version.changeset = task.changeset;
+		}
 	}
 
 	public void dissolve(Task task, User user) {
-		ensureIsMaintainer(task.area, user);
-		ensureUnsolved(task);
+		expectMaintainer(task.area, user);
+		expectUnsolved(task);
 		solve(task, user);
 		task.status = dissolved;
 		user.xp += 5;
@@ -224,7 +244,7 @@ public final class Tracker {
 	}
 	
 	private void solve(Task task, User user) {
-		ensureUnsolved(task);
+		expectUnsolved(task);
 		task.solver = user.name;
 		task.end = date(clock.time());
 	}
@@ -279,14 +299,14 @@ public final class Tracker {
 	/* A user's task queue */
 
 	public void mark(Task task, User user) {
-		ensureCanBeInvolved(task, user);
+		expectCanBeInvolved(task, user);
 		task.usersStarted.remove(user);
 		task.usersMarked.add(user);
 		touch(user);
 	}
 
 	public void drop(Task task, User user) {
-		ensureCanBeInvolved(task, user);
+		expectCanBeInvolved(task, user);
 		task.usersMarked.remove(user);
 		task.usersStarted.remove(user);
 		touch(user);
@@ -300,67 +320,73 @@ public final class Tracker {
 
 	/* consistency rules */
 
-	private static void ensureCanInitiate(Product product, User originator) {
-		if (product.star.maintainers.contains(originator.name)) {
+	private static void expectPublsihing(Task task) {
+		if (task.goal != publication) {
+			denyTransition("Must be a publishing task!");
+		}
+	}
+
+	private static void expectOriginMaintainer(Product product, User user) {
+		if (!product.origin.maintainers.contains(user.name)) {
 			denyTransition("Only maintainers of area '*' can initiate new areas and versions.");
 		}
 	}
 	
-	private static void ensureRegisteredUser(User user) {
+	private static void expectRegistered(User user) {
 		if (user.name.isInternal()) { // a anonymous user
 			denyTransition("Only registered users can create products and areas!");
 		}
 	}
 
-	private static void ensureExtendable(Cluster cluster, long now) {
+	private static void expectExtendable(Cluster cluster, long now) {
 		if (!cluster.canExtend(now)) {
 			denyTransition("To many new products and areas in last 24h! Wait until tomorrow.");
 		}
 	}
 	
-	private static void ensureCanReport(User reporter, long now) {
+	private static void expectCanReport(User reporter, long now) {
 		if (!reporter.canReport(now)) {
 			denyTransition("User cannot report due to abuse protection limits!");
 		}
 	}
 
-	private static void ensureCanBeInvolved(Task task, User user) {
+	private static void expectCanBeInvolved(Task task, User user) {
 		if (task.users() >= 5 && !task.usersMarked.contains(user) && !task.usersStarted.contains(user)) {
 			denyTransition("There are already to much users involved with the task: "+task);
 		}
 	}
 	
-	private static void ensureIsMaintainer(Area area, User user) {
-		if (area == null || !area.maintainers.contains(user)) {
+	private static void expectMaintainer(Area area, User user) {
+		if (!area.maintainers.contains(user)) {
 			denyTransition("Only maintainers of an area may assign that area to a task (pull).");
 		}
 	}
 
-	private static void ensureUnsolved(Task task) {
+	private static void expectUnsolved(Task task) {
 		if (task.status != unsolved) {
 			denyTransition("Cannot change the outcome of a task once it is concluded!");
 		}
 	}
 	
-	private static void ensureCanReportAnonymously(Product product) {
+	private static void expectCanReportAnonymously(Product product) {
 		if (!product.allowsAnonymousReports()) {
 			denyTransition("To many unconfirmed anonymous reports. Try again later.");
 		}
 	}
 
-	private static void ensureExternal(Name name) {
+	private static void expectExternal(Name name) {
 		if (name.isInternal()) {
 			denyTransition("A registered user's name must not use '@' and be shorter than 17 characters!");
 		}
 	}
 	
-	private static void ensureCanRegister(Cluster cluster, long now) {
+	private static void expectCanRegister(Cluster cluster, long now) {
 		if (!cluster.canRegister(now)) {
 			denyTransition("To many unconfirmed accounts created today. Please try again tomorrow!");
 		}
 	}
 	
-	private static void ensureNotActivated(User user) {
+	private static void expectNotActivated(User user) {
 		if (user.activated) {
 			denyTransition("User account already activated!");
 		}
