@@ -50,6 +50,7 @@ public final class Tracker {
 		user.name = name;
 		user.email = email;
 		user.md5 = md5(unsaltedMd5+cluster.salt);
+		user.sites = Names.empty();
 		touch(user);
 		return user;
 	}
@@ -85,7 +86,7 @@ public final class Tracker {
 		extend(cluster, originator);
 		Product p = new Product();
 		p.name = product;
-		p.origin = compart(p.name, Name.STAR, originator);
+		p.origin = compart(p.name, Name.ORIGIN, originator);
 		p.unknown = compart(p.name, Name.UNKNOWN, originator);
 		return p;
 	}
@@ -317,8 +318,46 @@ public final class Tracker {
 		task.usersMarked.remove(user);
 		touch(user);
 	}
+	
+	/* A user's sites */
+	
+	public Site launch(Name site, String template, User owner) {
+		expectNoUserSiteYet(site, owner);
+		expectCanHaveMoreSites(owner);
+		Site s = new Site();
+		s.name = site;
+		s.owner = owner.name;
+		s.template = template;
+		owner.sites.add(site);
+		touch(owner);
+		return s;
+	}
+
+	public void update(Site site, String template, User initiator) {
+		expectOwner(site, initiator);
+		site.template = template;
+		touch(initiator);
+	}
 
 	/* consistency rules */
+	
+	private static void expectCanHaveMoreSites(User owner) {
+		if (owner.sites.count() >= 10) {
+			denyTransition("Currently each user can only have 10 sites!");
+		}
+	}
+	
+	private static void expectOwner(Site site, User initiator) {
+		if (!site.owner.equalTo(initiator.name)) {
+			denyTransition("Only a site's owner can update it!");
+		}
+	}
+
+	private static void expectNoUserSiteYet(Name site, User owner) {
+		if (owner.sites.contains(site)) {
+			denyTransition("Site already exists!");
+		}
+	}
 
 	private static void expectPublsihing(Task task) {
 		if (task.goal != publication) {

@@ -33,6 +33,8 @@ public class User {
 	public long millisReported;
 	public int reportedToday;
 	//TODO maybe add a lock? user reporting to much a locked ...
+	// sites
+	public Names sites;
 	
 	public int emphasisDelay() {
 		return max(60000, (int)( 3600000f / (1f+(xp/50f))));
