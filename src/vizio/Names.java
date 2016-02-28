@@ -1,10 +1,14 @@
 package vizio;
 
 import static java.lang.System.arraycopy;
+import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOf;
 import static java.util.Arrays.copyOfRange;
 
-public class Names {
+import java.util.Arrays;
+import java.util.Iterator;
+
+public class Names implements Iterable<Name> {
 
 	private static final Name[] EMPTY = new Name[0];
 
@@ -30,8 +34,8 @@ public class Names {
 		}
 		return -1;
 	}
-
-	public void remove(User user) {
+	
+	public void remove(Name user) {
 		int idx = indexOf(user);
 		if (idx >= 0) {
 			if (idx == 0) {
@@ -46,19 +50,42 @@ public class Names {
 		}
 	}
 
-	public void add(User user) {
+	public void remove(User user) {
+		remove(user.name);
+	}
+
+	public void add(Name user) {
 		if (indexOf(user) < 0) {
 			names = copyOf(names, names.length+1);
-			names[names.length-1] = user.name;
+			names[names.length-1] = user;
 		}
+	}
+	
+	public void add(User user) {
+		add(user.name);
 	}
 
 	public boolean contains(User user) {
+		return indexOf(user) >= 0;
+	}
+	
+	public boolean contains(Name user) {
 		return indexOf(user) >= 0;
 	}
 
 	public static Names empty() {
 		return new Names(EMPTY);
 	}
+
+	@Override
+	public String toString() {
+		return Arrays.toString(names);
+	}
+
+	@Override
+	public Iterator<Name> iterator() {
+		return asList(names).iterator();
+	}
+
 
 }

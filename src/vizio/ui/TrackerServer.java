@@ -18,14 +18,14 @@ import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 
 import vizio.Area;
-import vizio.Goal;
-import vizio.IDN;
-import vizio.Motive;
 import vizio.Product;
 import vizio.Task;
 import vizio.Tracker;
 import vizio.User;
+import vizio.Version;
 import vizio.view.Coloring;
+import vizio.view.Page;
+import vizio.view.Widget;
 
 public class TrackerServer extends AbstractHandler {
 
@@ -48,27 +48,34 @@ public class TrackerServer extends AbstractHandler {
         server.join();
     }
 
-	private Tracker tracker = new Tracker(() -> currentTimeMillis());
-	private Task[] tasks = new Task[5];
-	private User user;
-	private Product product;
-	private Area area;
 
 	private TrackerServer() {
-		user = tracker.register("test@example.com");
-		product = tracker.introduce(named("vizio"), user);
-		area = tracker.structure(product.name, named("core"), user);
-		for (int i = 0; i < tasks.length; i++) {
-			tasks[i] = makeTask(i);
-		}
+	}
+	
+	private Task[] testTasks() {
+		Tracker tracker = new Tracker(() -> currentTimeMillis());
+		Task[] tasks = new Task[5];
+		User user = tracker.register("test@example.com");
+		user.name = named("moss");
+		Product product = tracker.introduce(named("vizio"), user);
+		Area area = tracker.structure(product.name, named("core"), user);
+		Area ui = tracker.structure(product.name, named("ui"), user);
+		Version v0_1= new Version(named("v0.1"));
+		tasks[0] = tracker.reportDefect(product, "Something is wrong with...", user, area, null, false);
+		tasks[1] = tracker.reportDefect(product, "Regression for 0.1 showed bug...", user, area, v0_1, true);
+		tasks[2] = tracker.reportProposal(product, "We should count ...", user, area);
+		tasks[3] = tracker.reportIdea(product, "Maybe make everything...", user, null);
+		tasks[4] = tracker.reportProposal(product, "Use bold text for everything important", user, ui);
+		tracker.mark(tasks[1], user);
+		tracker.start(tasks[2], user);
+		tasks[0].heat = 97;
+		tasks[1].heat = 78;
+		tasks[2].heat = 56;
+		tasks[3].heat = 28;
+		tasks[4].heat = 14;
+		return tasks;
 	}
 
-	private Task makeTask(int i) {
-		Task task = tracker.track(Motive.values()[i % Motive.values().length], Goal.clarification, "This is issue no. "+i, user);
-		task.id = new IDN(i);
-		tracker.relocate(task, area, user);
-		return task;
-	}
 
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)
@@ -77,10 +84,11 @@ public class TrackerServer extends AbstractHandler {
         response.setStatus(HttpServletResponse.SC_OK);
 
         PrintWriter out = response.getWriter();
-        out.append("<!DOCTYPE html>");
-        out.append("<head><link rel='stylesheet' href='/static/vizio.css'></head><body>");
-        new HTMLRenderer(out).render(tasks, Coloring.motive);
-        out.append("</body>");
+        Widget widget = new Widget();
+        widget.list = testTasks();
+        widget.scheme = Coloring.temp;
+        widget.caption = "Assorted tasks";
+		new HTMLRenderer(out).render(new Page("Test", widget));
 
         baseRequest.setHandled(true);
 	}
