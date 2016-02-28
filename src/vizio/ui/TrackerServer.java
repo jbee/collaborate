@@ -55,11 +55,11 @@ public class TrackerServer extends AbstractHandler {
 	private Task[] testTasks() {
 		Tracker tracker = new Tracker(() -> currentTimeMillis());
 		Task[] tasks = new Task[5];
-		User user = tracker.register("test@example.com");
+		User user = tracker.register(named("tester"), "test@example.com", "xxx");
 		user.name = named("moss");
-		Product product = tracker.introduce(named("vizio"), user);
-		Area area = tracker.structure(product.name, named("core"), user);
-		Area ui = tracker.structure(product.name, named("ui"), user);
+		Product product = tracker.initiate(named("vizio"), user);
+		Area area = tracker.compart(product, named("core"), user);
+		Area ui = tracker.compart(product, named("ui"), user);
 		Version v0_1= new Version(named("v0.1"));
 		tasks[0] = tracker.reportDefect(product, "Something is wrong with...", user, area, null, false);
 		tasks[1] = tracker.reportDefect(product, "Regression for 0.1 showed bug...", user, area, v0_1, true);

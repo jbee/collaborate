@@ -11,6 +11,8 @@ public final class Name implements CharSequence, Comparable<Name> {
 
 	private static final Name ANONYMOUS = named("anonymous");
 
+	public static final Name STAR = new Name(new byte[] {'*'});
+
 	private final byte[] symbols;
 
 	private Name(byte[] symbols) {
@@ -19,6 +21,8 @@ public final class Name implements CharSequence, Comparable<Name> {
 	}
 
 	public static Name named(String name) {
+		if ("*".equals(name))
+			return STAR;
 		final int len = name.length();
 		if (VALID.matcher(name).matches() && len > 1
 			&& (len <= 16 || (len <= 32 && name.indexOf('@') > 0))) {

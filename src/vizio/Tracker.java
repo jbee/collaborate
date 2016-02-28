@@ -10,6 +10,9 @@ import static vizio.Status.dissolved;
 import static vizio.Status.resolved;
 import static vizio.Status.unsolved;
 
+import java.security.MessageDigest;
+import java.util.Arrays;
+
 /**
  * Implementation of the tracker-business logic.
  *
@@ -25,58 +28,135 @@ public final class Tracker {
 		this.clock = clock;
 		this.cluster = new Cluster();
 	}
+	
+	/* Cluster */
 
-	public User register(String email) {
+	private void extend(Cluster cluster, User originator) {
+		long now = clock.time();
+		ensureExtendable(cluster, now);
+		ensureRegisteredUser(originator);
+		cluster.extended(now);
+	}	
+	
+	/* Users + Accounts */
+
+	public User register(Name name, String email, String unsaltedMd5) {
+		ensureExternal(name);
+		long now = clock.time();
+		ensureCanRegister(cluster, now);
+		cluster.registered(now);
 		User user = new User();
+		user.name = name;
 		user.email = email;
+		user.md5 = md5(unsaltedMd5+cluster.salt);
 		touch(user);
 		return user;
+	}
+	
+	public void activate(User user) {
+		ensureNotActivated(user);
+		user.activated = true;
+		cluster.unconfirmedRegistrationsToday--;
+	}
+
+	public void login(User user, String plainPass) {
+		if (!Arrays.equals(md5(md5(plainPass)+cluster.salt), user.md5)) {
+			denyTransition("Wrong passphrase!");
+		}
+	}
+	
+	private byte[] md5(String pass) {
+		try {
+			return MessageDigest.getInstance("MD5").digest(pass.getBytes("UTF-8"));
+		} catch (Exception e) {
+			denyTransition(e.getMessage());
+			return null;
+		}
 	}
 
 	private void touch(User user) {
 		user.lastActive = date(clock.time());
 	}
 
-	/* User created entities */
+	/* Products */
 
-	public Product introduce(Name product, User initiator) {
-		extendCluster(initiator);
+	public Product initiate(Name product, User originator) {
+		extend(cluster, originator);
 		Product p = new Product();
 		p.name = product;
-		touch(initiator);
+		p.star = compart(p, Name.STAR, originator);
 		return p;
 	}
 	
-	public Area structure(Name product, Name area, User initiator) {
-		extendCluster(initiator);
+	/* Areas */
+	
+	public Area compart(Product product, Name area, User originator) {
+		ensureCanInitiate(product, originator);
+		return compart(product.name, area, originator);
+	}
+	
+	public Area compart(Area area, Name subarea, User originator) {
+		ensureIsMaintainer(area, originator);
+		return compart(area.product, subarea, originator);
+	}
+	
+	private Area compart(Name product, Name area, User originator) {
+		extend(cluster, originator);
 		Area a = new Area();
 		a.name = area;
 		a.product = product;
-		a.maintainers=new Names(initiator.name);
-		touch(initiator);
-		return a;
+		a.maintainers=new Names(originator.name);
+		touch(originator);
+		return a;		
+	}
+	
+	public void leave(Area area, User maintainer) {
+		if (area.maintainers.contains(maintainer)) {
+			area.maintainers.remove(maintainer);
+			touch(maintainer);
+			// NB: votes cannot 'get stuck' as voter can change their vote until a vote is settled 
+		}
 	}
 
-	private void extendCluster(User initiator) {
-		long now = clock.time();
-		ensureExtendable(cluster, now);
-		ensureRegisteredUser(initiator);
-		cluster.extended(now);
+	public void relocate(Task task, Area to, User originator) {
+		if (task.area == null) {
+			ensureIsMaintainer(to, originator);
+		} else {
+			ensureIsMaintainer(task.area, originator);
+			if (to != null) {
+				ensureIsMaintainer(to, originator);
+			}
+		}
+		task.area = to;
+		touch(originator);
 	}
+	
+	/* Versions */
+	
+	//TODO
+	
+	/* Tasks */
 
 	public Task reportIdea(Product product, String summay, User reporter, Area area) {
-		return report(product, idea, summay, reporter, area, null, false);
+		return report(product, idea, clarification, summay, reporter, area, null, false);
 	}
 
 	public Task reportProposal(Product product, String summay, User reporter, Area area) {
-		return report(product, proposal, summay, reporter, area, null, false);
+		return report(product, proposal, clarification, summay, reporter, area, null, false);
 	}
 	
 	public Task reportDefect(Product product, String summay, User reporter, Area area, Version version, boolean exploitable) {
-		return report(product, defect, summay, reporter, area, version, exploitable);
+		return report(product, defect, clarification, summay, reporter, area, version, exploitable);
 	}
 
-	private Task report(Product product, Motive motive, String summay, User reporter, Area area, Version version, boolean exploitable) {
+	public Task reportSequel(Task cause, Goal goal, String summary, User reporter) {
+		Task task = report(cause.product, cause.motive, goal, summary, reporter, cause.area, cause.version, cause.exploitable);
+		task.cause = cause.id;
+		task.origin = cause.origin != null ? cause.origin : cause.id;
+		return task;
+	}
+	
+	private Task report(Product product, Motive motive, Goal goal, String summay, User reporter, Area area, Version version, boolean exploitable) {
 		if (area != null) {
 			ensureIsMaintainer(area, reporter);
 		}
@@ -90,14 +170,14 @@ public final class Tracker {
 		Task task = new Task();
 		product.tasks++;
 		task.id = new IDN(product.tasks);
-		task.product = product.name;
+		task.product = product;
 		task.area = area;
-		task.version = version != null ? version.name : null;
+		task.version = version;
 		task.reporter = reporter.name;
 		task.start = date(now);
 		task.summary = summay;
 		task.motive = motive;
-		task.goal = clarification;
+		task.goal = goal;
 		task.status = Status.unsolved;
 		task.exploitable = exploitable;
 		task.confirmed = task.reporter.isExternal();
@@ -106,42 +186,60 @@ public final class Tracker {
 		touch(reporter);
 		return task;
 	}
-
+	
 	public void confirm(Product product, Task task) {
 		task.confirmed = true;
 		product.unconfirmedTasks--;
 	}
+	
+	/* task resolution */
 
-	/* User initiated entity changes */
-
-	public void relocate(Task task, Area to, User initiator) {
-		if (task.area == null) {
-			ensureIsMaintainer(to, initiator);
-		} else {
-			ensureIsMaintainer(task.area, initiator);
-			if (to != null) {
-				ensureIsMaintainer(to, initiator);
-			}
+	public void absolve(Task task, User user) {
+		if (task.area != null) { // no change is a resolution even if no area has been specified before
+			ensureIsMaintainer(task.area, user);
 		}
-		task.area = to;
-		touch(initiator);
+		solve(task, user);
+		task.status = absolved;
+		user.absolved++;
+		touch(user);
 	}
 
-	public void leave(Area area, User maintainer) {
-		if (area.maintainers.contains(maintainer)) {
-			area.maintainers.remove(maintainer);
-			touch(maintainer);
-			// NB: votes cannot 'get stuck' as voter can change their vote until a vote is settled 
-		}
+	public void resolve(Task task, User user) {
+		ensureIsMaintainer(task.area, user);
+		solve(task, user);
+		task.status = resolved;
+		user.xp += 2;
+		user.resolved++;
+		touch(user);
 	}
 
-	public void pursue(Task cause, Task effect) {
-		effect.cause = cause.id;
-		effect.origin = cause.origin != null ? cause.origin : cause.id;
+	public void dissolve(Task task, User user) {
+		ensureIsMaintainer(task.area, user);
+		ensureUnsolved(task);
+		solve(task, user);
+		task.status = dissolved;
+		user.xp += 5;
+		user.dissolved++;
+		touch(user);
+	}
+	
+	private void solve(Task task, User user) {
+		ensureUnsolved(task);
+		task.solver = user.name;
+		task.end = date(clock.time());
 	}
 
 	/* User voting */
 
+	public void emphasize(Task task, User voter) {
+		long now = clock.time();
+		if (voter.canEmphasize(now)) {
+			voter.emphasized(now);
+			task.heat(date(now));
+			touch(voter);
+		}
+	}
+	
 	public void consent(Vote vote, User voter) {
 		vote(vote, voter, vote.dissenting, vote.consenting);
 	}
@@ -174,16 +272,7 @@ public final class Tracker {
 		case resignation:
 			vote.area.maintainers.remove(vote.affected); break;
 		case participation: 
-			vote.area.maintainers.add(vote.affected); break;
-		}
-	}
-
-	public void support(Task task, User voter) {
-		long now = clock.time();
-		if (voter.canSupport(now)) {
-			voter.supports(now);
-			task.heat(date(now));
-			touch(voter);
+			vote.area.maintainers.add(vote.affected);
 		}
 	}
 
@@ -209,36 +298,14 @@ public final class Tracker {
 		touch(user);
 	}
 
-	/* task resolution */
+	/* consistency rules */
 
-	public void absolve(Task task, User user) {
-		ensureUnsolved(task);
-		if (task.area != null) { // no change is a resolution even if no area has been specified before
-			ensureIsMaintainer(task.area, user);
+	private static void ensureCanInitiate(Product product, User originator) {
+		if (product.star.maintainers.contains(originator.name)) {
+			denyTransition("Only maintainers of area '*' can initiate new areas and versions.");
 		}
-		task.status = absolved;
-		user.absolved++;
-		touch(user);
 	}
-
-	public void resolve(Task task, User user) {
-		ensureUnsolved(task);
-		ensureIsMaintainer(task.area, user);
-		task.status = resolved;
-		user.xp += 2;
-		user.resolved++;
-		touch(user);
-	}
-
-	public void dissolve(Task task, User user) {
-		ensureUnsolved(task);
-		ensureIsMaintainer(task.area, user);
-		task.status = dissolved;
-		user.xp += 5;
-		user.dissolved++;
-		touch(user);
-	}
-
+	
 	private static void ensureRegisteredUser(User user) {
 		if (user.name.isInternal()) { // a anonymous user
 			denyTransition("Only registered users can create products and areas!");
@@ -278,6 +345,24 @@ public final class Tracker {
 	private static void ensureCanReportAnonymously(Product product) {
 		if (!product.allowsAnonymousReports()) {
 			denyTransition("To many unconfirmed anonymous reports. Try again later.");
+		}
+	}
+
+	private static void ensureExternal(Name name) {
+		if (name.isInternal()) {
+			denyTransition("A registered user's name must not use '@' and be shorter than 17 characters!");
+		}
+	}
+	
+	private static void ensureCanRegister(Cluster cluster, long now) {
+		if (!cluster.canRegister(now)) {
+			denyTransition("To many unconfirmed accounts created today. Please try again tomorrow!");
+		}
+	}
+	
+	private static void ensureNotActivated(User user) {
+		if (user.activated) {
+			denyTransition("User account already activated!");
 		}
 	}
 	

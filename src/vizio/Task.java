@@ -6,11 +6,13 @@ import static java.lang.Math.min;
 public class Task {
 
 	// creating a task
-	public Name product;
+	public Product product;
 	public IDN id;
+	// opening record
 	public Name reporter;
 	public Date start;
 	public String summary;
+	
 	public Motive motive;
 	public Goal goal;
 	public Status status;
@@ -21,11 +23,12 @@ public class Task {
 	public IDN origin;
 	public int heat;
 	public Area area;
-	public Name version;
+	public Version version;
 	public Names usersMarked;
 	public Names usersStarted;
 	public boolean confirmed;
-	// resolving a task
+	// resolving a task (closing record)
+	public Name solver;
 	public Date end;
 	public String disclosure; 
 

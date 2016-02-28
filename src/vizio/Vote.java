@@ -11,7 +11,7 @@ public class Vote {
 	public Matter matter;
 	public Area area;
 	public Name initiator;
-	public Name affected;
+	public User affected;
 	public Date start;
 	public Names consenting;
 	public Names dissenting;
@@ -19,7 +19,7 @@ public class Vote {
 	public Date end;
 	
 	public boolean canVote(Name voter) {
-		return area.maintainers.contains(voter) && !affected.equalTo(voter) && !isSettled();
+		return area.maintainers.contains(voter) && !affected.name.equalTo(voter) && !isSettled();
 	}
 	
 	public boolean isSettled() {

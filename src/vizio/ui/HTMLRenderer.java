@@ -91,19 +91,23 @@ public class HTMLRenderer {
 	}
 
 	private void renderVersionLink(Task task) {
-		out.append("<a href='/p/").append(task.product).append("/v/").append(task.version).append("/'>").append(task.version).append("</a>");
+		out.append("<a href='/p/").append(task.product.name).append("/v/").append(task.version.name).append("/'>").append(task.version.name).append("</a>");
 	}
 
 	private void renderUserLink(Name user) {
-		out.append(" <a href='/user/").append(user).append("/'>").append(user).append("</a>");
+		if (user.isExternal()) {
+			out.append(" <a href='/user/").append(user).append("/'>").append(user).append("</a>");
+		} else {
+			out.append(" <i>").append(user.external()).append("</i>");
+		}
 	}
 
 	private void renderAreaLink(Task task) {
-		out.append("<a href='/p/").append(task.product).append("/").append(task.area.name).append("/'>").append(task.area.name).append("</a>");
+		out.append("<a href='/p/").append(task.product.name).append("/").append(task.area.name).append("/'>").append(task.area.name).append("</a>");
 	}
 
 	private void renderTaskLink(Task task) {
-		out.append("<a href='p/").append(task.product).append("/").append(task.id).append("/'>#").append(task.id).append("</a>");
+		out.append("<a href='p/").append(task.product.name).append("/").append(task.id).append("/'>#").append(task.id).append("</a>");
 	}
 
 	private void renderCssClasses(Task task) {

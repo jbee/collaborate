@@ -18,7 +18,8 @@ public class User {
 	public Name name;
 	// account
 	public String email;
-	public boolean confirmed;
+	public byte[] md5;
+	public boolean activated;
 	// activity statistics
 	public Date lastActive;
 	public int xp;
@@ -26,37 +27,39 @@ public class User {
 	public int resolved;
 	public int dissolved;
 	// supporting tasks
-	public long millisSupported;
-	public int supportedToday;
+	public long millisEmphasized;
+	public int emphasizedToday;
 	// reporting tasks (protection against compromised accounts or abuse of anonymous reports)
 	public long millisReported;
 	public int reportedToday;
 	//TODO maybe add a lock? user reporting to much a locked ...
 	
-	public int supportDelay() {
+	public int emphasisDelay() {
 		return max(60000, (int)( 3600000f / (1f+(xp/50f))));
 	}
 
-	public int supportsPerDay() {
+	public int emphasisPerDay() {
 		return 10 + (xp/5);
 	}
 
-	public boolean canSupport(long now) {
-		return now - millisSupported > supportDelay()
-			&& (supportedToday < supportsPerDay() || date(now).after(date(millisSupported)));
+	public boolean canEmphasize(long now) {
+		return activated
+			&&	now - millisEmphasized > emphasisDelay()
+			&& (emphasizedToday < emphasisPerDay() || date(now).after(date(millisEmphasized)));
 	}
 
-	public void supports(long now) {
-		if (date(now).after(date(millisSupported))) {
-			supportedToday = 1;
+	public void emphasized(long now) {
+		if (date(now).after(date(millisEmphasized))) {
+			emphasizedToday = 1;
 		} else {
-			supportedToday++;
+			emphasizedToday++;
 		}
-		millisSupported = now;
+		millisEmphasized = now;
 	}
 	
 	public boolean canReport(long now) {
-		return now - millisReported > REPORT_DELAY
+		return activated
+			&&	now - millisReported > REPORT_DELAY
 			&& (reportedToday < REPORTS_PER_DAY || date(now).after(date(millisReported)));
 	}
 	
