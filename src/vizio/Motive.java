@@ -2,5 +2,5 @@ package vizio;
 
 public enum Motive {
 
-	defect, proposal, idea, sharing
+	defect, proposal, idea, release
 }

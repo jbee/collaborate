@@ -6,7 +6,7 @@ import static vizio.Goal.publication;
 import static vizio.Motive.defect;
 import static vizio.Motive.idea;
 import static vizio.Motive.proposal;
-import static vizio.Motive.sharing;
+import static vizio.Motive.release;
 import static vizio.Status.absolved;
 import static vizio.Status.dissolved;
 import static vizio.Status.resolved;
@@ -163,8 +163,8 @@ public final class Tracker {
 		return report(product, defect, clarification, summay, reporter, area, version, exploitable);
 	}
 	
-	public Task reportSharing(Product product, String summary, User reporter, Version version, Names changeset) {
-		Task task = report(product, sharing, publication, summary, reporter, product.origin, version, false);
+	public Task reportRelease(Product product, String summary, User reporter, Version released, Names changeset) {
+		Task task = report(product, release, publication, summary, reporter, product.origin, released, false);
 		task.changeset = changeset;
 		return task;
 	}
