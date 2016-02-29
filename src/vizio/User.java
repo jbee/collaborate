@@ -27,8 +27,8 @@ public class User {
 	public int resolved;
 	public int dissolved;
 	// supporting tasks
-	public long millisEmphasized;
-	public int emphasizedToday;
+	public long millisStressed;
+	public int stressedToday;
 	// reporting tasks (protection against compromised accounts or abuse of anonymous reports)
 	public long millisReported;
 	public int reportedToday;
@@ -36,27 +36,27 @@ public class User {
 	// sites
 	public Names sites;
 	
-	public int emphasisDelay() {
+	public int stressDelay() {
 		return max(60000, (int)( 3600000f / (1f+(xp/50f))));
 	}
 
-	public int emphasisPerDay() {
+	public int stressesPerDay() {
 		return 10 + (xp/5);
 	}
 
-	public boolean canEmphasize(long now) {
+	public boolean canStress(long now) {
 		return activated
-			&&	now - millisEmphasized > emphasisDelay()
-			&& (emphasizedToday < emphasisPerDay() || date(now).after(date(millisEmphasized)));
+			&&	now - millisStressed > stressDelay()
+			&& (stressedToday < stressesPerDay() || date(now).after(date(millisStressed)));
 	}
 
-	public void emphasized(long now) {
-		if (date(now).after(date(millisEmphasized))) {
-			emphasizedToday = 1;
+	public void stressed(long now) {
+		if (date(now).after(date(millisStressed))) {
+			stressedToday = 1;
 		} else {
-			emphasizedToday++;
+			stressedToday++;
 		}
-		millisEmphasized = now;
+		millisStressed = now;
 	}
 	
 	public boolean canReport(long now) {
@@ -65,7 +65,7 @@ public class User {
 			&& (reportedToday < REPORTS_PER_DAY || date(now).after(date(millisReported)));
 	}
 	
-	public void reports(long now) {
+	public void reported(long now) {
 		if (date(now).after(date(millisReported))) {
 			reportedToday =1;
 		} else {

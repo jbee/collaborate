@@ -1,10 +1,10 @@
 package vizio;
 
-public class Vote {
+public class Poll {
 
-	public static enum Matter { 
+	public static enum Matter {
 		// on maintainers
-		participation, resignation, 
+		participation, resignation,
 		// attitude towards anonymous participation
 		inclusion, exclusion }
 
@@ -17,11 +17,12 @@ public class Vote {
 	public Names dissenting;
 	public Date expiry;
 	public Date end;
-	
+	public Outcome outcome;
+
 	public boolean canVote(Name voter) {
 		return area.maintainers.contains(voter) && !affected.name.equalTo(voter) && !isSettled();
 	}
-	
+
 	public boolean isSettled() {
 		int all = area.maintainers.count();
 		int pro = consenting.count();
@@ -29,8 +30,8 @@ public class Vote {
 		int voted = pro + contra;
 		return all - voted < voted && pro != contra;
 	}
-	
-	public boolean isConsented() {
+
+	public boolean isAccepted() {
 		return consenting.count() > dissenting.count() && isSettled();
 	}
 }

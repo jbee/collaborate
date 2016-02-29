@@ -30,4 +30,8 @@ public final class Date implements Comparable<Date> {
 		return compare(daysSinceEra, other.daysSinceEra);
 	}
 
+	public Date plusDays(int days) {
+		return new Date(daysSinceEra+days);
+	}
+
 }

@@ -39,7 +39,6 @@ h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 
 .scheme-motive .motive-defect    td { background-color: #ffccbb; } 
 .scheme-motive .motive-proposal  td { background-color: #ccddff; } 
-.scheme-motive .motive-idea      td { background-color: #ffffbb; } 
-.scheme-motive .motive-release   td { background-color: #aaffcc; } 
-.scheme-motive .motive-defect.exploitable    td { background-color: #ffbbbb; } 
+.scheme-motive .motive-intention td { background-color: #ffffbb; } 
+.scheme-motive .exploitable      td { background-color: #ffbbbb; } 
 

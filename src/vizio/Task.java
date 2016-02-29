@@ -30,7 +30,7 @@ public class Task {
 	// resolving a task (closing record)
 	public Name solver;
 	public Date end;
-	public String disclosure; 
+	public String conclusion; 
 
 	/**
 	 * {@link Heat} is aggregated temperature. When {@link User} vote on
