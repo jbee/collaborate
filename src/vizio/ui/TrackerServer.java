@@ -1,7 +1,7 @@
 package vizio.ui;
 
 import static java.lang.System.currentTimeMillis;
-import static vizio.Name.named;
+import static vizio.Name.as;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -24,6 +24,7 @@ import vizio.Tracker;
 import vizio.User;
 import vizio.Version;
 import vizio.view.Coloring;
+import vizio.view.Column;
 import vizio.view.Page;
 import vizio.view.Widget;
 
@@ -53,21 +54,22 @@ public class TrackerServer extends AbstractHandler {
 	}
 
 	private long now;
+	private User user;
 
 	private Task[] testTasks() {
 		now = currentTimeMillis();
 		Tracker tracker = new Tracker(() -> { now += 70000; return now; } );
 		Task[] tasks = new Task[5];
-		User user = tracker.register(named("tester"), "test@example.com", "xxx");
+		user = tracker.register(as("tester"), "test@example.com", "xxx");
 		tracker.activate(user, user.md5);
-		Product product = tracker.initiate(named("vizio"), user);
-		Area area = tracker.compart(product, named("core"), user);
-		Area ui = tracker.compart(product, named("ui"), user);
-		Version v0_1= tracker.tag(product, named("v0.1"), user);
+		Product product = tracker.initiate(as("vizio"), user);
+		Area area = tracker.compart(product, as("core"), user);
+		Area ui = tracker.compart(product, as("ui"), user);
+		Version v0_1= tracker.tag(product, as("v0.1"), user);
 		tasks[0] = tracker.reportDefect(product, "Something is wrong with...", user, area, product.somewhen, false);
 		tasks[1] = tracker.reportDefect(product, "Regression for 0.1 showed bug...", user, area, v0_1, true);
 		tasks[2] = tracker.reportProposal(product, "We should count ...", user, product.origin);
-		tasks[3] = tracker.reportIntention(product, "Maybe make everything...", user, product.somewhere);
+		tasks[3] = tracker.reportIntention(product, "At some point the tracker should be released", user, product.origin);
 		tasks[4] = tracker.reportProposal(product, "Use bold text for everything important", user, ui);
 		tracker.mark(tasks[1], user);
 		tracker.start(tasks[2], user);
@@ -91,7 +93,7 @@ public class TrackerServer extends AbstractHandler {
         widget.list = testTasks();
         widget.scheme = Coloring.temp;
         widget.caption = "Assorted tasks";
-		new HTMLRenderer(out).render(new Page("Test", widget));
+		new HTMLRenderer(out, user).render(new Page("Test", new Column(widget), new Column(widget)));
 
         baseRequest.setHandled(true);
 	}

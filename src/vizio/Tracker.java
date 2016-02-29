@@ -266,7 +266,7 @@ public final class Tracker {
 
 	public void stress(Task task, User voter) {
 		long now = clock.time();
-		if (voter.canStress(now) && (!task.area.exclusive || task.area.maintainers.contains(voter))) {
+		if (voter.canStress(now) && task.canBeStressedBy(voter.name)) {
 			voter.stressed(now);
 			task.heat(date(now));
 			touch(voter);

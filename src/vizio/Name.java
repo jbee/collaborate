@@ -9,7 +9,7 @@ public final class Name implements CharSequence, Comparable<Name> {
 
 	private static final Pattern VALID = Pattern.compile("[a-zA-Z]+(?:[-.@]?[a-zA-Z0-9]+)*");
 
-	private static final Name ANONYMOUS = named("anonymous");
+	private static final Name ANONYMOUS = as("anonymous");
 
 	public static final Name ORIGIN = new Name(new byte[] {'*'});
 	public static final Name UNKNOWN = new Name(new byte[] {'~'});
@@ -21,7 +21,7 @@ public final class Name implements CharSequence, Comparable<Name> {
 		this.symbols = symbols;
 	}
 
-	public static Name named(String name) {
+	public static Name as(String name) {
 		if ("*".equals(name))
 			return ORIGIN;
 		if ("~".equals(name))

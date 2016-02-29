@@ -12,7 +12,7 @@ public class Task {
 	public Name reporter;
 	public Date start;
 	public String summary;
-	
+
 	public Motive motive;
 	public Goal goal;
 	public Status status;
@@ -30,7 +30,7 @@ public class Task {
 	// resolving a task (closing record)
 	public Name solver;
 	public Date end;
-	public String conclusion; 
+	public String conclusion;
 
 	/**
 	 * {@link Heat} is aggregated temperature. When {@link User} vote on
@@ -58,13 +58,17 @@ public class Task {
 	public int users() {
 		return usersMarked.count() + usersStarted.count();
 	}
-	
+
 	public boolean isVisibleTo(Name user) {
 		return !exploitable || reporter.equalTo(user) || area.maintainers.contains(user);
 	}
-	
+
 	@Override
 	public String toString() {
 		return id.toString();
+	}
+
+	public boolean canBeStressedBy(Name user) {
+		return (!area.exclusive || area.maintainers.contains(user));
 	}
 }

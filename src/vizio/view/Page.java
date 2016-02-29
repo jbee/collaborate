@@ -3,18 +3,16 @@ package vizio.view;
 public class Page {
 
 	public String title;
-	public Widget[] left;
-	public Widget[] right;
+	public Column[] columns;
 
-	public Page(String title, Widget... left) {
-		this(title, left, new Widget[0]);
+	public Page(String title, Widget... widgets) {
+		this(title, new Column[] { new Column(widgets) } );
 	}
-	
-	public Page(String title, Widget[] left, Widget[] right) {
+
+	public Page(String title, Column... columns) {
 		super();
 		this.title = title;
-		this.left = left;
-		this.right = right;
+		this.columns = columns;
 	}
-	
+
 }

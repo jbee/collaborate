@@ -1,17 +1,18 @@
 @import url(https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,400italic,700,600);
 
 body {
-	width: 60em;
-	margin: 0 auto;
+	margin: 0 auto 0 40px;
 	font-family: "Source Sans Pro", Verdana, Arial, Helvetica, sans-serif;
 	font-size: 9pt;
 }
 
 h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 
-.list { width: 400px; border-spacing: 1px; border-padding: 0; }
+.column { width: 400px; margin-right: 40px; float: left; }
+
+.list { width: 100%; border-spacing: 1px; border-padding: 0; }
 .list td { padding: 5px 0.5em; vertical-align: top; }
-.list td:first-child { width: 40px; text-align: right;}
+.list td:first-child { width: 40px; }
 .list td:nth-child(3) { width: 80px; }
 .list td a { text-decoration: none; }
 .list td:first-child a { font-weight: 600; }
@@ -20,6 +21,10 @@ h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 
 .list .exploitable h5 { font-weight: 600; }
 .list .exploitable td:first-child a { font-weight: 700; }
+
+a.stress { border-radius: 8px; display: inline-block; line-height: 16px; height: 16px; width: 16px; text-align: center; margin-top: 1em; }
+a.stress:hover { background-color: white; color: red; }
+a.idn { float: right; }
 
 .scheme-temp .temp-cold          td { background-color: #ffffcc; } 
 .scheme-temp .temp-tepid         td { background-color: #ffffbb; } 
