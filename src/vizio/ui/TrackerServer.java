@@ -25,7 +25,7 @@ import vizio.User;
 import vizio.Version;
 import vizio.view.Coloring;
 import vizio.view.Column;
-import vizio.view.Page;
+import vizio.view.View;
 import vizio.view.Widget;
 
 public class TrackerServer extends AbstractHandler {
@@ -71,7 +71,7 @@ public class TrackerServer extends AbstractHandler {
 		tasks[2] = tracker.reportProposal(product, "We should count ...", user, product.origin);
 		tasks[3] = tracker.reportIntention(product, "At some point the tracker should be released", user, product.origin);
 		tasks[4] = tracker.reportProposal(product, "Use bold text for everything important", user, ui);
-		tracker.mark(tasks[1], user);
+		tracker.target(tasks[1], user);
 		tracker.start(tasks[2], user);
 		tasks[0].heat = 97;
 		tasks[1].heat = 78;
@@ -93,7 +93,7 @@ public class TrackerServer extends AbstractHandler {
         widget.list = testTasks();
         widget.scheme = Coloring.temp;
         widget.caption = "Assorted tasks";
-		new HTMLRenderer(out, user).render(new Page("Test", new Column(widget), new Column(widget)));
+		new HTMLRenderer(out, user).render(new View("Test", new Column(widget), new Column(widget)));
 
         baseRequest.setHandled(true);
 	}

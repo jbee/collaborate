@@ -9,7 +9,7 @@ import vizio.Names;
 import vizio.Task;
 import vizio.User;
 import vizio.view.Column;
-import vizio.view.Page;
+import vizio.view.View;
 import vizio.view.Widget;
 
 public class HTMLRenderer {
@@ -25,11 +25,11 @@ public class HTMLRenderer {
 		this.now = System.currentTimeMillis();
 	}
 
-	public void render(Page page) {
+	public void render(View view) {
 		out.append("<!DOCTYPE html>");
 		out.append("<head><link rel='stylesheet' href='/static/vizio.css'></head><body>");
-		out.append("<h1>").append(page.title).append("</h1>");
-		for (Column column : page.columns) {
+		out.append("<h1>").append(view.title).append("</h1>");
+		for (Column column : view.columns) {
 			render(column);
 		}
 		out.append("</body>");
@@ -67,6 +67,13 @@ public class HTMLRenderer {
 		out.append("</td>");
 		out.append("<td><h5>").append(task.summary).append("</h5>");
 		renderUsersList(task);
+		if (viewer.activated) {
+			if (task.targetedBy.contains(viewer) || task.startedBy.contains(viewer)) {
+				renderTaskActionLink(task, "btn", "drop", "&minus;");
+			} else {
+				renderTaskActionLink(task, "btn", "target", "&plus;");
+			}
+		}
 		out.append("</td><td>");
 		if (task.area != null) {
 			renderAreaLink(task);
@@ -82,7 +89,11 @@ public class HTMLRenderer {
 	}
 
 	private void renderStressLink(Task task) {
-		out.append("<a class='stress' href='/stress/").append("'>").append("!").append("</a>");
+		renderTaskActionLink(task, "stress btn", "stress","!");
+	}
+
+	private void renderTaskActionLink(Task task, String cssClasses, String action, String label) {
+		out.append("<a class='").append(cssClasses).append("' href='/").append(action).append("/").append(task.product.name).append("/").append(task.id.toString()).append("/'>").append(label).append("</a>");
 	}
 
 	private void renderDataAttributes(Task task) {
@@ -91,12 +102,12 @@ public class HTMLRenderer {
 
 	private void renderUsersList(Task task) {
 		if (task.users() > 0) {
-			if (task.usersMarked.count() > 0) {
+			if (task.targetedBy.count() > 0) {
 				out.append("<b>[...</b>");
-				renderUsersLinks(task.usersMarked);
+				renderUsersLinks(task.targetedBy);
 				out.append(" <b>]</b>");
 			}
-			renderUsersLinks(task.usersStarted);
+			renderUsersLinks(task.startedBy);
 		}
 	}
 
@@ -123,7 +134,7 @@ public class HTMLRenderer {
 	}
 
 	private void renderTaskLink(Task task) {
-		out.append("<a class='idn' href='view/").append(task.product.name).append("/").append(task.id).append("/'>#").append(task.id).append("</a>");
+		renderTaskActionLink(task, "idn", "view", "#"+task.id);
 	}
 
 	private void renderCssClasses(Task task) {

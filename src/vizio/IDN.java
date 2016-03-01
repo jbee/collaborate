@@ -1,6 +1,6 @@
 package vizio;
 
-public final class IDN implements CharSequence {
+public final class IDN implements Comparable<IDN> {
 
 	public final int num;
 
@@ -15,17 +15,7 @@ public final class IDN implements CharSequence {
 	}
 
 	@Override
-	public int length() {
-		return (int)(Math.log10(num)+1);
-	}
-
-	@Override
-	public char charAt(int index) {
-		return String.valueOf(num).charAt(index);
-	}
-
-	@Override
-	public CharSequence subSequence(int start, int end) {
-		throw new UnsupportedOperationException("Do not change IDNs!");
+	public int compareTo(IDN other) {
+		return Integer.compare(num, other.num);
 	}
 }

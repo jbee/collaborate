@@ -24,8 +24,8 @@ public class Task {
 	public int heat;
 	public Area area;
 	public Version version;
-	public Names usersMarked;
-	public Names usersStarted;
+	public Names targetedBy;
+	public Names startedBy;
 	public boolean confirmed;
 	// resolving a task (closing record)
 	public Name solver;
@@ -56,7 +56,7 @@ public class Task {
 	}
 
 	public int users() {
-		return usersMarked.count() + usersStarted.count();
+		return targetedBy.count() + startedBy.count();
 	}
 
 	public boolean isVisibleTo(Name user) {

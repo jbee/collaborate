@@ -210,8 +210,8 @@ public final class Tracker {
 		task.status = Status.unsolved;
 		task.exploitable = exploitable;
 		task.confirmed = task.reporter.isExternal();
-		task.usersMarked = Names.empty();
-		task.usersStarted = Names.empty();
+		task.targetedBy = Names.empty();
+		task.startedBy = Names.empty();
 		touch(reporter);
 		return task;
 	}
@@ -330,23 +330,25 @@ public final class Tracker {
 
 	/* A user's task queue */
 
-	public void mark(Task task, User user) {
+	public void target(Task task, User user) {
 		expectCanBeInvolved(task, user);
-		task.usersStarted.remove(user);
-		task.usersMarked.add(user);
+		task.startedBy.remove(user);
+		task.targetedBy.add(user);
 		touch(user);
 	}
 
 	public void drop(Task task, User user) {
 		expectCanBeInvolved(task, user);
-		task.usersMarked.remove(user);
-		task.usersStarted.remove(user);
+		task.targetedBy.remove(user);
+		task.startedBy.remove(user);
 		touch(user);
 	}
 
 	public void start(Task task, User user) {
-		task.usersStarted.add(user);
-		task.usersMarked.remove(user);
+		expectCanBeInvolved(task, user);
+		expectMaintainer(task.area, user);
+		task.startedBy.add(user);
+		task.targetedBy.remove(user);
 		touch(user);
 	}
 
@@ -421,7 +423,7 @@ public final class Tracker {
 	}
 
 	private static void expectCanBeInvolved(Task task, User user) {
-		if (task.users() >= 5 && !task.usersMarked.contains(user) && !task.usersStarted.contains(user)) {
+		if (task.users() >= 5 && !task.targetedBy.contains(user) && !task.startedBy.contains(user)) {
 			denyTransition("There are already to much users involved with the task: "+task);
 		}
 	}
