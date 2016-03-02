@@ -1,17 +1,8 @@
-package vizio.io;
-
-import vizio.Area;
-import vizio.Cluster;
-import vizio.Poll;
-import vizio.Product;
-import vizio.Site;
-import vizio.Task;
-import vizio.User;
-import vizio.Version;
+package vizio;
 
 public interface Store {
 
-	Task[] select(TQuery query);
+	Task[] select(Query query);
 
 	void persist(Task task);
 	void persist(User user);

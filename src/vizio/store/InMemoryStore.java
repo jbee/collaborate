@@ -1,4 +1,4 @@
-package vizio.io;
+package vizio.store;
 
 public class InMemoryStore {
 
