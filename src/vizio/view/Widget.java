@@ -7,12 +7,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import vizio.Query;
-import vizio.Task;
-import vizio.Query.Filter;
-import vizio.Query.Operator;
-import vizio.Query.Property;
-import vizio.Query.Range;
+import vizio.store.Selection;
+import vizio.store.Selection.Filter;
+import vizio.store.Selection.Operator;
+import vizio.store.Selection.Property;
+import vizio.store.Selection.Range;
 
 public class Widget {
 
@@ -21,13 +20,12 @@ public class Widget {
 	public String caption;
 	public Coloring scheme;
 	// data
-	public Query query;
-	public Task[] list;
+	public Selection query;
 
 	public Widget() {
 	}
 
-	public Widget(String caption, Coloring scheme, Query query) {
+	public Widget(String caption, Coloring scheme, Selection query) {
 		super();
 		this.caption = caption;
 		this.scheme = scheme;
@@ -50,7 +48,7 @@ public class Widget {
 		return new Widget(caption, coloring, parseQuery(range, filters, orders));
 	}
 
-	private static String section(String str, char start, char end) {
+	public static String section(String str, char start, char end) {
 		int si = str.indexOf(start);
 		if (si < 0)
 			return "";
@@ -60,8 +58,18 @@ public class Widget {
 		return str.substring(si+1, ei);
 	}
 
-	public static Query parseQuery(String range, String filters, String orders) {
-		Query query = new Query();
+	public static String section(String str, String start, String end) {
+		int si = str.indexOf(start);
+		if (si < 0)
+			return "";
+		int ei = str.indexOf(end, si+start.length());
+		if (ei < 0)
+			return "";
+		return str.substring(si+start.length(), ei);
+	}
+
+	public static Selection parseQuery(String range, String filters, String orders) {
+		Selection query = new Selection();
 		query.orders = parseProperties(orders);
 		query.filters = parseFilters(filters);
 		query.range = parseRange(range);

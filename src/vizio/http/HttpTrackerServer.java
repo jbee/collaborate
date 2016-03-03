@@ -1,4 +1,4 @@
-package vizio.ui;
+package vizio.http;
 
 import static java.lang.System.currentTimeMillis;
 import static vizio.Name.as;
@@ -24,11 +24,11 @@ import vizio.Tracker;
 import vizio.User;
 import vizio.Version;
 import vizio.view.Coloring;
-import vizio.view.Column;
 import vizio.view.View;
+import vizio.view.View.Silo;
 import vizio.view.Widget;
 
-public class TrackerServer extends AbstractHandler {
+public class HttpTrackerServer extends AbstractHandler {
 
 	public static void main( String[] args ) throws Exception
     {
@@ -43,14 +43,14 @@ public class TrackerServer extends AbstractHandler {
         ContextHandler contextHandler = new ContextHandler("/static");
         contextHandler.setHandler(resource_handler);
 		handlers.addHandler(contextHandler);
-        handlers.addHandler(new TrackerServer());
+        handlers.addHandler(new HttpTrackerServer());
         server.setHandler(handlers);
         server.start();
         server.join();
     }
 
 
-	private TrackerServer() {
+	private HttpTrackerServer() {
 	}
 
 	private long now;
@@ -72,7 +72,7 @@ public class TrackerServer extends AbstractHandler {
 		tasks[3] = tracker.reportIntention(product, "At some point the tracker should be released", user, product.origin);
 		tasks[4] = tracker.reportProposal(product, "Use bold text for everything important", user, ui);
 		tracker.target(tasks[1], user);
-		tracker.start(tasks[2], user);
+		tracker.approach(tasks[2], user);
 		tasks[0].heat = 97;
 		tasks[1].heat = 78;
 		tasks[2].heat = 56;
@@ -90,10 +90,11 @@ public class TrackerServer extends AbstractHandler {
 
         PrintWriter out = response.getWriter();
         Widget widget = new Widget();
-        widget.list = testTasks();
+        Task[] tasks = testTasks();
         widget.scheme = Coloring.temp;
         widget.caption = "Assorted tasks";
-		new HTMLRenderer(out, user).render(new View("Test", new Column(widget), new Column(widget)));
+		View view = new View("Test", new Silo(widget), new Silo(widget));
+		new HTMLRenderer(out, user).render(view, new Task[][][] {{tasks}, {tasks}});
 
         baseRequest.setHandled(true);
 	}

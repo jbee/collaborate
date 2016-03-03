@@ -1,4 +1,4 @@
-package vizio.ui;
+package vizio.http;
 
 import static vizio.Date.date;
 
@@ -8,8 +8,8 @@ import vizio.Name;
 import vizio.Names;
 import vizio.Task;
 import vizio.User;
-import vizio.view.Column;
 import vizio.view.View;
+import vizio.view.View.Silo;
 import vizio.view.Widget;
 
 public class HTMLRenderer {
@@ -25,29 +25,29 @@ public class HTMLRenderer {
 		this.now = System.currentTimeMillis();
 	}
 
-	public void render(View view) {
+	public void render(View view, Task[][][] data) {
 		out.append("<!DOCTYPE html>");
 		out.append("<head><link rel='stylesheet' href='/static/vizio.css'></head><body>");
 		out.append("<h1>").append(view.title).append("</h1>");
-		for (Column column : view.columns) {
-			render(column);
+		for (int i = 0; i < view.silos.length; i++) {
+			render(view.silos[i], data[i]);
 		}
 		out.append("</body>");
 	}
 
-	private void render(Column column) {
+	private void render(Silo silo, Task[][] data) {
 		out.append("<div class='column'>");
-		for (Widget w : column.widgets) {
-			render(w);
+		for (int i = 0; i < silo.widgets.length; i++) {
+			render(silo.widgets[i], data[i]);
 		}
 		out.append("</div>");
 	}
 
-	public void render(Widget widget) {
+	public void render(Widget widget, Task[] tasks) {
 		out.append("<h3>").append(widget.caption).append("</h3>");
 		out.append(" (by ").append(widget.scheme.name()).append(")");
 		out.append("<table class='list scheme-").append(widget.scheme.name()).append("'>");
-		for (Task task : widget.list) {
+		for (Task task : tasks) {
 			render(task);
 		}
 		out.append("<tr><td colspan='3'>").append("</td></tr>");
@@ -68,7 +68,7 @@ public class HTMLRenderer {
 		out.append("<td><h5>").append(task.summary).append("</h5>");
 		renderUsersList(task);
 		if (viewer.activated) {
-			if (task.targetedBy.contains(viewer) || task.startedBy.contains(viewer)) {
+			if (task.targetedBy.contains(viewer) || task.approachedBy.contains(viewer)) {
 				renderTaskActionLink(task, "btn", "drop", "&minus;");
 			} else {
 				renderTaskActionLink(task, "btn", "target", "&plus;");
@@ -107,7 +107,7 @@ public class HTMLRenderer {
 				renderUsersLinks(task.targetedBy);
 				out.append(" <b>]</b>");
 			}
-			renderUsersLinks(task.startedBy);
+			renderUsersLinks(task.approachedBy);
 		}
 	}
 

@@ -2,45 +2,48 @@ package vizio.view;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class View {
 
+	public static class Silo {
+
+		public Widget[] widgets;
+
+		public Silo(Widget... widgets) {
+			super();
+			this.widgets = widgets;
+		}
+	}
+
 	public String title;
-	public Column[] columns;
+	public Silo[] silos;
 
 	public View(String title, Widget... widgets) {
-		this(title, new Column[] { new Column(widgets) } );
+		this(title, new Silo[] { new Silo(widgets) } );
 	}
 
-	public View(String title, Column... columns) {
+	public View(String title, Silo... silos) {
 		super();
 		this.title = title;
-		this.columns = columns;
+		this.silos = silos;
 	}
-
-	private static final Pattern PARTS = Pattern.compile(
-		"\\s*(===.*?===)"+ // title
-		"(?:\\s*\\|([^|]+)\\|)+", // columns
-		Pattern.MULTILINE
-	);
 
 	public static View parse(String template) {
-		Matcher m = PARTS.matcher(template);
-		if (m.matches()) {
-			String title = m.group(1);
-			Column[]columns = new Column[m.groupCount()-1];
-			for (int i = 2; i < m.groupCount(); i++) {
-				columns[i-2] = new Column(widgets( m.group(i) ));
-			}
-			return new View(title, columns);
+		String title = Widget.section(template, "===", "===");
+		template = template.replace("==="+title+"===", "");
+		List<Silo> silos = new ArrayList<>();
+		int e = 0;
+		int s = template.indexOf('|', e);
+		while (s >= 0) {
+			e = template.indexOf('|', s+1);
+			silos.add(new Silo(widgets(template.substring(s+1, e))));
+			s=template.indexOf('|', e+1);
 		}
-		throw new IllegalArgumentException(template);
+		return new View(title, silos.toArray(new Silo[0]));
 	}
 
-	private static Widget[] widgets(String column) {
-		String[] lines = column.split("\n");
+	private static Widget[] widgets(String silo) {
+		String[] lines = silo.split("\n");
 		List<Widget> widgets = new ArrayList<>();
 		for (String line : lines) {
 			line = line.trim();

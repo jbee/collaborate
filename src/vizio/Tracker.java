@@ -91,6 +91,7 @@ public final class Tracker {
 
 	public Product initiate(Name product, User originator) {
 		extend(cluster, originator);
+		expectExternal(product);
 		Product p = new Product();
 		p.name = product;
 		p.origin = compart(p.name, Name.ORIGIN, originator);
@@ -119,6 +120,7 @@ public final class Tracker {
 	}
 
 	private Area compart(Name product, Name area, User originator) {
+		expectExternal(area);
 		Area a = new Area();
 		a.name = area;
 		a.product = product;
@@ -152,6 +154,7 @@ public final class Tracker {
 
 	public Version tag(Product product, Name version, User originator) {
 		extend(cluster, originator);
+		expectExternal(version);
 		expectOriginMaintainer(product, originator);
 		Version v = new Version();
 		v.product = product.name;
@@ -197,8 +200,7 @@ public final class Tracker {
 		expectCanReport(reporter, now);
 		reporter.reported(now);
 		Task task = new Task();
-		product.tasks++;
-		task.id = new IDN(product.tasks);
+		task.id = new IDN(product.tasks.incrementAndGet());
 		task.product = product;
 		task.area = area;
 		task.version = version;
@@ -211,7 +213,7 @@ public final class Tracker {
 		task.exploitable = exploitable;
 		task.confirmed = task.reporter.isExternal();
 		task.targetedBy = Names.empty();
-		task.startedBy = Names.empty();
+		task.approachedBy = Names.empty();
 		touch(reporter);
 		return task;
 	}
@@ -332,22 +334,22 @@ public final class Tracker {
 
 	public void target(Task task, User user) {
 		expectCanBeInvolved(task, user);
-		task.startedBy.remove(user);
+		task.approachedBy.remove(user);
 		task.targetedBy.add(user);
 		touch(user);
 	}
 
-	public void drop(Task task, User user) {
+	public void abandon(Task task, User user) {
 		expectCanBeInvolved(task, user);
 		task.targetedBy.remove(user);
-		task.startedBy.remove(user);
+		task.approachedBy.remove(user);
 		touch(user);
 	}
 
-	public void start(Task task, User user) {
+	public void approach(Task task, User user) {
 		expectCanBeInvolved(task, user);
 		expectMaintainer(task.area, user);
-		task.startedBy.add(user);
+		task.approachedBy.add(user);
 		task.targetedBy.remove(user);
 		touch(user);
 	}
@@ -423,7 +425,7 @@ public final class Tracker {
 	}
 
 	private static void expectCanBeInvolved(Task task, User user) {
-		if (task.users() >= 5 && !task.targetedBy.contains(user) && !task.startedBy.contains(user)) {
+		if (task.users() >= 5 && !task.targetedBy.contains(user) && !task.approachedBy.contains(user)) {
 			denyTransition("There are already to much users involved with the task: "+task);
 		}
 	}

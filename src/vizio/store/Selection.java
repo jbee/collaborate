@@ -1,18 +1,21 @@
-package vizio;
+package vizio.store;
 
-public class Query {
+public class Selection {
 
+	/**
+	 * Properties a task can be filtered by
+	 */
 	public static enum Property {
-		temp, status, goal, stimulus,
-		heat, version, start, end, age,
-		users, active_users, passive_users,
+		temp, heat, status, goal, motive,
+		version, start, end,
+		exploitable,
+		age, origin, cause,
+		reporter, solver, users, maintainers, targeted_by, approched_by,
 		area, product,
-		summary,
-		exploitable
+		summary, conclusion
 	}
 
 	public static enum Operator {
-		//'=' | '!=' | '>' | '<' | '>=' | '<=' | '~' | '!~' | '/' | '!/'
 		eq("="), neq("!="), gt(">"), lt("<"), ge(">="), le("<="), in("~"), nin("!~"), any("/"), nany("!/");
 
 		public String symbol;

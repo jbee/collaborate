@@ -1,5 +1,7 @@
 package vizio;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Product {
 
 	public Name name;
@@ -19,7 +21,7 @@ public class Product {
 
 	public Version somewhen;
 
-	public int tasks;
+	public AtomicInteger tasks;
 	public int unconfirmedTasks;
 
 	public boolean allowsAnonymousReports() {

@@ -25,7 +25,7 @@ public class Task {
 	public Area area;
 	public Version version;
 	public Names targetedBy;
-	public Names startedBy;
+	public Names approachedBy;
 	public boolean confirmed;
 	// resolving a task (closing record)
 	public Name solver;
@@ -56,7 +56,7 @@ public class Task {
 	}
 
 	public int users() {
-		return targetedBy.count() + startedBy.count();
+		return targetedBy.count() + approachedBy.count();
 	}
 
 	public boolean isVisibleTo(Name user) {
