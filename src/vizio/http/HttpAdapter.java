@@ -3,6 +3,7 @@ package vizio.http;
 import static java.lang.Character.isDigit;
 import static java.lang.Integer.parseInt;
 import static vizio.Name.as;
+import static vizio.ctrl.Action.view;
 
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
@@ -15,6 +16,7 @@ import vizio.ctrl.Action;
 import vizio.ctrl.Context;
 import vizio.ctrl.Controller;
 import vizio.view.View;
+import vizio.view.Widget;
 
 /**
  * Connects the HTTP world with the general {@link Controller} abstraction.
@@ -42,12 +44,20 @@ public class HttpAdapter {
 	private int view(Context ctx, PrintWriter out) {
 		View view = ctrl.show(ctx.space(), ctx.site());
 		User viewer = ctrl.user(ctx.user);
-		new HTMLRenderer(out, viewer).render(view, fetch(view));
+		new HTMLRenderer(out, viewer).render(view, fetch(view, ctx));
 		return HttpURLConnection.HTTP_OK;
 	}
 
-	private Task[][][] fetch(View view) {
-		return null; //TODO
+	private Task[][][] fetch(View view, Context ctx) {
+		Task[][][] data = new Task[view.silos.length][][];
+		for (int i = 0; i < view.silos.length; i++) {
+			Widget[] widgets = view.silos[i].widgets;
+			data[i] = new Task[widgets.length][];
+			for (int j = 0; j < widgets.length; j++) {
+				data[i][j] = ctrl.select(widgets[j].query, ctx);
+			}
+		}
+		return data;
 	}
 
 	private Context map(String path, Map<String, String> params) {
@@ -75,12 +85,14 @@ public class HttpAdapter {
 			ctx.task=new IDN(parseInt(segments[2]));
 			break;
 		case user:
+			ctx.action=view;
 			ctx.user=as(segments[1]);
 			if (segments.length > 2) {
 				ctx.site=as(segments[2]);
 			}
 			break;
 		case my:
+			ctx.action=view;
 			ctx.user=as(params.get("user"));
 			ctx.site=as(segments[1]);
 		}
