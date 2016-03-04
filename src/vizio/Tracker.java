@@ -15,6 +15,7 @@ import static vizio.Status.unsolved;
 
 import java.security.MessageDigest;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import vizio.Poll.Matter;
 
@@ -94,6 +95,7 @@ public final class Tracker {
 		expectExternal(product);
 		Product p = new Product();
 		p.name = product;
+		p.tasks = new AtomicInteger(0);
 		p.origin = compart(p.name, Name.ORIGIN, originator);
 		p.somewhere = compart(p.name, Name.UNKNOWN, originator);
 		p.somewhen = tag(p, Name.UNKNOWN, originator);
@@ -101,6 +103,17 @@ public final class Tracker {
 	}
 
 	/* Areas */
+
+	public Area open(Product product, Name entrance, User originator, Motive motive, Goal goal) {
+		extend(cluster, originator);
+		expectOriginMaintainer(product, originator);
+		Area area = compart(product, entrance, originator);
+		area.entrance=true;
+		area.tasks = new AtomicInteger(0);
+		area.motive=motive;
+		area.goal=goal;
+		return area;
+	}
 
 	public Area compart(Product product, Name area, User originator) {
 		extend(cluster, originator);
@@ -166,15 +179,23 @@ public final class Tracker {
 	/* Tasks */
 
 	public Task reportProposal(Product product, String summay, User reporter, Area area) {
+		expectNoEntrance(area);
 		return report(product, proposal, clarification, summay, reporter, area, product.somewhen, false);
 	}
 
 	public Task reportIntention(Product product, String summary, User reporter, Area area) {
+		expectNoEntrance(area);
 		return report(product, intention, clarification, summary, reporter, area, product.somewhen, false);
 	}
 
 	public Task reportDefect(Product product, String summay, User reporter, Area area, Version version, boolean exploitable) {
+		expectNoEntrance(area);
 		return report(product, defect, clarification, summay, reporter, area, version, exploitable);
+	}
+
+	public Task reportRequest(Product product, String summary, User reporter, Area entrance) {
+		expectEntrance(entrance);
+		return report(product, entrance.motive, entrance.goal, summary, reporter, entrance, product.somewhen, false);
 	}
 
 	public Task reportSequel(Task cause, Goal goal, String summary, User reporter, Names changeset) {
@@ -189,7 +210,7 @@ public final class Tracker {
 	}
 
 	private Task report(Product product, Motive motive, Goal goal, String summary, User reporter, Area area, Version version, boolean exploitable) {
-		if (!area.name.isUnknown()) {
+		if (!area.name.isUnknown() && !area.entrance) { // NB. unknown is not an entrance since it does not dictate motive and goal
 			expectMaintainer(area, reporter);
 		}
 		long now = clock.time();
@@ -214,6 +235,9 @@ public final class Tracker {
 		task.confirmed = task.reporter.isExternal();
 		task.targetedBy = Names.empty();
 		task.approachedBy = Names.empty();
+		if (area.entrance) {
+			task.serial=new IDN(area.tasks.incrementAndGet());
+		}
 		touch(reporter);
 		return task;
 	}
@@ -375,6 +399,18 @@ public final class Tracker {
 	}
 
 	/* consistency rules */
+
+	private static void expectNoEntrance(Area area) {
+		if (area.entrance) {
+			denyTransition("Use request to submit to entrance areas!");
+		}
+	}
+
+	private static void expectEntrance(Area area) {
+		if (!area.entrance) {
+			denyTransition("Request must be submitted within an entrance area!");
+		}
+	}
 
 	private static void expectNoChangeset(Version version) {
 		if (version.changeset.count() > 0) {

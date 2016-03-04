@@ -8,6 +8,7 @@ public class Task {
 	// creating a task
 	public Product product;
 	public IDN id;
+	public IDN serial; // within an entrance area
 	// opening record
 	public Name reporter;
 	public Date start;
@@ -71,4 +72,8 @@ public class Task {
 	public boolean canBeStressedBy(Name user) {
 		return (!area.exclusive || area.maintainers.contains(user));
 	}
+
+	//TODO use copy on write? copy the objects before modification - also important for updates so see what has changed
+	// as a protection against forgetting to copy the store can compare its cached reference with the given instance
+	// if they are equal the cached one is reload from deep storage and a failure is thrown
 }

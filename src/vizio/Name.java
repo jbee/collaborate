@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 
 public final class Name implements CharSequence, Comparable<Name> {
 
-	private static final Pattern VALID = Pattern.compile("[a-zA-Z]+(?:[-.@]?[a-zA-Z0-9]+)*");
+	private static final Pattern VALID = Pattern.compile("[a-zA-Z]+(?:[-.@]?[a-zA-Z][a-zA-Z0-9]*)*");
 
 	private static final Name ANONYMOUS = as("anonymous");
 
@@ -33,18 +33,18 @@ public final class Name implements CharSequence, Comparable<Name> {
 		}
 		throw new IllegalArgumentException("Not a valid name: "+name);
 	}
-	
+
 	public boolean isInternal() {
 		return !isExternal();
 	}
-	
+
 	public boolean isExternal() {
 		for (int i = 0; i < symbols.length; i++)
 			if (symbols[i] == '@')
 				return false;
 		return true;
 	}
-	
+
 	public boolean isUnknown() {
 		return symbols[0] == '~';
 	}
@@ -52,7 +52,7 @@ public final class Name implements CharSequence, Comparable<Name> {
 	public boolean isOrigin() {
 		return symbols[0] == '*';
 	}
-	
+
 	public Name external() {
 		return isExternal() ? this : ANONYMOUS;
 	}

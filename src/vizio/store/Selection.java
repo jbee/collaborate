@@ -9,13 +9,15 @@ public class Selection {
 		temp, heat, status, goal, motive,
 		version, start, end,
 		exploitable,
-		age, origin, cause,
+		entrance, // serial is set
+		age, origin, cause, serial,
 		reporter, solver, users, maintainers, targeted_by, approched_by,
 		area, product,
 		summary, conclusion
 	}
 
 	public static enum Operator {
+		//TODO is-set, is-not-set?
 		eq("="), neq("!="), gt(">"), lt("<"), ge(">="), le("<="), in("~"), nin("!~"), any("/"), nany("!/");
 
 		public String symbol;

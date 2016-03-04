@@ -76,6 +76,7 @@ public class HttpAdapter {
 				} else {
 					ctx.area=as(segments[2]);
 				}
+				//TODO serials: both /area-serial/ and /area/serial/ works since in a name minus cannot be followed by a digit
 			}
 			break;
 		case target:
