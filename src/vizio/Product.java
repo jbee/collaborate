@@ -22,9 +22,9 @@ public class Product {
 	public Version somewhen;
 
 	public AtomicInteger tasks;
-	public int unconfirmedTasks;
+	public AtomicInteger unconfirmedTasks;
 
 	public boolean allowsAnonymousReports() {
-		return unconfirmedTasks < 10;
+		return unconfirmedTasks.get() < 10;
 	}
 }

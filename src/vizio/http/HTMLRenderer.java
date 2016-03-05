@@ -6,8 +6,12 @@ import java.io.PrintWriter;
 
 import vizio.Name;
 import vizio.Names;
+import vizio.Site;
 import vizio.Task;
+import vizio.Tracker;
 import vizio.User;
+import vizio.view.Menu;
+import vizio.view.Page;
 import vizio.view.View;
 import vizio.view.View.Silo;
 import vizio.view.Widget;
@@ -24,15 +28,40 @@ public class HTMLRenderer {
 		this.viewer = viewer;
 		this.now = System.currentTimeMillis();
 	}
-
-	public void render(View view, Task[][][] data) {
+	
+	public void render(Page page) {
 		out.append("<!DOCTYPE html>");
 		out.append("<head><link rel='stylesheet' href='/static/vizio.css'></head><body>");
+		render(page.menus);
+		render(page.view, page.data);
+		out.append("</body>");
+	}
+	
+	public void render(Menu[] menus) {
+		for (Menu menu : menus) {
+			render(menu);
+		}
+	}
+
+	private void render(Menu menu) {
+		out.append("<dl class='menu'><dt>").append(menu.label).append("</dt>");
+		for (Site site : menu.entries) {
+			//TODO this doesn't get right as e.g. a users site are in /user/ not /view/ - the action has to be encoded somewhere...
+			if (site.owner.isInternal()) {
+				Name space = Name.as(site.owner.toString().substring(1));
+				out.append("<dd><a href='/").append(space).append("/").append(site.name).append("/'>").append(site.name).append("</a></dd>");
+			} else {
+				out.append("<dd><a href='/view/").append(site.owner).append("/").append(site.name).append("/'>").append(site.name).append("</a></dd>");
+			}
+		}
+		out.append("</dl>");
+	}
+
+	public void render(View view, Task[][][] data) {
 		out.append("<h1>").append(view.title).append("</h1>");
 		for (int i = 0; i < view.silos.length; i++) {
 			render(view.silos[i], data[i]);
 		}
-		out.append("</body>");
 	}
 
 	private void render(Silo silo, Task[][] data) {
@@ -65,7 +94,13 @@ public class HTMLRenderer {
 			renderStressLink(task);
 		}
 		out.append("</td>");
-		out.append("<td><h5>").append(task.summary).append("</h5>");
+		out.append("<td><h5>");
+		if (Tracker.canView(viewer, task)) {
+			out.append(task.gist);
+		} else {
+			out.append("<i>(protected)</i>");
+		}
+		out.append("</h5>");
 		renderUsersList(task);
 		if (viewer.activated) {
 			if (task.targetedBy.contains(viewer) || task.approachedBy.contains(viewer)) {
@@ -125,7 +160,7 @@ public class HTMLRenderer {
 		if (user.isExternal()) {
 			out.append(" <a href='/user/").append(user).append("/'>").append(user).append("</a>");
 		} else {
-			out.append(" <i>").append(user.external()).append("</i>");
+			out.append(" <i>").append(user.display()).append("</i>");
 		}
 	}
 

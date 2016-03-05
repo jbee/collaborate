@@ -12,7 +12,7 @@ public class Task {
 	// opening record
 	public Name reporter;
 	public Date start;
-	public String summary;
+	public String gist;
 
 	public Motive motive;
 	public Goal goal;

@@ -78,4 +78,5 @@ public class User {
 	public String toString() {
 		return name != null ? name.toString() : email.toString();
 	}
+
 }

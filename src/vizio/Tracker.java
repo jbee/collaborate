@@ -87,6 +87,10 @@ public final class Tracker {
 	private void touch(User user) {
 		user.lastActive = date(clock.time());
 	}
+	
+	public static boolean canView(User user, Task task) {
+		return !task.exploitable || user.name.equalTo(task.reporter) || task.area.maintainers.contains(user);
+	}
 
 	/* Products */
 
@@ -183,9 +187,9 @@ public final class Tracker {
 		return report(product, proposal, clarification, summay, reporter, area, product.somewhen, false);
 	}
 
-	public Task reportIntention(Product product, String summary, User reporter, Area area) {
+	public Task reportIntention(Product product, String gist, User reporter, Area area) {
 		expectNoEntrance(area);
-		return report(product, intention, clarification, summary, reporter, area, product.somewhen, false);
+		return report(product, intention, clarification, gist, reporter, area, product.somewhen, false);
 	}
 
 	public Task reportDefect(Product product, String summay, User reporter, Area area, Version version, boolean exploitable) {
@@ -193,13 +197,14 @@ public final class Tracker {
 		return report(product, defect, clarification, summay, reporter, area, version, exploitable);
 	}
 
-	public Task reportRequest(Product product, String summary, User reporter, Area entrance) {
+	public Task reportRequest(Product product, String gist, User reporter, Area entrance) {
 		expectEntrance(entrance);
-		return report(product, entrance.motive, entrance.goal, summary, reporter, entrance, product.somewhen, false);
+		return report(product, entrance.motive, entrance.goal, gist, reporter, entrance, product.somewhen, false);
 	}
 
-	public Task reportSequel(Task cause, Goal goal, String summary, User reporter, Names changeset) {
-		Task task = report(cause.product, cause.motive, goal, summary, reporter, cause.area, cause.version, cause.exploitable);
+	public Task reportSequel(Task cause, Goal goal, String gist, User reporter, Names changeset) {
+		Area area = cause.area.entrance ? cause.product.somewhere : cause.area;
+		Task task = report(cause.product, cause.motive, goal, gist, reporter, area, cause.version, cause.exploitable);
 		task.cause = cause.id;
 		task.origin = cause.origin != null ? cause.origin : cause.id;
 		if (changeset != null && changeset.count() > 0) {
@@ -209,14 +214,14 @@ public final class Tracker {
 		return task;
 	}
 
-	private Task report(Product product, Motive motive, Goal goal, String summary, User reporter, Area area, Version version, boolean exploitable) {
+	private Task report(Product product, Motive motive, Goal goal, String gist, User reporter, Area area, Version version, boolean exploitable) {
 		if (!area.name.isUnknown() && !area.entrance) { // NB. unknown is not an entrance since it does not dictate motive and goal
 			expectMaintainer(area, reporter);
 		}
 		long now = clock.time();
 		if (reporter.name.isInternal()) {
 			expectCanReportAnonymously(product);
-			product.unconfirmedTasks++;
+			product.unconfirmedTasks.incrementAndGet();
 		}
 		expectCanReport(reporter, now);
 		reporter.reported(now);
@@ -227,7 +232,7 @@ public final class Tracker {
 		task.version = version;
 		task.reporter = reporter.name;
 		task.start = date(now);
-		task.summary = summary;
+		task.gist = gist;
 		task.motive = motive;
 		task.goal = goal;
 		task.status = Status.unsolved;
@@ -244,7 +249,7 @@ public final class Tracker {
 
 	public void confirm(Product product, Task task) {
 		task.confirmed = true;
-		product.unconfirmedTasks--;
+		product.unconfirmedTasks.decrementAndGet();
 	}
 
 	/* task resolution */
@@ -357,21 +362,21 @@ public final class Tracker {
 	/* A user's task queue */
 
 	public void target(Task task, User user) {
-		expectCanBeInvolved(task, user);
+		expectCanBeConnected(user, task);
 		task.approachedBy.remove(user);
 		task.targetedBy.add(user);
 		touch(user);
 	}
 
 	public void abandon(Task task, User user) {
-		expectCanBeInvolved(task, user);
+		expectCanBeConnected(user, task);
 		task.targetedBy.remove(user);
 		task.approachedBy.remove(user);
 		touch(user);
 	}
 
 	public void approach(Task task, User user) {
-		expectCanBeInvolved(task, user);
+		expectCanBeConnected(user, task);
 		expectMaintainer(task.area, user);
 		task.approachedBy.add(user);
 		task.targetedBy.remove(user);
@@ -383,10 +388,7 @@ public final class Tracker {
 	public Site launch(Name site, String template, User owner) {
 		expectNoUserSiteYet(site, owner);
 		expectCanHaveMoreSites(owner);
-		Site s = new Site();
-		s.name = site;
-		s.owner = owner.name;
-		s.template = template;
+		Site s = new Site(owner.name, site, template);
 		owner.sites.add(site);
 		touch(owner);
 		return s;
@@ -460,7 +462,7 @@ public final class Tracker {
 		}
 	}
 
-	private static void expectCanBeInvolved(Task task, User user) {
+	private static void expectCanBeConnected(User user, Task task) {
 		if (task.users() >= 5 && !task.targetedBy.contains(user) && !task.approachedBy.contains(user)) {
 			denyTransition("There are already to much users involved with the task: "+task);
 		}

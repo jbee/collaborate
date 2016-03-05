@@ -1,7 +1,7 @@
 @import url(https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,400italic,700,600);
 
 body {
-	margin: 0 auto 0 40px;
+	margin: 20px 40px;
 	font-family: "Source Sans Pro", Verdana, Arial, Helvetica, sans-serif;
 	font-size: 9pt;
 }
@@ -48,3 +48,10 @@ a.stress { margin-top: 1em; }
 .scheme-motive .motive-intention td { background-color: #ffffbb; } 
 .scheme-motive .exploitable      td { background-color: #ffbbbb; } 
 
+.menu { border-top: 1px solid #aaa; margin: 0; padding: 2px 0; }
+.menu:first-child { border-top-width: 0; }
+.menu * { display: inline-block; }
+.menu dt { font-weight: 600; width: 80px; text-align: right; margin-right: 1em; }
+.menu dd { margin-left: 0; }
+.menu dd + dd:before { content: "\2022"; margin: 0 0.5em; }
+.menu a { text-decoration: none; }

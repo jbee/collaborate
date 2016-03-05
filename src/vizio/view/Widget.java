@@ -17,13 +17,10 @@ public class Widget {
 
 	private static final Pattern FILTER_SPLIT = Pattern.compile("\\s*\\[?\\s*([-a-z]+)\\s*([!=<>~/]+)\\s*(\\{.*?\\}|[^\\s\\]]+)\\s*\\]?\\s*");
 	// ui
-	public String caption;
-	public Coloring scheme;
+	public final String caption;
+	public final Coloring scheme;
 	// data
-	public Selection query;
-
-	public Widget() {
-	}
+	public final Selection query;
 
 	public Widget(String caption, Coloring scheme, Selection query) {
 		super();

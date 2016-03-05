@@ -7,7 +7,7 @@ public class View {
 
 	public static class Silo {
 
-		public Widget[] widgets;
+		public final Widget[] widgets;
 
 		public Silo(Widget... widgets) {
 			super();
@@ -15,8 +15,8 @@ public class View {
 		}
 	}
 
-	public String title;
-	public Silo[] silos;
+	public final String title;
+	public final Silo[] silos;
 
 	public View(String title, Widget... widgets) {
 		this(title, new Silo[] { new Silo(widgets) } );

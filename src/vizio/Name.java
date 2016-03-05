@@ -7,9 +7,10 @@ import java.util.regex.Pattern;
 
 public final class Name implements CharSequence, Comparable<Name> {
 
-	private static final Pattern VALID = Pattern.compile("[a-zA-Z]+(?:[-.@]?[a-zA-Z][a-zA-Z0-9]*)*");
+	private static final Pattern VALID = Pattern.compile("@?[a-zA-Z]+(?:(?:-?[a-zA-Z]|[.@][a-zA-Z0-9])?[a-zA-Z0-9]*)*");
 
-	private static final Name ANONYMOUS = as("anonymous");
+	public static final Name ANONYMOUS = as("@anonymous");
+	public static final Name MY = as("@my");
 
 	public static final Name ORIGIN = new Name(new byte[] {'*'});
 	public static final Name UNKNOWN = new Name(new byte[] {'~'});
@@ -34,15 +35,27 @@ public final class Name implements CharSequence, Comparable<Name> {
 		throw new IllegalArgumentException("Not a valid name: "+name);
 	}
 
+	/**
+	 * @return internal names cannot be created by user but they might exist,
+	 *         e.g. <code>@my</code> to manage common pages.
+	 */
 	public boolean isInternal() {
 		return !isExternal();
 	}
 
+	/**
+	 * @return external names can be created by users.
+	 */
 	public boolean isExternal() {
-		for (int i = 0; i < symbols.length; i++)
-			if (symbols[i] == '@')
-				return false;
-		return true;
+		return indexOf('@') < 0;
+	}
+
+	private int indexOf(char c) {
+		for (int i = 0; i < symbols.length; i++) {
+			if (symbols[i] == c)
+				return i;
+		}
+		return -1;
 	}
 
 	public boolean isUnknown() {
@@ -53,8 +66,9 @@ public final class Name implements CharSequence, Comparable<Name> {
 		return symbols[0] == '*';
 	}
 
-	public Name external() {
-		return isExternal() ? this : ANONYMOUS;
+	public Name display() {
+		// this is not the same as external, internal names like @my are ok to display while emails are not.
+		return indexOf('@') > 0 ? ANONYMOUS : this;
 	}
 
 	@Override

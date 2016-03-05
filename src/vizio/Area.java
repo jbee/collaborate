@@ -11,6 +11,9 @@ public class Area {
 
 	public Name product;
 	public Name name;
+	/**
+	 * The 'parent' area. Something that contains this area in some way.
+	 */
 	public Name basis;
 	public Names maintainers;
 	/**
