@@ -1,15 +1,15 @@
 @import url(https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,400italic,700,600);
 
 body {
-	margin: 20px 40px;
+	margin: 20px 0;
 	font-family: "Source Sans Pro", Verdana, Arial, Helvetica, sans-serif;
 	font-size: 9pt;
 }
 
 h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 
-.column { width: 400px; float: left; padding-right: 20px; }
-@media (max-width:440px){
+.column { width: 400px; float: left; padding-left: 20px; }
+@media (max-width:420px){
 	body .column { width: 100%; }
     body .list td:first-child { width: auto; }
 	body .list td:nth-child(3) { width: auto; max-width: 80px; }
@@ -64,4 +64,4 @@ a.stress { margin-top: 1em; }
 .legend { width: 25%; border-spacing: 1px; border-padding: 0; text-align: center; float: left; }
 .legend td { padding: 3px; font-style: italic; }
 .legend th { font-weight: 600; }
-.footer { clear: left; max-width: 400px; }
+.footer { clear: left; max-width: 400px; padding-left: 20px; }
