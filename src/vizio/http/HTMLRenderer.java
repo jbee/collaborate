@@ -4,12 +4,17 @@ import static vizio.Date.date;
 
 import java.io.PrintWriter;
 
+import vizio.Goal;
+import vizio.Motive;
 import vizio.Name;
 import vizio.Names;
 import vizio.Site;
+import vizio.Status;
 import vizio.Task;
+import vizio.Temp;
 import vizio.Tracker;
 import vizio.User;
+import vizio.view.Coloring;
 import vizio.view.Menu;
 import vizio.view.Page;
 import vizio.view.View;
@@ -34,7 +39,27 @@ public class HTMLRenderer {
 		out.append("<head><link rel='stylesheet' href='/static/vizio.css'></head><body>");
 		render(page.menus);
 		render(page.view, page.data);
+		
+		// render color explanation table
+		// goal
+		// motive
+		// temp
+		out.append("<div class='footer'>");
+		renderTable(Coloring.motive, Motive.class);
+		renderTable(Coloring.goal, Goal.class);
+		renderTable(Coloring.status, Status.class);
+		renderTable(Coloring.temp, Temp.class);
+		out.append("</div>");
 		out.append("</body>");
+	}
+	
+	public void renderTable(Coloring scheme, Class<? extends Enum<?>> type) {
+		out.append("<table class='legend scheme-").append(scheme.name()).append("'>");
+		out.append("<tr><th>").append(scheme.name()).append("</th></td>");
+		for (Enum<?> v : type.getEnumConstants()) {
+			out.append("<tr class='").append(scheme.name()).append("-").append(v.name()).append("'><td>").append(v.name()).append("</td></tr>");
+		}
+		out.append("</table>");
 	}
 	
 	public void render(Menu[] menus) {

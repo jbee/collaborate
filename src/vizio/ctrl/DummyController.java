@@ -76,7 +76,8 @@ public class DummyController implements Controller {
 	public View view(Name space, Name site) {
         Widget left = new Widget("Assorted tasks", Coloring.temp, new Selection());
         Widget right = new Widget("Some others...", Coloring.goal, new Selection());
-		return new View("Test", new Silo(left), new Silo(right));
+        Widget right2 = new Widget("And more", Coloring.motive, new Selection());
+		return new View("Test", new Silo(left), new Silo(right), new Silo(right2));
 	}
 
 }

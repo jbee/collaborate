@@ -15,7 +15,7 @@ public class View {
 		}
 	}
 
-	public final String title;
+	public final String title; //TODO use silo titles instead
 	public final Silo[] silos;
 
 	public View(String title, Widget... widgets) {
