@@ -33,26 +33,22 @@ public class HTMLRenderer {
 		this.viewer = viewer;
 		this.now = System.currentTimeMillis();
 	}
-	
+
 	public void render(Page page) {
 		out.append("<!DOCTYPE html>");
 		out.append("<head><link rel='stylesheet' href='/static/vizio.css'></head><body>");
 		render(page.menus);
 		render(page.view, page.data);
-		
-		// render color explanation table
-		// goal
-		// motive
-		// temp
-		out.append("<div class='footer'>");
+
+		out.append("<div class='footer'><div class='column'>");
 		renderTable(Coloring.motive, Motive.class);
 		renderTable(Coloring.goal, Goal.class);
 		renderTable(Coloring.status, Status.class);
 		renderTable(Coloring.temp, Temp.class);
-		out.append("</div>");
+		out.append("</div></div>");
 		out.append("</body>");
 	}
-	
+
 	public void renderTable(Coloring scheme, Class<? extends Enum<?>> type) {
 		out.append("<table class='legend scheme-").append(scheme.name()).append("'>");
 		out.append("<tr><th>").append(scheme.name()).append("</th></td>");
@@ -61,7 +57,7 @@ public class HTMLRenderer {
 		}
 		out.append("</table>");
 	}
-	
+
 	public void render(Menu[] menus) {
 		for (Menu menu : menus) {
 			render(menu);
@@ -69,21 +65,26 @@ public class HTMLRenderer {
 	}
 
 	private void render(Menu menu) {
-		out.append("<dl class='menu'><dt>").append(menu.label).append("</dt>");
+		out.append("<div class='menu'><span class='group'>").append(menu.label).append("</span><ul>");
 		for (Site site : menu.entries) {
-			//TODO this doesn't get right as e.g. a users site are in /user/ not /view/ - the action has to be encoded somewhere...
-			if (site.owner.isInternal()) {
-				Name space = Name.as(site.owner.toString().substring(1));
-				out.append("<dd><a href='/").append(space).append("/").append(site.name).append("/'>").append(site.name).append("</a></dd>");
-			} else {
-				out.append("<dd><a href='/view/").append(site.owner).append("/").append(site.name).append("/'>").append(site.name).append("</a></dd>");
+			out.append("<li>");
+			switch (menu.action) {
+			case my: out.append("<a href='/my/").append(site.name).append("/'>").append(site.name.display()).append("</a>"); break;
+			default:
+			case user:
+			case view:
+				out.append("<a href='/").append(menu.action.name()).append("/").append(site.owner).append("/");
+				if (!site.name.equalTo(Name.as("@home"))) {
+					out.append(site.name).append("/");
+				}
+				out.append("'>").append(site.name.display()).append("</a>"); break;
 			}
+			out.append("</li>");
 		}
-		out.append("</dl>");
+		out.append("</ul></div>");
 	}
 
 	public void render(View view, Task[][][] data) {
-		out.append("<h1>").append(view.title).append("</h1>");
 		for (int i = 0; i < view.silos.length; i++) {
 			render(view.silos[i], data[i]);
 		}
@@ -91,6 +92,7 @@ public class HTMLRenderer {
 
 	private void render(Silo silo, Task[][] data) {
 		out.append("<div class='column'>");
+		out.append("<h2>").append(silo.title).append("</h2>");
 		for (int i = 0; i < silo.widgets.length; i++) {
 			render(silo.widgets[i], data[i]);
 		}

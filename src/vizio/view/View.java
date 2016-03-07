@@ -7,39 +7,33 @@ public class View {
 
 	public static class Silo {
 
+		public final String title;
 		public final Widget[] widgets;
 
-		public Silo(Widget... widgets) {
+		public Silo(String title, Widget... widgets) {
 			super();
+			this.title = title;
 			this.widgets = widgets;
 		}
 	}
 
-	public final String title; //TODO use silo titles instead
 	public final Silo[] silos;
 
-	public View(String title, Widget... widgets) {
-		this(title, new Silo[] { new Silo(widgets) } );
-	}
-
-	public View(String title, Silo... silos) {
+	public View(Silo... silos) {
 		super();
-		this.title = title;
 		this.silos = silos;
 	}
 
 	public static View parse(String template) {
-		String title = Widget.section(template, "===", "===");
-		template = template.replace("==="+title+"===", "");
 		List<Silo> silos = new ArrayList<>();
 		int e = 0;
 		int s = template.indexOf('|', e);
 		while (s >= 0) {
 			e = template.indexOf('|', s+1);
-			silos.add(new Silo(widgets(template.substring(s+1, e))));
+			silos.add(new Silo("NO_TITLE", widgets(template.substring(s+1, e))));
 			s=template.indexOf('|', e+1);
 		}
-		return new View(title, silos.toArray(new Silo[0]));
+		return new View(silos.toArray(new Silo[0]));
 	}
 
 	private static Widget[] widgets(String silo) {

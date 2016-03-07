@@ -39,7 +39,7 @@ public class HttpTrackerServer extends AbstractHandler {
 		server.join();
 	}
 
-	private HttpAdapter adapter = new HttpAdapter(new DummyController());
+	private HttpAdapter adapter = new HttpTrackerAdapter(new DummyController());
 
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response)

@@ -85,9 +85,9 @@ public final class Tracker {
 	}
 
 	private void touch(User user) {
-		user.lastActive = date(clock.time());
+		user.millisLastActive = clock.time();
 	}
-	
+
 	public static boolean canView(User user, Task task) {
 		return !task.exploitable || user.name.equalTo(task.reporter) || task.area.maintainers.contains(user);
 	}

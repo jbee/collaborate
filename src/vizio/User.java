@@ -14,14 +14,14 @@ public class User {
 	 * A user can report once per hour on average.
 	 */
 	private static final int REPORTS_PER_DAY = 24;
-	
+
 	public Name name;
 	// account
 	public String email;
 	public byte[] md5;
 	public boolean activated;
 	// activity statistics
-	public Date lastActive;
+	public long millisLastActive;
 	public int xp;
 	public int absolved;
 	public int resolved;
@@ -35,7 +35,7 @@ public class User {
 	//TODO maybe add a lock? user reporting to much a locked ...
 	// sites
 	public Names sites;
-	
+
 	public int stressDelay() {
 		return max(60000, (int)( 3600000f / (1f+(xp/50f))));
 	}
@@ -58,13 +58,13 @@ public class User {
 		}
 		millisStressed = now;
 	}
-	
+
 	public boolean canReport(long now) {
 		return activated
 			&&	now - millisReported > REPORT_DELAY
 			&& (reportedToday < REPORTS_PER_DAY || date(now).after(date(millisReported)));
 	}
-	
+
 	public void reported(long now) {
 		if (date(now).after(date(millisReported))) {
 			reportedToday =1;
@@ -73,7 +73,7 @@ public class User {
 		}
 		millisReported = now;
 	}
-	
+
 	@Override
 	public String toString() {
 		return name != null ? name.toString() : email.toString();

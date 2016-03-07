@@ -2,6 +2,10 @@ package vizio.ctrl;
 
 import static java.lang.System.currentTimeMillis;
 import static vizio.Name.as;
+
+import java.util.Arrays;
+import java.util.Random;
+
 import vizio.Area;
 import vizio.Name;
 import vizio.Product;
@@ -22,11 +26,11 @@ public class DummyController implements Controller {
 	private long now;
 	private User user;
 	private Task[] tasks;
-	
+
 	public DummyController() {
 		init();
 	}
-	
+
 	private void init() {
 		now = currentTimeMillis();
 		Tracker tracker = new Tracker(() -> { now += 70000; return now; } );
@@ -49,11 +53,11 @@ public class DummyController implements Controller {
 		tasks[2].heat = 56;
 		tasks[3].heat = 28;
 		tasks[4].heat = 14;
-	}	
-	
+	}
+
 	@Override
 	public Task[] tasks(Selection selection, Context ctx) {
-		return tasks;
+		return Arrays.copyOf(tasks, new Random().nextInt(tasks.length)+1) ;
 	}
 
 	@Override
@@ -63,21 +67,21 @@ public class DummyController implements Controller {
 
 	@Override
 	public Menu[] menus(Context ctx) {
-		return new Menu[] { 
-				new Menu("My", new Site(Name.MY, Name.as("dashboard"), "")),
-				new Menu("User jan", 
-						new Site(as("jan"), Name.as("home"), ""),
+		return new Menu[] {
+				new Menu("My", Action.my, new Site(Name.MY, Name.as("dashboard"), "")),
+				new Menu("jan's", Action.user,
+						new Site(as("jan"), Name.as("@home"), ""),
 						new Site(as("jan"), Name.as("special"), "")
 						)
 				};
 	}
-	
+
 	@Override
 	public View view(Name space, Name site) {
         Widget left = new Widget("Assorted tasks", Coloring.temp, new Selection());
         Widget right = new Widget("Some others...", Coloring.goal, new Selection());
         Widget right2 = new Widget("And more", Coloring.motive, new Selection());
-		return new View("Test", new Silo(left), new Silo(right), new Silo(right2));
+		return new View(new Silo("My Tasks", left), new Silo("Inbox", right), new Silo("Urgent", right2));
 	}
 
 }

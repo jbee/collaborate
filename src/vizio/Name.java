@@ -68,7 +68,8 @@ public final class Name implements CharSequence, Comparable<Name> {
 
 	public Name display() {
 		// this is not the same as external, internal names like @my are ok to display while emails are not.
-		return indexOf('@') > 0 ? ANONYMOUS : this;
+		int idx = indexOf('@');
+		return idx == 0 ? subSequence(1, symbols.length) : idx > 0 ? ANONYMOUS : this;
 	}
 
 	@Override

@@ -8,18 +8,18 @@ body {
 
 h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 
-.column { width: 400px; float: left; padding-left: 20px; }
-@media (max-width:420px){
-	body .column { width: 100%; }
-    body .list td:first-child { width: auto; }
-	body .list td:nth-child(3) { width: auto; max-width: 80px; }
+.footer { clear: left; border-top: 1px solid #bbb; margin-top: 1em; }
+.column { width: 400px; float: left; margin-left: 20px; }
+@media (max-width:430px){
+	body .column { width: 100%; margin: 0; }
+	h2, h3 { padding-left: 0.5em; }
 	body a.btn { display: none; }
 }
 
 .list { width: 100%; border-spacing: 1px; border-padding: 0; }
-.list td { padding: 5px 0.5em; vertical-align: top; }
-.list td:first-child { width: 40px; }
-.list td:nth-child(3) { width: 80px; }
+.list td { padding: 5px; vertical-align: top; }
+.list td:first-child { width: 15%; }
+.list td:nth-child(3) { width: 20%; }
 .list td a { text-decoration: none; }
 .list td:first-child a { font-weight: 600; }
 .list td:nth-child(2) { text-align: right; }
@@ -31,7 +31,7 @@ h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 a.btn { border-radius: 8px; display: inline-block; line-height: 16px; height: 16px; width: 16px; text-align: center;  }
 a.btn:hover { background-color: white; color: red; }
 a.idn { float: right; }
-a.stress { margin-top: 1em; }
+a.stress { clear: right; }
 
 .scheme-temp .temp-cold          td { background-color: #eeeeff; } 
 .scheme-temp .temp-tepid         td { background-color: #ffffbb; } 
@@ -53,15 +53,16 @@ a.stress { margin-top: 1em; }
 .scheme-motive .motive-proposal  td { background-color: #ddeeff; } 
 .scheme-motive .motive-intention td { background-color: #ffffbb; } 
 
-.menu { border-top: 1px solid #aaa; margin: 0; padding: 2px 0; }
+.menu { border-top: 1px solid #bbb; margin: 0; padding: 2px 0; }
 .menu:first-child { border-top-width: 0; }
 .menu * { display: inline-block; }
-.menu dt { font-weight: 600; width: 80px; text-align: right; margin-right: 1em; }
-.menu dd { margin-left: 0; }
-.menu dd + dd:before { content: "\2022"; margin: 0 0.5em; }
+.menu .group { font-weight: 600; width: 80px; text-align: right; margin-right: 1em; }
+.menu ul { padding: 0; margin: 0; }
+.menu li { margin-left: 0; }
+.menu li + li:before { content: "\2022"; margin: 0 0.5em; }
 .menu a { text-decoration: none; }
 
 .legend { width: 25%; border-spacing: 1px; border-padding: 0; text-align: center; float: left; }
 .legend td { padding: 3px; font-style: italic; }
 .legend th { font-weight: 600; }
-.footer { clear: left; max-width: 400px; padding-left: 20px; }
+
