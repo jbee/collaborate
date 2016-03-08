@@ -1,14 +1,15 @@
 @import url(https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,400italic,700,600);
 
 body {
-	margin: 20px 0;
+	margin: 0;
 	font-family: "Source Sans Pro", Verdana, Arial, Helvetica, sans-serif;
 	font-size: 9pt;
 }
 
+h1 { margin: 0; padding: 0; }
 h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 
-.footer { clear: left; border-top: 1px solid #bbb; margin-top: 1em; }
+.footer { clear: left; border-top: 1px solid #bbb; padding-top: 15px; }
 .column { width: 400px; float: left; margin-left: 20px; }
 @media (max-width:430px){
 	body .column { width: 100%; margin: 0; }
@@ -16,7 +17,7 @@ h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 	body a.btn { display: none; }
 }
 
-.list { width: 100%; border-spacing: 1px; border-padding: 0; }
+.list { width: 100%; border-spacing: 1px; border-padding: 0; margin-bottom: 20px; }
 .list td { padding: 5px; vertical-align: top; }
 .list td:first-child { width: 15%; }
 .list td:nth-child(3) { width: 20%; }
@@ -33,6 +34,7 @@ a.btn:hover { background-color: white; color: red; }
 a.idn { float: right; }
 a.stress { clear: right; }
 
+/* We do this ob two levels to be able to render all actual propeties an chose by the scheme what is used */
 .scheme-temp .temp-cold          td { background-color: #eeeeff; } 
 .scheme-temp .temp-tepid         td { background-color: #ffffbb; } 
 .scheme-temp .temp-warm          td { background-color: #ffeeaa; } 
@@ -41,19 +43,19 @@ a.stress { clear: right; }
 
 .scheme-goal .goal-clarification td { background-color: #ffddff; } 
 .scheme-goal .goal-modification  td { background-color: #ffffbb; } 
-.scheme-goal .goal-verification  td { background-color: #ddeeff; } 
+.scheme-goal .goal-verification  td { background-color: #ddddff; } 
 .scheme-goal .goal-publication   td { background-color: #ddffcc; } 
 
-.scheme-status .status-unsolved  td { background-color: #eeeeff; } 
-.scheme-status .status-absolved  td { background-color: #ffffbb; } 
-.scheme-status .status-resolved  td { background-color: #ddeeff; } 
-.scheme-status .status-dissolved td { background-color: #ddffcc; } 
+.scheme-status .status-unsolved    td { background-color: #eeeeff; } 
+.scheme-status .status-absolved    td { background-color: #ffffbb; } 
+.scheme-status .status-resolved    td { background-color: #ddddff; } 
+.scheme-status .status-dissolved   td { background-color: #ddffcc; } 
 
-.scheme-motive .motive-defect    td { background-color: #ffddcc; } 
-.scheme-motive .motive-proposal  td { background-color: #ddeeff; } 
-.scheme-motive .motive-intention td { background-color: #ffffbb; } 
+.scheme-motive .motive-defect      td { background-color: #ffddcc; } 
+.scheme-motive .motive-proposal    td { background-color: #ddddff; } 
+.scheme-motive .motive-intention   td { background-color: #ffffbb; } 
 
-.menu { border-top: 1px solid #bbb; margin: 0; padding: 2px 0; }
+.menu { border-top: 1px solid #bbb; margin: 0; padding: 2px 20px; }
 .menu:first-child { border-top-width: 0; }
 .menu * { display: inline-block; }
 .menu .group { font-weight: 600; width: 80px; text-align: right; margin-right: 1em; }
@@ -66,3 +68,4 @@ a.stress { clear: right; }
 .legend td { padding: 3px; font-style: italic; }
 .legend th { font-weight: 600; }
 
+select { float: right; }

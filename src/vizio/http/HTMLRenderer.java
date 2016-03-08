@@ -37,6 +37,7 @@ public class HTMLRenderer {
 	public void render(Page page) {
 		out.append("<!DOCTYPE html>");
 		out.append("<head><link rel='stylesheet' href='/static/vizio.css'></head><body>");
+		renderStaticMenu();
 		render(page.menus);
 		render(page.view, page.data);
 
@@ -47,6 +48,13 @@ public class HTMLRenderer {
 		renderTable(Coloring.temp, Temp.class);
 		out.append("</div></div>");
 		out.append("</body>");
+	}
+
+	private void renderStaticMenu() {
+		out.append("<div class='menu'><h1>LiTTr</h1><span class='group'></span>");
+		// Liberated Task Coordination
+
+		out.append("</div>");
 	}
 
 	public void renderTable(Coloring scheme, Class<? extends Enum<?>> type) {
@@ -101,12 +109,14 @@ public class HTMLRenderer {
 
 	public void render(Widget widget, Task[] tasks) {
 		out.append("<h3>").append(widget.caption).append("</h3>");
-		out.append(" (by ").append(widget.scheme.name()).append(")");
+		out.append(" (by ").append(widget.scheme.name()).append(")<select><option>temp</option></select>");
+		//TODO render a link "scheme", when clicked turns itself into a dropdown, that is just changing the table next to it
+		// once selected the dropdown turns into the color link again
+		// this is done with JS on client side
 		out.append("<table class='list scheme-").append(widget.scheme.name()).append("'>");
 		for (Task task : tasks) {
 			render(task);
 		}
-		out.append("<tr><td colspan='3'>").append("</td></tr>");
 		out.append("</table>");
 	}
 
