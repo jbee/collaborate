@@ -182,9 +182,9 @@ public final class Tracker {
 
 	/* Tasks */
 
-	public Task reportProposal(Product product, String summay, User reporter, Area area) {
+	public Task reportProposal(Product product, String gist, User reporter, Area area) {
 		expectNoEntrance(area);
-		return report(product, proposal, clarification, summay, reporter, area, product.somewhen, false);
+		return report(product, proposal, clarification, gist, reporter, area, product.somewhen, false);
 	}
 
 	public Task reportIntention(Product product, String gist, User reporter, Area area) {
@@ -192,9 +192,9 @@ public final class Tracker {
 		return report(product, intention, clarification, gist, reporter, area, product.somewhen, false);
 	}
 
-	public Task reportDefect(Product product, String summay, User reporter, Area area, Version version, boolean exploitable) {
+	public Task reportDefect(Product product, String gist, User reporter, Area area, Version version, boolean exploitable) {
 		expectNoEntrance(area);
-		return report(product, defect, clarification, summay, reporter, area, version, exploitable);
+		return report(product, defect, clarification, gist, reporter, area, version, exploitable);
 	}
 
 	public Task reportRequest(Product product, String gist, User reporter, Area entrance) {

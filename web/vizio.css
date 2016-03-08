@@ -1,6 +1,6 @@
 @import url(https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300,400italic,700,600);
 
-body {
+body, input, select {
 	margin: 0;
 	font-family: "Source Sans Pro", Verdana, Arial, Helvetica, sans-serif;
 	font-size: 9pt;
@@ -28,6 +28,10 @@ h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 
 .list .exploitable h5 { font-weight: 600; }
 .list .exploitable td:first-child a { font-weight: 700; }
+
+.form.list td:nth-child(2) { text-align: left; }
+.form.list input[type=text] { background-color: transparent; border-width: 0; border-bottom: 1px dashed black; display: block; width: 100%; margin-bottom: 4px;  }
+.form.list select { width: 100%; } 
 
 a.btn { border-radius: 8px; display: inline-block; line-height: 16px; height: 16px; width: 16px; text-align: center;  }
 a.btn:hover { background-color: white; color: red; }

@@ -2,8 +2,6 @@ package vizio.http;
 
 import static java.lang.Character.isDigit;
 import static java.lang.Integer.parseInt;
-import static vizio.Name.MY;
-import static vizio.Name.UNKNOWN;
 import static vizio.Name.as;
 
 import java.io.PrintWriter;
@@ -11,6 +9,7 @@ import java.net.HttpURLConnection;
 import java.util.Map;
 
 import vizio.IDN;
+import vizio.Name;
 import vizio.Task;
 import vizio.User;
 import vizio.ctrl.Action;
@@ -44,6 +43,7 @@ public class HttpTrackerAdapter implements HttpAdapter {
 	public int respond(String path, Map<String, String> params, PrintWriter out) {
 		Context ctx = map(path, params);
 		switch(ctx.action) {
+		case as:
 		case my:
 		case user:
 		case view: return view(ctx, out);
@@ -53,7 +53,7 @@ public class HttpTrackerAdapter implements HttpAdapter {
 	}
 
 	private int view(Context ctx, PrintWriter out) {
-		View view = ctrl.view(ctx.space, ctx.site);
+		View view = ctrl.view(ctx.owner, ctx.site);
 		User viewer = ctrl.user(ctx.user);
 		HTMLRenderer renderer = new HTMLRenderer(out, viewer);
 		renderer.render(new Page(ctrl.menus(ctx), view, fetch(view, ctx)));
@@ -77,20 +77,20 @@ public class HttpTrackerAdapter implements HttpAdapter {
 	 * application level request {@link Context} from it.
 	 */
 	private Context map(String path, Map<String, String> params) {
-		if (path.startsWith("/")) 
+		if (path.startsWith("/"))
 			path = path.substring(1);
+		Context ctx = new Context();
+		String user = params.get(KEY_SESSION_USER);
+		ctx.user = user == null ? Name.ANONYMOUS : as(user);
 		String[] segments = path.split("/");
 		Action action = Action.valueOf(segments[0]);
-		Context ctx = new Context();
 		ctx.action = action;
-		ctx.user = UNKNOWN;
-		//TODO get user from params (session)
 		switch (action) {
 		case view:
 			// non-user views
 			// :me is substituted with the ctx.user (viewer)
 			ctx.product=as(segments[1]);
-			ctx.space=as("@product."+segments[1]); // each product has its own common views
+			ctx.owner=as("@product."+segments[1]); // each product has its own common views
 			if (segments.length > 2) {
 				if ("v".equals(segments[2])) {
 					ctx.version=as(segments[3]);
@@ -108,14 +108,14 @@ public class HttpTrackerAdapter implements HttpAdapter {
 							ctx.area=as(area.substring(0, area.lastIndexOf('-')));
 							ctx.serial=new IDN(parseInt(area.substring(area.lastIndexOf('-')+1)));
 							ctx.site=as("@request");
-						} else { 
+						} else {
 							ctx.area=as(area);
 							ctx.site=as("@area");
 						}
 					}
 				}
 			} else { // /view/<product>/
-				// a product's home page, initially copied from @my:@product
+				// a product's home page
 				ctx.site=as("@home");
 			}
 			break;
@@ -125,30 +125,35 @@ public class HttpTrackerAdapter implements HttpAdapter {
 			ctx.product=as(segments[1]);
 			ctx.task=new IDN(parseInt(segments[2]));
 			break;
+		case as: // almost the same as /user/x/; /as/x/ shows the site of user x but having :me subst with the current user
 		case user:
 			if (segments.length==1) {
-				ctx.space=MY;
+				ctx.owner=Name.MASTER;
 				ctx.site=as("@users");
 			} else {
 				// these are the views made by the users themselves
-				// here :me is substituted with ctx.space (not viewing user)
-				ctx.space=as(segments[1]);
+				// here :me is substituted with ctx.owner (not viewing user)
+				ctx.owner=as(segments[1]);
 				// a third menu shows the sites in space (in case the viewer isn't that user himself)
 				if (segments.length > 2) {
 					ctx.site=as(segments[2]);
 				} else {
 					// this site is customized by the user (since space is the user's space)
-					// initially it is copied from @my:@home
 					ctx.site=as("@home");
 				}
 			}
-			// TODO how to use a site created by the viewer or a common one for a specific user?
 			break;
-		case my:
+		case my: // this is just a shortcut to the sites of the logged in user (or @anonymous sites)
+			ctx.owner=ctx.user;
+			ctx.site=as(segments[1]);
+
+		// case ? TODO
 			// these are common views
 			// :me is substituted with ctx.user (viewer)
-			ctx.space=MY; // belongs to all and nobody in particular (make this a system config? what users are registered to "product" @my)
-			ctx.site=as(segments[1]); // these are custom sites created, like "dashboard"
+			// belongs to all and nobody in particular
+
+		// TODO how to use a site created by the viewer or a common one for a specific user?
+
 		}
 		return ctx;
 	}

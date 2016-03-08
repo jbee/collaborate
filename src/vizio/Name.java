@@ -11,6 +11,7 @@ public final class Name implements CharSequence, Comparable<Name> {
 
 	public static final Name ANONYMOUS = as("@anonymous");
 	public static final Name MY = as("@my");
+	public static final Name MASTER = as("@master");
 
 	public static final Name ORIGIN = new Name(new byte[] {'*'});
 	public static final Name UNKNOWN = new Name(new byte[] {'~'});

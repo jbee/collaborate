@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<head>
+	<link rel='stylesheet' href='/static/vizio.css'>
+</head>
+<body>
+<div class='column'>
+	<table class='form list scheme-motive'>
+	<tr class='motive-proposal'>
+		<td>Proposal<br/><input type="radio" name="motive" value="proposal"/></td>
+		<td><input name="gist" type="text" placeholder="gist (3-9 words)" /></td>
+		<td>
+		<select name="area"><option>~</option><option>core</option></select><br/>
+		</td>
+	</tr>
+	<tr class='motive-intention'>
+		<td>Intention<br/><input type="radio" name="motive" value="intention"/></td>
+		<td><input name="gist" type="text" placeholder="gist (3-9 words)" /></td>
+		<td>
+		<select name="area"><option>~</option><option>core</option></select><br/>
+		</td>
+	</tr>
+	<tr class='motive-defect'>
+		<td>Defect<br/><input type="radio" name="motive" value="defect"/></td>
+		<td><input name="gist" type="text" placeholder="gist (3-9 words)" />
+		<input name="exploitable" type="checkbox" /> exploitable
+		</td>
+		<td>
+		<select name="area"><option>~</option><option>core</option></select><br/>
+		<select name="version"><option>~</option><option>v0.1</option></select>
+		</td>
+	</tr>
+	</table>
+</div>
+</body>

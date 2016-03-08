@@ -5,6 +5,8 @@ import java.util.Map;
 
 public interface HttpAdapter {
 
+	String KEY_SESSION_USER = "SESSION_USER";
+
 	/**
 	 * Responds the request by writing to output stream.
 	 *

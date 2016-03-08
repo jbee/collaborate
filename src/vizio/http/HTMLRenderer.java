@@ -109,7 +109,7 @@ public class HTMLRenderer {
 
 	public void render(Widget widget, Task[] tasks) {
 		out.append("<h3>").append(widget.caption).append("</h3>");
-		out.append(" (by ").append(widget.scheme.name()).append(")<select><option>temp</option></select>");
+		out.append(" (by ").append(widget.scheme.name()).append(")");
 		//TODO render a link "scheme", when clicked turns itself into a dropdown, that is just changing the table next to it
 		// once selected the dropdown turns into the color link again
 		// this is done with JS on client side
