@@ -77,7 +77,7 @@ public class DummyController implements Controller {
 	}
 
 	@Override
-	public View view(Name space, Name site) {
+	public View view(Context ctx) {
         Widget left = new Widget("Assorted tasks", Coloring.temp, new Selection());
         Widget right = new Widget("Some others...", Coloring.goal, new Selection());
         Widget right2 = new Widget("And more", Coloring.motive, new Selection());

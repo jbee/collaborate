@@ -5,34 +5,31 @@ import vizio.Name;
 
 public class Context {
 
-	public Action action;
-	public IDN serial;
-	public IDN task;
-
-	// SUBSTITUTION DATA
-
-	public Name product;
-	public Name version;
-	public Name area;
-
 	/**
 	 * The current user/viewer/actor, {@link Name#UNKNOWN} for users not logged
 	 * in, an email name for anonymous users that did provide their mail during
 	 * the session.
 	 */
-	public Name user;
+	public Name currentUser;
 
-	// VIEW
+	public Action action;
+	public ContentType type;
+
+	// SUBSTITUTION DATA (parameters that have been extracted from inputs like the URL)
+	public IDN serial;
+	public IDN task;
+	public Name product;
+	public Name version;
+	public Name area;
+	public Name user;
+	public Name site;
 
 	/**
 	 * A user or a internal space like <code>@my</code>, <code>@anonymous</code>
 	 * or <code>@product</code>.
 	 */
-	public Name owner;
-
-	/**
-	 * The name of the site/page within the {@link #owner}.
-	 */
-	public Name site;
+	public Name owner() {
+		return user;
+	}
 
 }

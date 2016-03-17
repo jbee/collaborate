@@ -2,5 +2,5 @@ package vizio.ctrl;
 
 public enum Action {
 
-	view, target, approach, abandon, user, my, as
+	view, target, approach, abandon, user, my, peek
 }

@@ -3,6 +3,12 @@ package vizio.http;
 import static java.lang.Character.isDigit;
 import static java.lang.Integer.parseInt;
 import static vizio.Name.as;
+import static vizio.ctrl.Action.view;
+import static vizio.ctrl.ContentType.Area;
+import static vizio.ctrl.ContentType.Product;
+import static vizio.ctrl.ContentType.Task;
+import static vizio.ctrl.ContentType.User;
+import static vizio.ctrl.ContentType.Version;
 
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
@@ -43,7 +49,6 @@ public class HttpTrackerAdapter implements HttpAdapter {
 	public int respond(String path, Map<String, String> params, PrintWriter out) {
 		Context ctx = map(path, params);
 		switch(ctx.action) {
-		case as:
 		case my:
 		case user:
 		case view: return view(ctx, out);
@@ -53,7 +58,7 @@ public class HttpTrackerAdapter implements HttpAdapter {
 	}
 
 	private int view(Context ctx, PrintWriter out) {
-		View view = ctrl.view(ctx.owner, ctx.site);
+		View view = ctrl.view(ctx);
 		User viewer = ctrl.user(ctx.user);
 		HTMLRenderer renderer = new HTMLRenderer(out, viewer);
 		renderer.render(new Page(ctrl.menus(ctx), view, fetch(view, ctx)));
@@ -81,81 +86,75 @@ public class HttpTrackerAdapter implements HttpAdapter {
 			path = path.substring(1);
 		Context ctx = new Context();
 		String user = params.get(KEY_SESSION_USER);
-		ctx.user = user == null ? Name.ANONYMOUS : as(user);
+		ctx.currentUser = user == null ? Name.ANONYMOUS : as(user);
+		ctx.action=view;
+		if (path.isEmpty() || "/".equals(path))
+			return ctx;
 		String[] segments = path.split("/");
 		Action action = Action.valueOf(segments[0]);
 		ctx.action = action;
 		switch (action) {
 		case view:
 			// non-user views
-			// :me is substituted with the ctx.user (viewer)
+			ctx.type=Product;
 			ctx.product=as(segments[1]);
-			ctx.owner=as("@product."+segments[1]); // each product has its own common views
 			if (segments.length > 2) {
 				if ("v".equals(segments[2])) {
+					ctx.type=Version;
 					ctx.version=as(segments[3]);
-					ctx.site=as("@version");
+					siteAtIndex(4, segments, ctx);
 				} else if (isDigit(segments[2].charAt(0))) {
+					ctx.type=Task;
 					ctx.task=new IDN(parseInt(segments[2]));
-					ctx.site=as("@task");
+					siteAtIndex(3, segments, ctx);
 				} else {
+					ctx.type=Area;
 					String area = segments[2];
-					if (segments.length > 3) {
-						ctx.serial=new IDN(parseInt(segments[3]));
-						ctx.site=as("@request");
+					if (area.matches("^.*?-[0-9]+$")) {
+						ctx.area=as(area.substring(0, area.lastIndexOf('-')));
+						ctx.serial=new IDN(parseInt(area.substring(area.lastIndexOf('-')+1)));
+						siteAtIndex(3, segments, ctx);
 					} else {
-						if (area.matches("^.*?-[0-9]+$")) {
-							ctx.area=as(area.substring(0, area.lastIndexOf('-')));
-							ctx.serial=new IDN(parseInt(area.substring(area.lastIndexOf('-')+1)));
-							ctx.site=as("@request");
-						} else {
-							ctx.area=as(area);
-							ctx.site=as("@area");
+						ctx.area=as(area);
+						if (segments.length > 3) {
+							ctx.serial=new IDN(parseInt(segments[3]));
 						}
+						siteAtIndex(4, segments, ctx);
+					}
+					if (ctx.serial!=null) {
+						ctx.type=Task;
 					}
 				}
-			} else { // /view/<product>/
-				// a product's home page
-				ctx.site=as("@home");
 			}
 			break;
 		case target:
 		case approach:
 		case abandon:
+			ctx.type=Task;
 			ctx.product=as(segments[1]);
 			ctx.task=new IDN(parseInt(segments[2]));
 			break;
-		case as: // almost the same as /user/x/; /as/x/ shows the site of user x but having :me subst with the current user
+		case peek: // the semantics are just different later on in the substitution of :me
 		case user:
-			if (segments.length==1) {
-				ctx.owner=Name.MASTER;
-				ctx.site=as("@users");
-			} else {
-				// these are the views made by the users themselves
-				// here :me is substituted with ctx.owner (not viewing user)
-				ctx.owner=as(segments[1]);
-				// a third menu shows the sites in space (in case the viewer isn't that user himself)
-				if (segments.length > 2) {
-					ctx.site=as(segments[2]);
-				} else {
-					// this site is customized by the user (since space is the user's space)
-					ctx.site=as("@home");
-				}
+			ctx.type=User;
+			if (segments.length > 1) {
+				ctx.user=as(segments[1]);
+				siteAtIndex(2, segments, ctx);
 			}
 			break;
 		case my: // this is just a shortcut to the sites of the logged in user (or @anonymous sites)
-			ctx.owner=ctx.user;
-			ctx.site=as(segments[1]);
-
-		// case ? TODO
-			// these are common views
-			// :me is substituted with ctx.user (viewer)
-			// belongs to all and nobody in particular
-
-		// TODO how to use a site created by the viewer or a common one for a specific user?
-
+			ctx.type=User;
+			ctx.user=ctx.currentUser;
+			siteAtIndex(1, segments, ctx);
+			break;
 		}
 		return ctx;
+	}
+
+	private static void siteAtIndex(int idx, String[] segments, Context ctx) {
+		if (idx < segments.length) {
+			ctx.site=as(segments[idx]);
+		}
 	}
 
 }

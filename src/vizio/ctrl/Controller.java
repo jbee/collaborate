@@ -10,15 +10,15 @@ import vizio.view.View;
 public interface Controller {
 
 	// DATA
-	
+
 	Task[] tasks(Selection selection, Context ctx);
 
 	User user(Name user);
 
 	// UI
-	
+
 	Menu[] menus(Context ctx);
-	
-	View view(Name space, Name site);
+
+	View view(Context ctx);
 
 }
