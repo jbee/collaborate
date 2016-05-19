@@ -55,7 +55,8 @@ public final class Tracker {
 		user.name = name;
 		user.email = email;
 		user.md5 = md5(unsaltedMd5+cluster.salt); // also acts as activationKey
-		user.sites = Names.empty();
+		user.sites = new Site[0];
+		user.watches = new AtomicInteger(0);
 		touch(user);
 		return user;
 	}
@@ -240,6 +241,7 @@ public final class Tracker {
 		task.confirmed = task.reporter.isExternal();
 		task.targetedBy = Names.empty();
 		task.approachedBy = Names.empty();
+		task.watchedBy = new Names(reporter.name);
 		if (area.entrance) {
 			task.serial=new IDN(area.tasks.incrementAndGet());
 		}
@@ -383,13 +385,33 @@ public final class Tracker {
 		touch(user);
 	}
 
+	/* A user's watch list */
+
+	public void watch(Task task, User user) {
+		if (!task.watchedBy.contains(user)) {
+			expectCanWatch(user);
+			task.watchedBy.add(user);
+			user.watches.incrementAndGet();
+			touch(user);
+		}
+	}
+
+	public void unwatch(Task task, User user) {
+		if (task.watchedBy.contains(user)) {
+			task.watchedBy.remove(user);
+			user.watches.decrementAndGet();
+			touch(user);
+		}
+	}
+
 	/* A user's sites */
 
 	public Site launch(Name site, String template, User owner) {
 		expectNoUserSiteYet(site, owner);
 		expectCanHaveMoreSites(owner);
 		Site s = new Site(owner.name, site, template);
-		owner.sites.add(site);
+		owner.sites = Arrays.copyOf(owner.sites, owner.sites.length+1);
+		owner.sites[owner.sites.length-1] = s;
 		touch(owner);
 		return s;
 	}
@@ -421,7 +443,7 @@ public final class Tracker {
 	}
 
 	private static void expectCanHaveMoreSites(User owner) {
-		if (owner.sites.count() >= 10) {
+		if (owner.sites.length >= 10) {
 			denyTransition("Currently each user can only have 10 sites!");
 		}
 	}
@@ -433,7 +455,7 @@ public final class Tracker {
 	}
 
 	private static void expectNoUserSiteYet(Name site, User owner) {
-		if (owner.sites.contains(site)) {
+		if (owner.hasSite(site)) {
 			denyTransition("Site already exists!");
 		}
 	}
@@ -463,7 +485,7 @@ public final class Tracker {
 	}
 
 	private static void expectCanBeConnected(User user, Task task) {
-		if (task.users() >= 5 && !task.targetedBy.contains(user) && !task.approachedBy.contains(user)) {
+		if (task.involvedUsers() >= 5 && !task.targetedBy.contains(user) && !task.approachedBy.contains(user)) {
 			denyTransition("There are already to much users involved with the task: "+task);
 		}
 	}
@@ -501,6 +523,15 @@ public final class Tracker {
 	private static void expectNotActivated(User user) {
 		if (user.activated) {
 			denyTransition("User account already activated!");
+		}
+	}
+
+	private static void expectCanWatch(User user) {
+		if (!user.activated) {
+			denyTransition("Only active users can watch");
+		}
+		if (!user.canWatch()) {
+			denyTransition("User has reached maximum number of watched tasks. Unwatch tasks or increase limit by closing tasks.");
 		}
 	}
 

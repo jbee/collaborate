@@ -1,5 +1,10 @@
 package vizio;
 
+/**
+ * An {@link IDN} is an identity number that is unique for a {@link Product} (but not globally unique!).
+ *
+ * @author jan
+ */
 public final class IDN implements Comparable<IDN> {
 
 	public final int num;

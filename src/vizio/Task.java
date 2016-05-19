@@ -27,6 +27,7 @@ public class Task {
 	public Version version;
 	public Names targetedBy;
 	public Names approachedBy;
+	public Names watchedBy;
 	public boolean confirmed;
 	// resolving a task (closing record)
 	public Name solver;
@@ -56,7 +57,7 @@ public class Task {
 		return today.daysSince(start) + 1;
 	}
 
-	public int users() {
+	public int involvedUsers() {
 		return targetedBy.count() + approachedBy.count();
 	}
 

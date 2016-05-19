@@ -67,6 +67,7 @@ a.stress { clear: right; }
 .menu li { margin-left: 0; }
 .menu li + li:before { content: "\2022"; margin: 0 0.5em; }
 .menu a { text-decoration: none; }
+.menu a:hover { text-decoration: underline; }
 
 .legend { width: 25%; border-spacing: 1px; border-padding: 0; text-align: center; float: left; }
 .legend td { padding: 3px; font-style: italic; }

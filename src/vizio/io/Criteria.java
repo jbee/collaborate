@@ -1,6 +1,6 @@
-package vizio.store;
+package vizio.io;
 
-public class Selection {
+public class Criteria {
 
 	/**
 	 * Properties a task can be filtered by
@@ -11,7 +11,7 @@ public class Selection {
 		exploitable,
 		entrance, // serial is set
 		age, origin, cause, serial,
-		reporter, solver, users, maintainers, targeted_by, approched_by,
+		reporter, solver, users, maintainers, targeted_by, approched_by, watched_by,
 		area, product,
 		summary, conclusion
 	}

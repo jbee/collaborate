@@ -34,7 +34,7 @@ public class Names implements Iterable<Name> {
 		}
 		return -1;
 	}
-	
+
 	public void remove(Name user) {
 		int idx = indexOf(user);
 		if (idx >= 0) {
@@ -60,7 +60,7 @@ public class Names implements Iterable<Name> {
 			names[names.length-1] = user;
 		}
 	}
-	
+
 	public void add(User user) {
 		add(user.name);
 	}
@@ -68,7 +68,7 @@ public class Names implements Iterable<Name> {
 	public boolean contains(User user) {
 		return indexOf(user) >= 0;
 	}
-	
+
 	public boolean contains(Name user) {
 		return indexOf(user) >= 0;
 	}
@@ -86,6 +86,5 @@ public class Names implements Iterable<Name> {
 	public Iterator<Name> iterator() {
 		return asList(names).iterator();
 	}
-
 
 }

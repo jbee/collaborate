@@ -7,11 +7,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import vizio.store.Selection;
-import vizio.store.Selection.Filter;
-import vizio.store.Selection.Operator;
-import vizio.store.Selection.Property;
-import vizio.store.Selection.Range;
+import vizio.io.Criteria;
+import vizio.io.Criteria.Filter;
+import vizio.io.Criteria.Operator;
+import vizio.io.Criteria.Property;
+import vizio.io.Criteria.Range;
 
 public class Widget {
 
@@ -20,9 +20,9 @@ public class Widget {
 	public final String caption;
 	public final Coloring scheme;
 	// data
-	public final Selection query;
+	public final Criteria query;
 
-	public Widget(String caption, Coloring scheme, Selection query) {
+	public Widget(String caption, Coloring scheme, Criteria query) {
 		super();
 		this.caption = caption;
 		this.scheme = scheme;
@@ -65,8 +65,8 @@ public class Widget {
 		return str.substring(si+start.length(), ei);
 	}
 
-	public static Selection parseQuery(String range, String filters, String orders) {
-		Selection query = new Selection();
+	public static Criteria parseQuery(String range, String filters, String orders) {
+		Criteria query = new Criteria();
 		query.orders = parseProperties(orders);
 		query.filters = parseFilters(filters);
 		query.range = parseRange(range);

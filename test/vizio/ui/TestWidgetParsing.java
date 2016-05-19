@@ -10,38 +10,38 @@ public class TestWidgetParsing {
 
 	@Test
 	public void onlyFilterIsMandatory() {
-		verifyQuery("[users=x]",
+		verifyWidget("[users=x]",
 				"\"\"{0 *}[users=x]<>#temp#");
 	}
 
 	@Test
 	public void valueCanBeTheEmptySet() {
-		verifyQuery("[users={}]",
+		verifyWidget("[users={}]",
 				"\"\"{0 *}[users={}]<>#temp#");
 	}
 
 	@Test
 	public void valueCanBeASingletonSet() {
-		verifyQuery("[users={x}]",
+		verifyWidget("[users={x}]",
 				"\"\"{0 *}[users=x]<>#temp#");
 	}
 
 	@Test
 	public void valueCanBeASet() {
-		verifyQuery("[users={x y}]",
+		verifyWidget("[users={x y}]",
 				"\"\"{0 *}[users={x y}]<>#temp#");
 	}
 
 	@Test
 	public void twoComponentsTwoOrders() {
-		verifyQuery("\"caption\"{2 3}[users=bar users!={}]<users status>#age#", "");
+		verifyWidget("\"caption\"{2 3}[users=bar users!={}]<users status>#temp#", "");
 	}
 
-	private static void verifyQuery(String query, String expected) {
+	private static void verifyWidget(String widget, String expected) {
 		if (expected.isEmpty()) {
-			expected = query;
+			expected = widget;
 		}
-		Widget w = Widget.parse(query);
+		Widget w = Widget.parse(widget);
 		assertEquals(expected, w.toString());
 		Widget ww = Widget.parse(w.toString());
 		assertEquals(expected, ww.toString());

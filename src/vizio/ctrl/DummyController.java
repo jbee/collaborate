@@ -14,7 +14,7 @@ import vizio.Task;
 import vizio.Tracker;
 import vizio.User;
 import vizio.Version;
-import vizio.store.Selection;
+import vizio.io.Criteria;
 import vizio.view.Coloring;
 import vizio.view.Menu;
 import vizio.view.View;
@@ -56,7 +56,7 @@ public class DummyController implements Controller {
 	}
 
 	@Override
-	public Task[] tasks(Selection selection, Context ctx) {
+	public Task[] tasks(Criteria selection, Context ctx) {
 		return Arrays.copyOf(tasks, new Random().nextInt(tasks.length)+1) ;
 	}
 
@@ -78,9 +78,9 @@ public class DummyController implements Controller {
 
 	@Override
 	public View view(Context ctx) {
-        Widget left = new Widget("Assorted tasks", Coloring.temp, new Selection());
-        Widget right = new Widget("Some others...", Coloring.goal, new Selection());
-        Widget right2 = new Widget("And more", Coloring.motive, new Selection());
+        Widget left = new Widget("Assorted tasks", Coloring.temp, new Criteria());
+        Widget right = new Widget("Some others...", Coloring.goal, new Criteria());
+        Widget right2 = new Widget("And more", Coloring.motive, new Criteria());
 		return new View(new Silo("My Tasks", left), new Silo("Inbox", right), new Silo("Urgent", right2));
 	}
 
