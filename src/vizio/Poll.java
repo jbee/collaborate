@@ -6,13 +6,13 @@ public class Poll {
 		// on maintainers
 		participation, resignation,
 		// attitude towards anonymous participation
-		inclusion, exclusion 
+		inclusion, exclusion
 	}
 
-	public Matter matter;
 	public Area area;
-	public Name initiator;
+	public Matter matter;
 	public User affected;
+	public Name initiator;
 	public Date start;
 	public Names consenting;
 	public Names dissenting;

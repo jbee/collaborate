@@ -1,12 +1,6 @@
 package vizio.io;
 
-/**
- * Each product is independent with respect to its transaction boundaries.
- * Therefore each product is stored in a separate file.
- *
- * @author jan
- */
-public class MemTaskRegister {
+public class SimplePersistenceManager {
 
 	// INDEX A: product, status
 	// INDEX B: product, motive

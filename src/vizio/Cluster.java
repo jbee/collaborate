@@ -11,6 +11,9 @@ import static vizio.Date.date;
  * All {@link User}s are common to a {@link Cluster} or {@link Tracker}
  * instance.
  *
+ * A {@link Cluster}'s "counters" change when new {@link Product}s or
+ * {@link Area} are created.
+ *
  * @author jan
  */
 public class Cluster {

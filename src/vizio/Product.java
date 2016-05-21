@@ -2,6 +2,12 @@ package vizio;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * A {@link Product}'s "counter" change when new {@link Task}s for that product
+ * are created.
+ *
+ * @author jan
+ */
 public class Product {
 
 	public Name name;
@@ -12,13 +18,22 @@ public class Product {
 	 */
 	public Area origin;
 	/**
-	 * The area tasks are assigned to as long as it is unclear to which area
-	 * they belong.
+	 * The area tasks are assigned to as long as it is unclear to which
+	 * {@link Area} they belong.
 	 *
-	 * <pre>?</pre>
+	 * <pre>
+	 * ~
+	 * </pre>
 	 */
 	public Area somewhere;
-
+	/**
+	 * The version tasks are assigned to as long as it is unclear to which
+	 * {@link Version} they belong.
+	 *
+	 * <pre>
+	 * ~
+	 * </pre>
+	 */
 	public Version somewhen;
 
 	public AtomicInteger tasks;

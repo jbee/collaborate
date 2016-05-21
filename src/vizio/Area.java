@@ -25,18 +25,18 @@ public class Area {
 	/**
 	 * Any registered user may add tasks.
 	 * However, no task created with this area can be moved to other areas.
-	 * Instead a sequel would be created if necessary. 
+	 * Instead a sequel would be created if necessary.
 	 */
 	public boolean entrance;
+	public Motive motive;
+	public Purpose purpose;
 	/**
 	 * A per area counter that is used in case of {@link #entrance} areas.
 	 */
 	public AtomicInteger tasks;
-	public Motive motive;
-	public Purpose purpose;
-	
+
 	/*
 	 * An example for an entrance area would be RFCs. The area would be named "RFC".
-	 * Tasks created would become "RFC-1" and so on. 
+	 * Tasks created would become "RFC-1" and so on.
 	 */
 }

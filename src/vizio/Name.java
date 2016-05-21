@@ -7,6 +7,10 @@ import java.util.regex.Pattern;
 
 public final class Name implements CharSequence, Comparable<Name> {
 
+	public static Name fromBytes(byte[] name) {
+		return new Name(name);
+	}
+
 	private static final Pattern VALID = Pattern.compile("@?[a-zA-Z]+(?:(?:-?[a-zA-Z]|[.@][a-zA-Z0-9])?[a-zA-Z0-9]*)*");
 
 	public static final Name ANONYMOUS = as("@anonymous");
@@ -112,5 +116,9 @@ public final class Name implements CharSequence, Comparable<Name> {
 	@Override
 	public String toString() {
 		return new String(symbols);
+	}
+
+	public byte[] bytes() {
+		return symbols;
 	}
 }
