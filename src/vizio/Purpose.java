@@ -1,6 +1,6 @@
 package vizio;
 
-public enum Goal {
+public enum Purpose {
 
 	clarification, // confirming defects, localizing area, exploring ideas
 	modification,  // something actually changes

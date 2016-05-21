@@ -46,7 +46,7 @@ public class DummyController implements Controller {
 		tasks[2] = tracker.reportProposal(product, "We should count ...", user, product.origin);
 		tasks[3] = tracker.reportIntention(product, "At some point the tracker should be released", user, product.origin);
 		tasks[4] = tracker.reportProposal(product, "Use bold text for everything important", user, ui);
-		tracker.target(tasks[1], user);
+		tracker.enlist(tasks[1], user);
 		tracker.approach(tasks[2], user);
 		tasks[0].heat = 97;
 		tasks[1].heat = 78;

@@ -4,7 +4,7 @@ import static vizio.Date.date;
 
 import java.io.PrintWriter;
 
-import vizio.Goal;
+import vizio.Purpose;
 import vizio.Motive;
 import vizio.Name;
 import vizio.Names;
@@ -14,6 +14,7 @@ import vizio.Task;
 import vizio.Temp;
 import vizio.Tracker;
 import vizio.User;
+import vizio.ctrl.Action;
 import vizio.view.Coloring;
 import vizio.view.Menu;
 import vizio.view.Page;
@@ -43,7 +44,7 @@ public class HTMLRenderer {
 
 		out.append("<div class='footer'><div class='column'>");
 		renderTable(Coloring.motive, Motive.class);
-		renderTable(Coloring.goal, Goal.class);
+		renderTable(Coloring.goal, Purpose.class);
 		renderTable(Coloring.status, Status.class);
 		renderTable(Coloring.temp, Temp.class);
 		out.append("</div></div>");
@@ -140,10 +141,10 @@ public class HTMLRenderer {
 		out.append("</h5>");
 		renderUsersList(task);
 		if (viewer.activated) {
-			if (task.targetedBy.contains(viewer) || task.approachedBy.contains(viewer)) {
-				renderTaskActionLink(task, "btn", "drop", "&minus;");
+			if (task.enlistedBy.contains(viewer) || task.approachedBy.contains(viewer)) {
+				renderTaskActionLink(task, "btn", Action.drop, "&minus;");
 			} else {
-				renderTaskActionLink(task, "btn", "target", "&plus;");
+				renderTaskActionLink(task, "btn", Action.enlist, "&plus;");
 			}
 		}
 		out.append("</td><td>");
@@ -151,7 +152,7 @@ public class HTMLRenderer {
 			renderAreaLink(task);
 			out.append("<span title='").append(task.area.maintainers.toString()).append("'>'").append(String.valueOf(task.area.maintainers.count())).append("</span>");
 		}
-		if (task.version != null) {
+		if (task.base != null) {
 			out.append("<div>");
 			renderVersionLink(task);
 			out.append("</div>");
@@ -161,11 +162,11 @@ public class HTMLRenderer {
 	}
 
 	private void renderStressLink(Task task) {
-		renderTaskActionLink(task, "stress btn", "stress","!");
+		renderTaskActionLink(task, "stress btn", Action.stress,"!");
 	}
 
-	private void renderTaskActionLink(Task task, String cssClasses, String action, String label) {
-		out.append("<a class='").append(cssClasses).append("' href='/").append(action).append("/").append(task.product.name).append("/").append(task.id.toString()).append("/'>").append(label).append("</a>");
+	private void renderTaskActionLink(Task task, String cssClasses, Action action, String label) {
+		out.append("<a class='").append(cssClasses).append("' href='/").append(action.name()).append("/").append(task.product.name).append("/").append(task.id.toString()).append("/'>").append(label).append("</a>");
 	}
 
 	private void renderDataAttributes(Task task) {
@@ -174,9 +175,9 @@ public class HTMLRenderer {
 
 	private void renderUsersList(Task task) {
 		if (task.involvedUsers() > 0) {
-			if (task.targetedBy.count() > 0) {
+			if (task.enlistedBy.count() > 0) {
 				out.append("<b>[...</b>");
-				renderUsersLinks(task.targetedBy);
+				renderUsersLinks(task.enlistedBy);
 				out.append(" <b>]</b>");
 			}
 			renderUsersLinks(task.approachedBy);
@@ -190,7 +191,7 @@ public class HTMLRenderer {
 	}
 
 	private void renderVersionLink(Task task) {
-		out.append("<a href='/view/").append(task.product.name).append("/v/").append(task.version.name).append("/'>").append(task.version.name).append("</a>");
+		out.append("<a href='/view/").append(task.product.name).append("/v/").append(task.base.name).append("/'>").append(task.base.name).append("</a>");
 	}
 
 	private void renderUserLink(Name user) {
@@ -206,13 +207,13 @@ public class HTMLRenderer {
 	}
 
 	private void renderTaskLink(Task task) {
-		renderTaskActionLink(task, "idn", "view", "#"+task.id);
+		renderTaskActionLink(task, "idn", Action.view, "#"+task.id);
 	}
 
 	private void renderCssClasses(Task task) {
 		out.append(" class='");
 		out.append(" status-").append(task.status.name());
-		out.append(" goal-").append(task.goal.name());
+		out.append(" goal-").append(task.purpose.name());
 		out.append(" motive-").append(task.motive.name());
 		out.append(" temp-").append(task.temerature(date(now)).name());
 		if (task.exploitable) {

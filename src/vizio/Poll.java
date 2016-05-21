@@ -6,7 +6,8 @@ public class Poll {
 		// on maintainers
 		participation, resignation,
 		// attitude towards anonymous participation
-		inclusion, exclusion }
+		inclusion, exclusion 
+	}
 
 	public Matter matter;
 	public Area area;

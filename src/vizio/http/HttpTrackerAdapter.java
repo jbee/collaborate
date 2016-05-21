@@ -127,7 +127,7 @@ public class HttpTrackerAdapter implements HttpAdapter {
 				}
 			}
 			break;
-		case target:
+		case enlist:
 		case approach:
 		case abandon:
 			ctx.type=Task;

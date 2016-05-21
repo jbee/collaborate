@@ -14,20 +14,27 @@ public class Task {
 	public Date start;
 	public String gist;
 
-	public Motive motive;
-	public Goal goal;
+	public Motive motive; 
+	public Purpose purpose;
 	public Status status;
 	public Names changeset;
 	public boolean exploitable;
 	// working with a task (data that might change)
-	public IDN cause;
-	public IDN origin;
+	public IDN cause; // direct predecessor
+	public IDN origin; // initial "impulse" that lead to this task 
 	public int heat;
 	public Area area;
-	public Version version;
-	public Names targetedBy;
+	/**
+	 * The {@link Version} is usually the (already released) version that is the
+	 * basis of a modification. Such a modification is later released under one
+	 * or more version that include the base version in their change-set. Only
+	 * for such release tasks this field holds a now version that isn't the base
+	 * the the newly released version.
+	 */
+	public Version base;
+	public Names enlistedBy;
 	public Names approachedBy;
-	public Names watchedBy;
+	public Names watchedBy; // OBS! this is the only real dynamic length field...
 	public boolean confirmed;
 	// resolving a task (closing record)
 	public Name solver;
@@ -58,11 +65,15 @@ public class Task {
 	}
 
 	public int involvedUsers() {
-		return targetedBy.count() + approachedBy.count();
+		return enlistedBy.count() + approachedBy.count();
 	}
 
 	public boolean isVisibleTo(Name user) {
 		return !exploitable || reporter.equalTo(user) || area.maintainers.contains(user);
+	}
+	
+	public boolean canBeStressedBy(Name user) {
+		return (!area.exclusive || area.maintainers.contains(user));
 	}
 
 	@Override
@@ -70,11 +81,4 @@ public class Task {
 		return id.toString();
 	}
 
-	public boolean canBeStressedBy(Name user) {
-		return (!area.exclusive || area.maintainers.contains(user));
-	}
-
-	//TODO use copy on write? copy the objects before modification - also important for updates so see what has changed
-	// as a protection against forgetting to copy the store can compare its cached reference with the given instance
-	// if they are equal the cached one is reload from deep storage and a failure is thrown
 }

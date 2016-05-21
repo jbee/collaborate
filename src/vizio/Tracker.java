@@ -1,7 +1,7 @@
 package vizio;
 
 import static vizio.Date.date;
-import static vizio.Goal.clarification;
+import static vizio.Purpose.clarification;
 import static vizio.Motive.defect;
 import static vizio.Motive.intention;
 import static vizio.Motive.proposal;
@@ -109,14 +109,14 @@ public final class Tracker {
 
 	/* Areas */
 
-	public Area open(Product product, Name entrance, User originator, Motive motive, Goal goal) {
+	public Area open(Product product, Name entrance, User originator, Motive motive, Purpose purpose) {
 		extend(cluster, originator);
 		expectOriginMaintainer(product, originator);
 		Area area = compart(product, entrance, originator);
 		area.entrance=true;
 		area.tasks = new AtomicInteger(0);
 		area.motive=motive;
-		area.goal=goal;
+		area.purpose=purpose;
 		return area;
 	}
 
@@ -156,12 +156,13 @@ public final class Tracker {
 	}
 
 	public void relocate(Task task, Area to, User originator) {
+		expectNoEntrance(task.area);
 		if (task.area.name.isUnknown()) {
-			expectMaintainer(to, originator);
+			expectMaintainer(to, originator); // pull from ~
 		} else {
-			expectMaintainer(task.area, originator);
+			expectMaintainer(task.area, originator); // push from
 			if (!to.name.isUnknown()) {
-				expectMaintainer(to, originator);
+				expectMaintainer(to, originator); // to some else than ~
 			}
 		}
 		task.area = to;
@@ -200,22 +201,22 @@ public final class Tracker {
 
 	public Task reportRequest(Product product, String gist, User reporter, Area entrance) {
 		expectEntrance(entrance);
-		return report(product, entrance.motive, entrance.goal, gist, reporter, entrance, product.somewhen, false);
+		return report(product, entrance.motive, entrance.purpose, gist, reporter, entrance, product.somewhen, false);
 	}
 
-	public Task reportSequel(Task cause, Goal goal, String gist, User reporter, Names changeset) {
+	public Task reportSequel(Task cause, Purpose purpose, String gist, User reporter, Names changeset) {
 		Area area = cause.area.entrance ? cause.product.somewhere : cause.area;
-		Task task = report(cause.product, cause.motive, goal, gist, reporter, area, cause.version, cause.exploitable);
+		Task task = report(cause.product, cause.motive, purpose, gist, reporter, area, cause.base, cause.exploitable);
 		task.cause = cause.id;
 		task.origin = cause.origin != null ? cause.origin : cause.id;
 		if (changeset != null && changeset.count() > 0) {
-			expectNoChangeset(task.version);
+			expectNoChangeset(task.base);
 			task.changeset = changeset;
 		}
 		return task;
 	}
 
-	private Task report(Product product, Motive motive, Goal goal, String gist, User reporter, Area area, Version version, boolean exploitable) {
+	private Task report(Product product, Motive motive, Purpose purpose, String gist, User reporter, Area area, Version version, boolean exploitable) {
 		if (!area.name.isUnknown() && !area.entrance) { // NB. unknown is not an entrance since it does not dictate motive and goal
 			expectMaintainer(area, reporter);
 		}
@@ -230,16 +231,16 @@ public final class Tracker {
 		task.id = new IDN(product.tasks.incrementAndGet());
 		task.product = product;
 		task.area = area;
-		task.version = version;
+		task.base = version;
 		task.reporter = reporter.name;
 		task.start = date(now);
 		task.gist = gist;
 		task.motive = motive;
-		task.goal = goal;
+		task.purpose = purpose;
 		task.status = Status.unsolved;
 		task.exploitable = exploitable;
 		task.confirmed = task.reporter.isExternal();
-		task.targetedBy = Names.empty();
+		task.enlistedBy = Names.empty();
 		task.approachedBy = Names.empty();
 		task.watchedBy = new Names(reporter.name);
 		if (area.entrance) {
@@ -274,7 +275,7 @@ public final class Tracker {
 		user.resolved++;
 		touch(user);
 		if (task.changeset != null) { // publishing is something that is resolved
-			task.version.changeset = task.changeset;
+			task.base.changeset = task.changeset;
 		}
 	}
 
@@ -363,25 +364,25 @@ public final class Tracker {
 
 	/* A user's task queue */
 
-	public void target(Task task, User user) {
-		expectCanBeConnected(user, task);
+	public void enlist(Task task, User user) {
+		expectCanBeInvolved(user, task);
 		task.approachedBy.remove(user);
-		task.targetedBy.add(user);
+		task.enlistedBy.add(user);
 		touch(user);
 	}
 
 	public void abandon(Task task, User user) {
-		expectCanBeConnected(user, task);
-		task.targetedBy.remove(user);
+		expectCanBeInvolved(user, task);
+		task.enlistedBy.remove(user);
 		task.approachedBy.remove(user);
 		touch(user);
 	}
 
 	public void approach(Task task, User user) {
-		expectCanBeConnected(user, task);
+		expectCanBeInvolved(user, task);
 		expectMaintainer(task.area, user);
 		task.approachedBy.add(user);
-		task.targetedBy.remove(user);
+		task.enlistedBy.remove(user);
 		touch(user);
 	}
 
@@ -484,8 +485,8 @@ public final class Tracker {
 		}
 	}
 
-	private static void expectCanBeConnected(User user, Task task) {
-		if (task.involvedUsers() >= 5 && !task.targetedBy.contains(user) && !task.approachedBy.contains(user)) {
+	private static void expectCanBeInvolved(User user, Task task) {
+		if (task.involvedUsers() >= 5 && !task.enlistedBy.contains(user) && !task.approachedBy.contains(user)) {
 			denyTransition("There are already to much users involved with the task: "+task);
 		}
 	}

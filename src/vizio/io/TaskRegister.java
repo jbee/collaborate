@@ -7,14 +7,14 @@ import vizio.Product;
 import vizio.Task;
 import vizio.Version;
 
-public interface ProductRegister {
+public interface TaskRegister {
 
 	Task[] list(Criteria criteria);
 
-	void persist(Task task);
-	void persist(Poll poll);
-	void persist(Area area);
 	void persist(Cluster cluster);
 	void persist(Product product);
 	void persist(Version version);
+	void persist(Area area);
+	void persist(Poll poll);
+	void persist(Task task);
 }

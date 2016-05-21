@@ -17,7 +17,6 @@ public class Criteria {
 	}
 
 	public static enum Operator {
-		//TODO is-set, is-not-set?
 		eq("="), neq("!="), gt(">"), lt("<"), ge(">="), le("<="), in("~"), nin("!~"), any("/"), nany("!/");
 
 		public String symbol;

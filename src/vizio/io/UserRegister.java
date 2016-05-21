@@ -13,7 +13,7 @@ import vizio.User;
  */
 public interface UserRegister {
 
-	User fetch(Name name);
+	User fetch(Name user);
 
 	/**
 	 * A user is always stored completely with all its "dependent data".
