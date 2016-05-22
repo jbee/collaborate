@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import vizio.Area;
+import vizio.Cluster;
 import vizio.Name;
 import vizio.Product;
 import vizio.Site;
@@ -33,7 +34,7 @@ public class DummyController implements Controller {
 
 	private void init() {
 		now = currentTimeMillis();
-		Tracker tracker = new Tracker(() -> { now += 70000; return now; } );
+		Tracker tracker = new Tracker(() -> { now += 70000; return now; }, new Cluster("salt") );
 		tasks = new Task[5];
 		user = tracker.register(as("tester"), "test@example.com", "xxx");
 		tracker.activate(user, user.md5);

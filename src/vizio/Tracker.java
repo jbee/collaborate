@@ -1,13 +1,14 @@
 package vizio;
 
+import static java.lang.Math.min;
 import static vizio.Date.date;
-import static vizio.Purpose.clarification;
 import static vizio.Motive.defect;
 import static vizio.Motive.intention;
 import static vizio.Motive.proposal;
 import static vizio.Outcome.consent;
 import static vizio.Outcome.dissent;
 import static vizio.Poll.Matter.participation;
+import static vizio.Purpose.clarification;
 import static vizio.Status.absolved;
 import static vizio.Status.dissolved;
 import static vizio.Status.resolved;
@@ -26,13 +27,13 @@ import vizio.Poll.Matter;
  */
 public final class Tracker {
 
-	private final Cluster cluster;
+	public final Cluster cluster;
 	private final Clock clock;
 
-	public Tracker(Clock clock) {
+	public Tracker(Clock clock, Cluster cluster) {
 		super();
 		this.clock = clock;
-		this.cluster = new Cluster();
+		this.cluster = cluster;
 	}
 
 	/* Cluster */
@@ -76,7 +77,7 @@ public final class Tracker {
 		}
 	}
 
-	private byte[] md5(String pass) {
+	public static byte[] md5(String pass) {
 		try {
 			return MessageDigest.getInstance("MD5").digest(pass.getBytes("UTF-8"));
 		} catch (Exception e) {
@@ -101,6 +102,7 @@ public final class Tracker {
 		Product p = new Product();
 		p.name = product;
 		p.tasks = new AtomicInteger(0);
+		p.unconfirmedTasks = new AtomicInteger(0);
 		p.origin = compart(p.name, Name.ORIGIN, originator);
 		p.somewhere = compart(p.name, Name.UNKNOWN, originator);
 		p.somewhen = tag(p, Name.UNKNOWN, originator);
@@ -114,7 +116,6 @@ public final class Tracker {
 		expectOriginMaintainer(product, originator);
 		Area area = compart(product, entrance, originator);
 		area.entrance=true;
-		area.tasks = new AtomicInteger(0);
 		area.motive=motive;
 		area.purpose=purpose;
 		return area;
@@ -143,6 +144,7 @@ public final class Tracker {
 		a.name = area;
 		a.product = product;
 		a.maintainers=new Names(originator.name);
+		a.tasks = new AtomicInteger(0);
 		touch(originator);
 		return a;
 	}
@@ -209,7 +211,7 @@ public final class Tracker {
 		Task task = report(cause.product, cause.motive, purpose, gist, reporter, area, cause.base, cause.exploitable);
 		task.cause = cause.id;
 		task.origin = cause.origin != null ? cause.origin : cause.id;
-		if (changeset != null && changeset.count() > 0) {
+		if (changeset != null && !changeset.isEmpty()) {
 			expectNoChangeset(task.base);
 			task.changeset = changeset;
 		}
@@ -243,6 +245,7 @@ public final class Tracker {
 		task.enlistedBy = Names.empty();
 		task.approachedBy = Names.empty();
 		task.watchedBy = new Names(reporter.name);
+		task.changeset = Names.empty();
 		if (area.entrance) {
 			task.serial=new IDN(area.tasks.incrementAndGet());
 		}
@@ -274,7 +277,7 @@ public final class Tracker {
 		user.xp += 2;
 		user.resolved++;
 		touch(user);
-		if (task.changeset != null) { // publishing is something that is resolved
+		if (!task.changeset.isEmpty()) { // publishing is something that is resolved
 			task.base.changeset = task.changeset;
 		}
 	}
@@ -320,7 +323,7 @@ public final class Tracker {
 		poll.outcome = Outcome.unsettled;
 		poll.consenting = Names.empty();
 		poll.dissenting = Names.empty();
-		poll.expiry = poll.start.plusDays(area.maintainers.count());
+		poll.expiry = poll.start.plusDays(min(14, area.maintainers.count()));
 		touch(initiator);
 		return poll;
 	}
@@ -480,6 +483,9 @@ public final class Tracker {
 	}
 
 	private static void expectCanReport(User reporter, long now) {
+		if (!reporter.activated) {
+			denyTransition("Only activated users can report tasks!");
+		}
 		if (!reporter.canReport(now)) {
 			denyTransition("User cannot report due to abuse protection limits!");
 		}

@@ -9,36 +9,36 @@ import vizio.Area;
 import vizio.Motive;
 import vizio.Purpose;
 import vizio.io.PersistenceManager;
-import vizio.io.Streamable;
+import vizio.io.Streamer;
 
-public class AreaStream implements Streamable<Area> {
+public class AreaStreamer implements Streamer<Area> {
 
 	@Override
 	public Area read(DataInputStream in, PersistenceManager pm) throws IOException {
 		Area a = new Area();
-		a.product = Streamable.readName(in);
-		a.name = Streamable.readName(in);
-		a.basis = Streamable.readName(in);
-		a.maintainers = Streamable.readNames(in);
+		a.product = Streamer.readName(in);
+		a.name = Streamer.readName(in);
+		a.basis = Streamer.readName(in);
+		a.maintainers = Streamer.readNames(in);
 		a.tasks = new AtomicInteger(in.readInt());
 		a.exclusive = in.readBoolean();
 		a.entrance = in.readBoolean();
-		a.motive = Streamable.readEnum(Motive.class, in);
-		a.purpose = Streamable.readEnum(Purpose.class, in);
+		a.motive = Streamer.readEnum(Motive.class, in);
+		a.purpose = Streamer.readEnum(Purpose.class, in);
 		return a;
 	}
 
 	@Override
 	public void write(Area a, DataOutputStream out) throws IOException {
-		Streamable.writeName(a.product, out);
-		Streamable.writeName(a.name, out);
-		Streamable.writeName(a.basis, out);
-		Streamable.writeNames(a.maintainers, out);
+		Streamer.writeName(a.product, out);
+		Streamer.writeName(a.name, out);
+		Streamer.writeName(a.basis, out);
+		Streamer.writeNames(a.maintainers, out);
 		out.writeInt(a.tasks.get());
 		out.writeBoolean(a.exclusive);
 		out.writeBoolean(a.entrance);
-		Streamable.writeEnum(a.motive, out);
-		Streamable.writeEnum(a.purpose, out);
+		Streamer.writeEnum(a.motive, out);
+		Streamer.writeEnum(a.purpose, out);
 	}
 
 }

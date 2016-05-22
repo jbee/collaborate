@@ -87,4 +87,8 @@ public class Names implements Iterable<Name> {
 		return asList(names).iterator();
 	}
 
+	public boolean isEmpty() {
+		return names.length == 0;
+	}
+
 }

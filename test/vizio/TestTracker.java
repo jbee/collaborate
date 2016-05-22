@@ -12,7 +12,7 @@ import org.junit.Test;
 public class TestTracker {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(TestTracker.this::tick);
+	private Tracker tracker = new Tracker(TestTracker.this::tick, new Cluster("salt"));
 
 	private long tick() {
 		now += 60000;

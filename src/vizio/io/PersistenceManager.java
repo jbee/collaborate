@@ -14,7 +14,7 @@ public interface PersistenceManager {
 
 	User user(Name user);
 
-	Product product(Name readName);
+	Product product(Name product);
 	Area area(Name product, Name area);
 	Version version(Name product, Name version);
 	Task task(Name product, IDN id);

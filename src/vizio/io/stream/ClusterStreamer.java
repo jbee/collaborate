@@ -6,16 +6,13 @@ import java.io.IOException;
 
 import vizio.Cluster;
 import vizio.io.PersistenceManager;
-import vizio.io.Streamable;
+import vizio.io.Streamer;
 
-public class ClusterStream implements Streamable<Cluster> {
+public class ClusterStreamer implements Streamer<Cluster> {
 
 	@Override
 	public Cluster read(DataInputStream in, PersistenceManager pm) throws IOException {
-		Cluster c = new Cluster();
-		byte[] salt = new byte[in.readUnsignedShort()];
-		in.read(salt);
-		c.salt = new String(salt, UTF8);
+		Cluster c = new Cluster(Streamer.readString(in));
 		c.millisExtended = in.readLong();
 		c.extensionsToday = in.readInt();
 		c.millisRegistered = in.readLong();
@@ -25,9 +22,7 @@ public class ClusterStream implements Streamable<Cluster> {
 
 	@Override
 	public void write(Cluster c, DataOutputStream out) throws IOException {
-		byte[] salt = c.salt.getBytes(UTF8);
-		out.writeShort(salt.length);
-		out.write(salt);
+		Streamer.writeString(c.salt, out);
 		out.writeLong(c.millisExtended);
 		out.writeInt(c.extensionsToday);
 		out.writeLong(c.millisRegistered);

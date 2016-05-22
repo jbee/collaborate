@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import vizio.Name;
 import vizio.Product;
-import vizio.io.Streamable;
+import vizio.io.Streamer;
 import vizio.io.PersistenceManager;
 
 /**
@@ -22,12 +22,12 @@ import vizio.io.PersistenceManager;
  * @author jan
  *
  */
-public class ProductStream implements Streamable<Product> {
+public class ProductStreamer implements Streamer<Product> {
 
 	@Override
 	public Product read(DataInputStream in, PersistenceManager pm) throws IOException {
 		Product p = new Product();
-		p.name = Streamable.readName(in);
+		p.name = Streamer.readName(in);
 		p.tasks = new AtomicInteger(in.readInt());
 		p.unconfirmedTasks = new AtomicInteger(in.readInt());
 
@@ -39,7 +39,7 @@ public class ProductStream implements Streamable<Product> {
 
 	@Override
 	public void write(Product p, DataOutputStream out) throws IOException {
-		Streamable.writeName(p.name, out);
+		Streamer.writeName(p.name, out);
 		out.writeInt(p.tasks.get());
 		out.writeInt(p.unconfirmedTasks.get());
 	}

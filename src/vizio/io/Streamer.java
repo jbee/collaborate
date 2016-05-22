@@ -10,7 +10,7 @@ import vizio.IDN;
 import vizio.Name;
 import vizio.Names;
 
-public interface Streamable<T> {
+public interface Streamer<T> {
 
 	Charset UTF8 = Charset.forName("UTF-8");
 
@@ -26,7 +26,9 @@ public interface Streamable<T> {
 	// Task:    /<product>/task/<IDN>.dat
 
 	static Name readName(DataInputStream in) throws IOException {
-		int len = in.readUnsignedByte();
+		int len = in.readByte();
+		if (len < 0)
+			return null;
 		byte[] name = new byte[len];
 		in.read(name);
 		return Name.fromBytes(name);
@@ -42,9 +44,13 @@ public interface Streamable<T> {
 	}
 
 	static void writeName(Name name, DataOutputStream out) throws IOException {
-		byte[] bytes = name.bytes();
-		out.writeByte(bytes.length);
-		out.write(bytes);
+		if (name == null) {
+			out.writeByte(-1);
+		} else {
+			byte[] bytes = name.bytes();
+			out.writeByte(bytes.length);
+			out.write(bytes);
+		}
 	}
 
 	static void writeNames(Names names, DataOutputStream out) throws IOException {
@@ -63,19 +69,40 @@ public interface Streamable<T> {
 		return ordinal < 0 ? null : type.getEnumConstants()[ordinal];
 	}
 
-	static void writeDate(Date start, DataOutputStream out) throws IOException {
-		out.writeInt(start.daysSinceEra);
+	static void writeDate(Date date, DataOutputStream out) throws IOException {
+		out.writeInt(date == null ? -1 : date.daysSinceEra);
 	}
 
 	static Date readDate(DataInputStream in) throws IOException {
-		return new Date(in.readInt());
+		int daysSinceEra = in.readInt();
+		return daysSinceEra < 0 ? null : new Date(daysSinceEra);
 	}
 
 	static void writeIDN(IDN id, DataOutputStream out) throws IOException {
-		out.writeInt(id.num);
+		out.writeInt(id == null ? -1 : id.num);
 	}
 
 	static IDN readIDN(DataInputStream in) throws IOException {
-		return new IDN(in.readInt());
+		int num = in.readInt();
+		return num < 0 ? null : new IDN(num);
+	}
+
+	static void writeString(String s, DataOutputStream out) throws IOException {
+		if (s == null) {
+			out.writeInt(-1);
+		} else {
+			byte[] bytes = s.getBytes(UTF8);
+			out.writeInt(bytes.length);
+			out.write(bytes);
+		}
+	}
+
+	static String readString(DataInputStream in) throws IOException {
+		int len = in.readInt();
+		if (len < 0)
+			return null;
+		byte[] bytes = new byte[len];
+		in.read(bytes);
+		return new String(bytes, UTF8);
 	}
 }

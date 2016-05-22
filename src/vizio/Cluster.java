@@ -31,7 +31,7 @@ public class Cluster {
 	 * likely to match known hashes. As long as the salt is unknown the
 	 * protection is quite strong.
 	 */
-	public String salt;
+	public final String salt;
 
 	// protection against to many products and areas are created
 	public long millisExtended;
@@ -41,6 +41,9 @@ public class Cluster {
 	public long millisRegistered;
 	public int unconfirmedRegistrationsToday;
 
+	public Cluster(String salt) {
+		this.salt = salt;
+	}
 	//TODO maybe track IPs of unconfirmed additions to block them?
 	// or at least reduce unconfirmed additions to 1 per IP/User
 
