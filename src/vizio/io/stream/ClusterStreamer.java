@@ -5,13 +5,13 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import vizio.Cluster;
-import vizio.io.PersistenceManager;
+import vizio.io.EntityManager;
 import vizio.io.Streamer;
 
 public class ClusterStreamer implements Streamer<Cluster> {
 
 	@Override
-	public Cluster read(DataInputStream in, PersistenceManager pm) throws IOException {
+	public Cluster read(DataInputStream in, EntityManager em) throws IOException {
 		Cluster c = new Cluster(Streamer.readString(in));
 		c.millisExtended = in.readLong();
 		c.extensionsToday = in.readInt();

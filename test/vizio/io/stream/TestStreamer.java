@@ -24,7 +24,7 @@ import vizio.Tracker;
 import vizio.User;
 import vizio.Version;
 import vizio.io.Criteria;
-import vizio.io.PersistenceManager;
+import vizio.io.EntityManager;
 import vizio.io.Streamer;
 
 public class TestStreamer {
@@ -108,7 +108,7 @@ public class TestStreamer {
 		}
 	}
 
-	static class TestPM implements PersistenceManager {
+	static class TestPM implements EntityManager {
 
 		@Override
 		public User user(Name user) {
@@ -154,43 +154,43 @@ public class TestStreamer {
 		}
 
 		@Override
-		public void persist(User user) {
+		public void update(User user) {
 			// TODO Auto-generated method stub
 
 		}
 
 		@Override
-		public void persist(Cluster cluster) {
+		public void update(Cluster cluster) {
 			// TODO Auto-generated method stub
 
 		}
 
 		@Override
-		public void persist(Product product) {
+		public void update(Product product) {
 			// TODO Auto-generated method stub
 
 		}
 
 		@Override
-		public void persist(Version version) {
+		public void update(Version version) {
 			// TODO Auto-generated method stub
 
 		}
 
 		@Override
-		public void persist(Area area) {
+		public void update(Area area) {
 			// TODO Auto-generated method stub
 
 		}
 
 		@Override
-		public void persist(Poll poll) {
+		public void update(Poll poll) {
 			// TODO Auto-generated method stub
 
 		}
 
 		@Override
-		public void persist(Task task) {
+		public void update(Task task) {
 			// TODO Auto-generated method stub
 
 		}

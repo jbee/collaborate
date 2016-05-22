@@ -1,6 +1,18 @@
 package vizio.io;
 
-public class SimplePersistenceManager {
+/**
+ * Paths:
+ * <pre>
+ * Product /<product>/product.dat
+ * Area    /<product>/area/<area>.dat
+ * Poll    /<product>/poll/<area>/<matter>/<affected>.dat
+ * Version /<product>/version/<version>.dat
+ * Task    /<product>/task/<IDN>.dat
+ * </pre>
+ *
+ * @author jan
+ */
+public class SimpleEntityManager {
 
 	// INDEX A: product, status
 	// INDEX B: product, motive

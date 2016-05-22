@@ -8,13 +8,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import vizio.Name;
 import vizio.Site;
 import vizio.User;
-import vizio.io.PersistenceManager;
+import vizio.io.EntityManager;
 import vizio.io.Streamer;
 
 public class UserStreamer implements Streamer<User> {
 
 	@Override
-	public User read(DataInputStream in, PersistenceManager pm) throws IOException {
+	public User read(DataInputStream in, EntityManager em) throws IOException {
 		User u = new User();
 		u.name = Streamer.readName(in);
 		u.email = Streamer.readString(in);

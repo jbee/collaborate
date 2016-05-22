@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import vizio.Name;
 import vizio.Product;
 import vizio.io.Streamer;
-import vizio.io.PersistenceManager;
+import vizio.io.EntityManager;
 
 /**
  * {@link Product} IO.
@@ -25,15 +25,15 @@ import vizio.io.PersistenceManager;
 public class ProductStreamer implements Streamer<Product> {
 
 	@Override
-	public Product read(DataInputStream in, PersistenceManager pm) throws IOException {
+	public Product read(DataInputStream in, EntityManager em) throws IOException {
 		Product p = new Product();
 		p.name = Streamer.readName(in);
 		p.tasks = new AtomicInteger(in.readInt());
 		p.unconfirmedTasks = new AtomicInteger(in.readInt());
 
-		p.origin = pm.area(p.name, Name.ORIGIN);
-		p.somewhere = pm.area(p.name, Name.UNKNOWN);
-		p.somewhen = pm.version(p.name, Name.UNKNOWN);
+		p.origin = em.area(p.name, Name.ORIGIN);
+		p.somewhere = em.area(p.name, Name.UNKNOWN);
+		p.somewhen = em.version(p.name, Name.UNKNOWN);
 		return p;
 	}
 

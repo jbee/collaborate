@@ -8,13 +8,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import vizio.Area;
 import vizio.Motive;
 import vizio.Purpose;
-import vizio.io.PersistenceManager;
+import vizio.io.EntityManager;
 import vizio.io.Streamer;
 
 public class AreaStreamer implements Streamer<Area> {
 
 	@Override
-	public Area read(DataInputStream in, PersistenceManager pm) throws IOException {
+	public Area read(DataInputStream in, EntityManager em) throws IOException {
 		Area a = new Area();
 		a.product = Streamer.readName(in);
 		a.name = Streamer.readName(in);

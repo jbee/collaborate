@@ -7,17 +7,17 @@ import java.io.IOException;
 import vizio.Outcome;
 import vizio.Poll;
 import vizio.Poll.Matter;
-import vizio.io.PersistenceManager;
+import vizio.io.EntityManager;
 import vizio.io.Streamer;
 
 public class PollStreamer implements Streamer<Poll> {
 
 	@Override
-	public Poll read(DataInputStream in, PersistenceManager pm) throws IOException {
+	public Poll read(DataInputStream in, EntityManager em) throws IOException {
 		Poll p = new Poll();
-		p.area = pm.area(Streamer.readName(in), Streamer.readName(in));
+		p.area = em.area(Streamer.readName(in), Streamer.readName(in));
 		p.matter = Streamer.readEnum(Matter.class, in);
-		p.affected = pm.user(Streamer.readName(in));
+		p.affected = em.user(Streamer.readName(in));
 		p.initiator = Streamer.readName(in);
 		p.start = Streamer.readDate(in);
 		p.consenting = Streamer.readNames(in);

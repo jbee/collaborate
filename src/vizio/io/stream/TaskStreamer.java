@@ -8,16 +8,16 @@ import vizio.Motive;
 import vizio.Purpose;
 import vizio.Status;
 import vizio.Task;
-import vizio.io.PersistenceManager;
+import vizio.io.EntityManager;
 import vizio.io.Streamer;
 
 public class TaskStreamer implements Streamer<Task> {
 
 	@Override
-	public Task read(DataInputStream in, PersistenceManager pm) throws IOException {
+	public Task read(DataInputStream in, EntityManager em) throws IOException {
 		Task t = new Task();
-		t.product = pm.product(Streamer.readName(in));
-		t.area = pm.area(t.product.name, Streamer.readName(in));
+		t.product = em.product(Streamer.readName(in));
+		t.area = em.area(t.product.name, Streamer.readName(in));
 		t.id = Streamer.readIDN(in);
 		t.serial = Streamer.readIDN(in);
 		t.reporter = Streamer.readName(in);
@@ -31,7 +31,7 @@ public class TaskStreamer implements Streamer<Task> {
 		t.cause = Streamer.readIDN(in);
 		t.origin = Streamer.readIDN(in);
 		t.heat = in.readInt();
-		t.base = pm.version(t.product.name, Streamer.readName(in));
+		t.base = em.version(t.product.name, Streamer.readName(in));
 		t.enlistedBy = Streamer.readNames(in);
 		t.approachedBy = Streamer.readNames(in);
 		t.watchedBy = Streamer.readNames(in);

@@ -14,16 +14,13 @@ public interface Streamer<T> {
 
 	Charset UTF8 = Charset.forName("UTF-8");
 
-	T read(DataInputStream in, PersistenceManager pm) throws IOException;
+	T read(DataInputStream in, EntityManager em) throws IOException;
 
 	void write(T data, DataOutputStream out) throws IOException;
 
-	// stores
-	// Product: /<product>/product.dat
-	// Area:    /<product>/area/<area>.dat
-	// Poll:    /<product>/poll/<area>/<matter>/<affected>.dat
-	// Version: /<product>/version/<version>.dat
-	// Task:    /<product>/task/<IDN>.dat
+	/*
+	 * Utility helpers
+	 */
 
 	static Name readName(DataInputStream in) throws IOException {
 		int len = in.readByte();

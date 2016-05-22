@@ -5,13 +5,13 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import vizio.Version;
-import vizio.io.PersistenceManager;
+import vizio.io.EntityManager;
 import vizio.io.Streamer;
 
 public class VersionStreamer implements Streamer<Version> {
 
 	@Override
-	public Version read(DataInputStream in, PersistenceManager pm) throws IOException {
+	public Version read(DataInputStream in, EntityManager em) throws IOException {
 		Version v = new Version();
 		v.product = Streamer.readName(in);
 		v.name = Streamer.readName(in);
