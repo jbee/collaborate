@@ -3,7 +3,7 @@ package vizio;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-public class Task {
+public class Task implements Comparable<Task> {
 
 	// creating a task
 	public Product product;
@@ -76,6 +76,16 @@ public class Task {
 		return (!area.exclusive || area.maintainers.contains(user));
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof Task && id.num == ((Task)obj).id.num;
+	}
+	
+	@Override
+	public int compareTo(Task other) {
+		return Integer.compare(id.num, other.id.num);
+	}
+	
 	@Override
 	public String toString() {
 		return id.toString();

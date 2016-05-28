@@ -1,8 +1,8 @@
 package vizio.io;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 
+import vizio.IDN;
 import vizio.Motive;
 import vizio.Name;
 import vizio.Names;
@@ -24,7 +24,6 @@ import vizio.Task;
  */
 public class SimpleEntityManager {
 
-	// FIX (keys are data that cannot change)
 	// INDEX B: product, motive
 	// INDEX C: product, purpose
 	// INDEX E: product, version, status
@@ -81,6 +80,13 @@ public class SimpleEntityManager {
 		return null;
 	}
 
+	/**
+	 * An {@link Index} always has two key levels. 
+	 * The {@link #values} for a particular key-pair are themselves a set sorted by {@link Task#id}.
+	 * 
+	 * Both the arrays for keys and those for the value-sets of key-pairs are growing with power of two.
+	 * Unused slots are null values.
+	 */
 	static final class Index<K1,K2> {
 
 		/**
@@ -92,11 +98,9 @@ public class SimpleEntityManager {
 		 */
 		final K2[] keys2;
 		/**
-		 * A *unsorted* set of values (no particular order) having the common
+		 * A set of values (sorted by {@link IDN}) having the common
 		 * keys 1 and 2 at the same index. The array may have null values at the
-		 * end. The first null value indicates the end of the set. New values
-		 * are simply "appended". If the array is full it is copied to a new
-		 * larger one with fresh space for new values.
+		 * end. The first null value indicates the end of the set.
 		 */
 		final Task[][] values;
 
@@ -108,31 +112,8 @@ public class SimpleEntityManager {
 		}
 
 		Index<K1,K2> index(K1 key1, K2 key2, Task value) {
-			int idx = search(key1, key2);
-			if (idx >= 0) {
-				values[idx] = join(values[idx], value);
-				return this;
-			}
-			int len = values.length+1;
-			K1[] ks1 = (K1[]) Array.newInstance(key1.getClass(), len);
-			K2[] ks2 = (K2[]) Array.newInstance(key2.getClass(), len);
-			Task[][] vs = new Task[len][];
-			idx = -(idx+1);
-			if (idx > 0) {
-				System.arraycopy(keys1, 0, ks1, 0, idx);
-				System.arraycopy(keys2, 0, ks2, 0, idx);
-				System.arraycopy(values, 0, vs, 0, idx);
-			}
-			// TODO returns a new index object if the key pair did not exist already
-			// otherwise returns same index with updated values for the key pair
-			return new Index<K1,K2>(ks1, ks2, vs);
-		}
 
-		private static Task[] join(Task[] tasks, Task task) {
-			//TODO prevent duplicates (maybe sort tasks by IDN so that check is cheap)
-			Task[] appended = Arrays.copyOf(tasks, tasks.length+1);
-			appended[appended.length-1] = task;
-			return appended;
+			return this;
 		}
 
 		/**
@@ -145,5 +126,56 @@ public class SimpleEntityManager {
 
 			return -1;
 		}
+	}
+	
+	/**
+	 * Adds the element to the set. 
+	 * The set is sorted by {@link Task#id}. 
+	 * The set might have empty (null) slots at the end for later use. 
+	 */
+	static <T extends Comparable<T>> T[] insert(T[] set, T e) {
+		return insert(set, e, indexOf(set, e));
+	}
+	
+	static <T> T[] insert(T[] set, T e, int idx) {		
+		if (idx >= 0) { // found
+			set[idx] = e; // update to be sure
+			return set;
+		}
+		idx = -++idx; // undo negative pos
+		int last = set.length-1;
+		int len = last-idx;
+		if (set[last] != null) { // allocate
+			set = Arrays.copyOf(set, set.length*2);
+			len++;
+		} 
+		if (len > 0) { // move backwards
+			System.arraycopy(set, idx, set, idx+1, len);
+		}
+		set[idx] = e;
+		return set;
+	}
+	
+	static <T extends Comparable<T>> int indexOf(T[] set, T e) {
+		return search(set, 0, set.length, e);
+	}
+	
+	private static <T extends Comparable<T>> int search(T[] a, int fromIndex, int toIndex, T e) {
+		int low = fromIndex;
+		int high = toIndex - 1;
+
+		while (low <= high) {
+			int mid = (low + high) >>> 1;
+			T midVal = a[mid];
+			int cmp = midVal == null ? 1 : midVal.compareTo(e);
+
+			if (cmp < 0)
+				low = mid + 1;
+			else if (cmp > 0)
+				high = mid - 1;
+			else
+				return mid; // key found
+		}
+		return -(low + 1);  // key not found.
 	}
 }
