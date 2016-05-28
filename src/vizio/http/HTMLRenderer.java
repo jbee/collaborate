@@ -4,10 +4,10 @@ import static vizio.Date.date;
 
 import java.io.PrintWriter;
 
-import vizio.Purpose;
 import vizio.Motive;
 import vizio.Name;
 import vizio.Names;
+import vizio.Purpose;
 import vizio.Site;
 import vizio.Status;
 import vizio.Task;
@@ -54,6 +54,7 @@ public class HTMLRenderer {
 	private void renderStaticMenu() {
 		out.append("<div class='menu'><h1>LiTTr</h1><span class='group'></span>");
 		// Liberated Task Coordination
+		// Reality Tracker (track what really is not would we believe or want to be)
 
 		out.append("</div>");
 	}
@@ -142,7 +143,7 @@ public class HTMLRenderer {
 		renderUsersList(task);
 		if (viewer.activated) {
 			if (task.enlistedBy.contains(viewer) || task.approachedBy.contains(viewer)) {
-				renderTaskActionLink(task, "btn", Action.drop, "&minus;");
+				renderTaskActionLink(task, "btn", Action.abandon, "&minus;");
 			} else {
 				renderTaskActionLink(task, "btn", Action.enlist, "&plus;");
 			}
