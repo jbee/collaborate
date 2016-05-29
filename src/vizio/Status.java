@@ -2,7 +2,25 @@ package vizio;
 
 public enum Status {
 
+	/**
+	 * The problem is not concluded yet.
+	 */
 	unsolved, 
-	// concluded
-	absolved, resolved, dissolved;
+	
+	/*
+	 * concluded
+	 */
+	
+	/**
+	 * Problem isn't worth looking into (ignored).
+	 */
+	absolved, 
+	/**
+	 * Problem tracked down and "fixed".
+	 */
+	resolved, 
+	/**
+	 * System redesigned to not have the (kind of) problem any more.
+	 */
+	dissolved;
 }
