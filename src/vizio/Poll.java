@@ -9,6 +9,7 @@ public class Poll {
 		inclusion, exclusion
 	}
 
+	public IDN serial;
 	public Area area;
 	public Matter matter;
 	public User affected;

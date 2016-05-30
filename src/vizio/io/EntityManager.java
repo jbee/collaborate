@@ -13,6 +13,7 @@ import vizio.Version;
 public interface EntityManager {
 
 	User user(Name user);
+	Poll poll(Name product, Name area, IDN serial);
 	Product product(Name product);
 	Area area(Name product, Name area);
 	Version version(Name product, Name version);

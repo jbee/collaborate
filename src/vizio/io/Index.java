@@ -1,6 +1,7 @@
 package vizio.io;
 
 import java.lang.reflect.Array;
+import java.util.Arrays;
 
 import vizio.IDN;
 import vizio.Name;
@@ -182,6 +183,35 @@ final class Index<K extends Comparable<K>> {
 			System.arraycopy(arr, idx, res, idx+1, arr.length-idx);
 		}
 		return res;
+	}
+	
+	static <T extends Comparable<T>> T[] merge(T[] a, T[] b) {
+		int ia = 0;
+		int ib = 0;
+		int ic = 0;
+		@SuppressWarnings("unchecked")
+		T[] c = (T[]) Array.newInstance(a.getClass().getComponentType(), a.length+b.length);
+		while (ia < a.length && ib < b.length) {
+			int cmp = a[ia].compareTo(b[ib]);
+			if (cmp == 0) {
+				c[ic++] = a[ia];
+				ia++;
+				ib++;
+			} else if (cmp < 0) {
+				c[ic++] = a[ia++];
+			} else {
+				c[ic++] = b[ib++];
+			}
+		}
+		if (ia < a.length) {
+			System.arraycopy(a, ia, c, ic, a.length-ia);
+			ic+=a.length-ia;
+		}
+		if (ib < b.length) {
+			System.arraycopy(b, ia, c, ic, b.length-ib);
+			ic+=b.length-ib;
+		}
+		return ic == c.length ? c : Arrays.copyOf(c, ic); 
 	}
 
 	static <T extends Comparable<T>> T[] cutout(T[] set, T e) {

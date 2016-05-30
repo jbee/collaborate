@@ -147,6 +147,14 @@ public class TestStreamer {
 			res.id = id;
 			return res;
 		}
+		
+		@Override
+		public Poll poll(Name product, Name area, IDN serial) {
+			Poll res = new Poll();
+			res.serial = serial;
+			res.area = area(product, area);
+			return res;
+		}
 
 		@Override
 		public Task[] tasks(Criteria criteria) {

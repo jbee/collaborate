@@ -34,4 +34,8 @@ public final class Date implements Comparable<Date> {
 		return new Date(daysSinceEra+days);
 	}
 
+	public static Date today() {
+		return date(System.currentTimeMillis());
+	}
+
 }

@@ -8,7 +8,7 @@ import static java.util.Arrays.copyOfRange;
 import java.util.Arrays;
 import java.util.Iterator;
 
-public class Names implements Iterable<Name> {
+public class Names implements Iterable<Name>, Comparable<Names> {
 
 	private static final Name[] EMPTY = new Name[0];
 
@@ -89,6 +89,19 @@ public class Names implements Iterable<Name> {
 
 	public boolean isEmpty() {
 		return names.length == 0;
+	}
+
+	@Override
+	public int compareTo(Names other) {
+		int cmp = Integer.compare(names.length, other.names.length);
+		if (cmp != 0)
+			return cmp;
+		for (int i = 0; i < names.length; i++) {
+			cmp = names[i].compareTo(other.names[i]);
+			if (cmp != 0)
+				return cmp;
+		}
+		return 0;
 	}
 
 }

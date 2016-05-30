@@ -145,6 +145,7 @@ public final class Tracker {
 		a.product = product;
 		a.maintainers=new Names(originator.name);
 		a.tasks = new AtomicInteger(0);
+		a.polls = new AtomicInteger(0);
 		touch(originator);
 		return a;
 	}
@@ -315,6 +316,7 @@ public final class Tracker {
 			expectMaintainer(area, initiator);
 		}
 		Poll poll = new Poll();
+		poll.serial = new IDN(area.polls.incrementAndGet());
 		poll.matter = matter;
 		poll.area = area;
 		poll.initiator = initiator.name;

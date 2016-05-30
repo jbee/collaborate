@@ -21,6 +21,11 @@ public class Area {
 	 */
 	public boolean exclusive;
 
+	/**
+	 * {@link Poll}s have a {@link Poll#serial} that is unique within the affected {@link Area}.
+	 */
+	public AtomicInteger polls;
+
 	// entrance areas:
 	/**
 	 * Any registered user may add tasks.
