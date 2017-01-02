@@ -5,6 +5,8 @@ import static vizio.Date.date;
 import static vizio.Motive.defect;
 import static vizio.Motive.intention;
 import static vizio.Motive.proposal;
+import static vizio.Name.ORIGIN;
+import static vizio.Name.UNKNOWN;
 import static vizio.Name.limit;
 import static vizio.Outcome.consent;
 import static vizio.Outcome.dissent;
@@ -28,17 +30,6 @@ import vizio.Poll.Matter;
  */
 public final class Tracker {
 
-	/**
-	 * The most global limit for changes of non-user entities.
-	 */
-	private static final Name LIMIT_EXTENDED = limit("extended");
-
-	/**
-	 * The most global limit for changes of user entities.
-	 */
-	private static final Name LIMIT_REGISTERED = limit("registered");
-
-
 	private final Clock clock;
 	private final Limits limits;
 
@@ -54,6 +45,7 @@ public final class Tracker {
 		expectExternal(name);
 		long now = clock.time();
 		approachNewUser(now);
+		approachNewEntity(now);
 		User user = new User();
 		user.name = name;
 		user.email = email;
@@ -291,6 +283,7 @@ public final class Tracker {
 
 	private void solve(Task task, User user, String conclusion) {
 		expectUnsolved(task);
+		approchSolution(task, user, clock.time());
 		task.solver = user.name;
 		task.end = date(clock.time());
 		task.conclusion = conclusion;
@@ -379,6 +372,7 @@ public final class Tracker {
 
 	public void abandon(Task task, User user) {
 		expectCanBeInvolved(user, task);
+		approachQueue(task, user, clock.time());
 		task.enlistedBy.remove(user);
 		task.approachedBy.remove(user);
 		touch(user);
@@ -387,6 +381,7 @@ public final class Tracker {
 	public void approach(Task task, User user) {
 		expectCanBeInvolved(user, task);
 		expectMaintainer(task.area, user);
+		approachQueue(task, user, clock.time());
 		task.approachedBy.add(user);
 		task.enlistedBy.remove(user);
 		touch(user);
@@ -430,54 +425,60 @@ public final class Tracker {
 	}
 
 	/* limit checks */
-
-	private void approachNewUser(long now) {
-		approachLimit(LIMIT_REGISTERED, now,"Too many users registered lately.");
+	
+	private void approachNewEntity(long now) {
+		approachLimit(limit("x", ORIGIN), now, "Too many new entities.");
 	}
 
-	private void approachNewEntity(long now) {
-		approachLimit(LIMIT_EXTENDED, now, "Too many new entities.");
+	private void approachNewUser(long now) {
+		approachLimit(limit("user", ORIGIN), now,"Too many users registered lately.");
 	}
 
 	private void approachNewProduct(long now) {
-		approachLimit(limit("x-product"), now, "Too many new products.");
+		approachLimit(limit("product", ORIGIN), now, "Too many new products.");
 	}
 
 	private void approachNewArea(Name product, long now) {
-		approachLimit(limit("product-area", product), now, "Too many new areas for product: "+product);
-		approachLimit(limit("x-area"), now, "Too many new areas.");
+		approachLimit(limit("area@product", product), now, "Too many new areas for product: "+product);
+		approachLimit(limit("area", ORIGIN), now, "Too many new areas.");
 	}
 
 	private void approachNewVersion(Product product, long now) {
-		approachLimit(limit("product-version", product.name), now, "Too many new versions for product: "+product.name);
-		approachLimit(limit("x-version"), now, "Too many new versions.");
+		approachLimit(limit("version@product", product.name), now, "Too many new versions for product: "+product.name);
+		approachLimit(limit("version", ORIGIN), now, "Too many new versions.");
 	}
 
 	private void approachNewTask(Product product, User reporter, long now) {
-		if (reporter.name.isInternal()) {
-			approachLimit(limit("x-task", product.name), now, "Too many anonymous task reports.");
+		if (reporter.name.isNonEditable()) {
+			approachLimit(limit("task@user", UNKNOWN), now, "Too many anonymous task reports.");
 		} else {
-			approachLimit(limit("user-task", reporter.name), now, "Too many new task by user: "+reporter.name);
+			approachLimit(limit("task@user", reporter.name), now, "Too many new task by user: "+reporter.name);
 		}
-		approachLimit(limit("product-task", product.name), now, "Too many new task for product: "+product.name);
+		approachLimit(limit("task@product", product.name), now, "Too many new task for product: "+product.name);
 	}
 
 	private void approachNewPoll(Area area, User initiator, long now) {
-		approachLimit(limit("user-poll", initiator.name), now, "Too many new polls by user: "+initiator.name);
-		approachLimit(limit("area-poll", area.name), now, "Too many new polls in area: "+area.name);
-		approachLimit(limit("x-poll"), now, "Too many new polls.");
+		approachLimit(limit("poll@user", initiator.name), now, "Too many new polls by user: "+initiator.name);
+		approachLimit(limit("poll@area", area.name), now, "Too many new polls in area: "+area.name);
+		approachLimit(limit("poll", ORIGIN), now, "Too many new polls.");
 	}
 
 	private void approachNewVote(Poll poll, User voter, long now) {
-		approachLimit(limit("user-vote", voter.name), now, "Too many recent votes by user: "+voter.name);
-		approachLimit(limit("poll-vote", voter.name), now, "Too many recent votes in poll: "+poll.matter+" "+poll.affected);
-		approachLimit(limit("x-vote"), now, "Too many votes recently.");
+		approachLimit(limit("vote@user", voter.name), now, "Too many recent votes by user: "+voter.name);
+		approachLimit(limit("vote@poll", voter.name), now, "Too many recent votes in poll: "+poll.matter+" "+poll.affected);
+		approachLimit(limit("vote", ORIGIN), now, "Too many votes recently.");
 	}
 
 	private void approachQueue(Task task, User user, long now) {
-		approachLimit(limit("user-queue"), now, "Too many queue activities by user: "+user.name);
-		approachLimit(limit("task-queue"), now, "Too many queue activities for task: "+task.id);
-		approachLimit(limit("x-queue"), now, "Too many queue activities recently.");
+		approachLimit(limit("queue@user-", user.name), now, "Too many queue activities by user: "+user.name);
+		approachLimit(limit("queue@task", Name.as("no-"+task.id)), now, "Too many queue activities for task: "+task.id);
+		approachLimit(limit("queue", ORIGIN), now, "Too many queue activities recently.");
+	}
+	
+	private void approchSolution(Task task, User user, long now) {
+		approachLimit(limit("solution@user-", user.name), now, "Too many solution activities by user: "+user.name);
+		approachLimit(limit("solution@task", Name.as("no-"+task.id)), now, "Too many solution activities for task: "+task.id);
+		approachLimit(limit("solution", ORIGIN), now, "Too many solution activities recently.");
 	}
 
 	private void approachLimit(Name limit, long now, String error) {
@@ -531,7 +532,7 @@ public final class Tracker {
 	}
 
 	private static void expectRegistered(User user) {
-		if (user.name.isInternal()) { // a anonymous user
+		if (user.name.isNonEditable()) { // a anonymous user
 			denyTransition("Only registered users can create products and areas!");
 		}
 	}
@@ -561,7 +562,7 @@ public final class Tracker {
 	}
 
 	private static void expectExternal(Name name) {
-		if (name.isInternal()) {
+		if (name.isNonEditable()) {
 			denyTransition("A registered user's name must not use '@' and be shorter than 17 characters!");
 		}
 	}

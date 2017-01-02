@@ -38,7 +38,4 @@ public class Product {
 
 	public AtomicInteger tasks;
 
-	public Name limit() {
-		return Name.limit("product-"+name);
-	}
 }

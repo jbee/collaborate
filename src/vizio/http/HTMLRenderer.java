@@ -196,7 +196,7 @@ public class HTMLRenderer {
 	}
 
 	private void renderUserLink(Name user) {
-		if (user.isExternal()) {
+		if (user.isEditable()) {
 			out.append(" <a href='/user/").append(user).append("/'>").append(user).append("</a>");
 		} else {
 			out.append(" <i>").append(user.display()).append("</i>");

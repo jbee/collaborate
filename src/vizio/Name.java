@@ -5,13 +5,41 @@ import static java.util.Arrays.copyOfRange;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+/**
+ * Valid editable names:
+ * <pre>
+ * x1
+ * simple
+ * two-part
+ * three-part-word
+ * me42
+ * </pre>
+ * 
+ * Illegal editable names:
+ * <pre>
+ * x
+ * </pre>
+ * 
+ * Valid non editable names:
+ * <pre>
+ * *
+ * ~
+ * @foo
+ * @foo.*
+ * @foo.~
+ * </pre>
+ * 
+ * @author jan
+ *
+ */
 public final class Name implements CharSequence, Comparable<Name> {
 
 	public static Name fromBytes(byte[] name) {
 		return new Name(name);
 	}
 
-	private static final Pattern VALID = Pattern.compile("@?[a-zA-Z]+(?:(?:-?[a-zA-Z]|[.@][a-zA-Z0-9])?[a-zA-Z0-9]*)*");
+	private static final Pattern VALID_NON_EDITABLE = Pattern.compile("@[a-zA-Z]+(?:(?:[-.][a-zA-Z0-9])?[a-zA-Z0-9]*)*(?:[.][*~])?");
+	private static final Pattern VALID_EDITABLE = Pattern.compile("[a-zA-Z]+(?:(?:[-][a-zA-Z0-9])?[a-zA-Z0-9]*)+");
 
 	public static final Name ANONYMOUS = as("@anonymous");
 	public static final Name MY = as("@my");
@@ -27,12 +55,8 @@ public final class Name implements CharSequence, Comparable<Name> {
 		this.symbols = symbols;
 	}
 
-	public static Name limit(String name) {
-		return as("@limit."+name);
-	}
-
 	public static Name limit(String type, Name name) {
-		return limit(type+"."+name);
+		return as("@limit."+type+"."+name);
 	}
 
 	public static Name as(String name) {
@@ -41,26 +65,28 @@ public final class Name implements CharSequence, Comparable<Name> {
 		if ("~".equals(name))
 			return UNKNOWN;
 		final int len = name.length();
-		if (VALID.matcher(name).matches() && len > 1
-			&& (len <= 16 || (len <= 32 && name.indexOf('@') > 0))) {
+		if (len <= 16 && VALID_EDITABLE.matcher(name).matches()) {
+			return new Name(name.getBytes());
+		}
+		if (len <= 32 && VALID_NON_EDITABLE.matcher(name).matches()) {
 			return new Name(name.getBytes());
 		}
 		throw new IllegalArgumentException("Not a valid name: "+name);
 	}
 
 	/**
-	 * @return internal names cannot be created by user but they might exist,
+	 * @return not editable names cannot be created by user but they might exist,
 	 *         e.g. <code>@my</code> to manage common pages.
 	 */
-	public boolean isInternal() {
-		return !isExternal();
+	public boolean isNonEditable() {
+		return indexOf('@') == 0 || symbols.length == 1;
 	}
 
 	/**
-	 * @return external names can be created by users.
+	 * @return editable names can be created by users.
 	 */
-	public boolean isExternal() {
-		return indexOf('@') < 0;
+	public boolean isEditable() {
+		return !isNonEditable();
 	}
 
 	private int indexOf(char c) {
