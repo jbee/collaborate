@@ -27,6 +27,14 @@ public final class Name implements CharSequence, Comparable<Name> {
 		this.symbols = symbols;
 	}
 
+	public static Name limit(String name) {
+		return as("@limit."+name);
+	}
+
+	public static Name limit(String type, Name name) {
+		return limit(type+"."+name);
+	}
+
 	public static Name as(String name) {
 		if ("*".equals(name))
 			return ORIGIN;

@@ -37,9 +37,8 @@ public class Product {
 	public Version somewhen;
 
 	public AtomicInteger tasks;
-	public AtomicInteger unconfirmedTasks;
 
-	public boolean allowsAnonymousReports() {
-		return unconfirmedTasks.get() < 10;
+	public Name limit() {
+		return Name.limit("product-"+name);
 	}
 }

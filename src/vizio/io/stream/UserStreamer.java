@@ -37,8 +37,6 @@ public class UserStreamer implements Streamer<User> {
 		u.dissolved = in.readInt();
 		u.millisStressed = in.readLong();
 		u.stressedToday = in.readInt();
-		u.millisReported = in.readLong();
-		u.reportedToday = in.readInt();
 		return u;
 	}
 
@@ -63,8 +61,6 @@ public class UserStreamer implements Streamer<User> {
 		out.writeInt(u.dissolved);
 		out.writeLong(u.millisStressed);
 		out.writeInt(u.stressedToday);
-		out.writeLong(u.millisReported);
-		out.writeInt(u.reportedToday);
 	}
 
 }

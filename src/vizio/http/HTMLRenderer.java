@@ -11,7 +11,7 @@ import vizio.Purpose;
 import vizio.Site;
 import vizio.Status;
 import vizio.Task;
-import vizio.Temp;
+import vizio.Heat;
 import vizio.Tracker;
 import vizio.User;
 import vizio.ctrl.Action;
@@ -46,7 +46,7 @@ public class HTMLRenderer {
 		renderTable(Coloring.motive, Motive.class);
 		renderTable(Coloring.goal, Purpose.class);
 		renderTable(Coloring.status, Status.class);
-		renderTable(Coloring.temp, Temp.class);
+		renderTable(Coloring.temp, Heat.class);
 		out.append("</div></div>");
 		out.append("</body>");
 	}
@@ -216,7 +216,7 @@ public class HTMLRenderer {
 		out.append(" status-").append(task.status.name());
 		out.append(" goal-").append(task.purpose.name());
 		out.append(" motive-").append(task.motive.name());
-		out.append(" temp-").append(task.temerature(date(now)).name());
+		out.append(" temp-").append(task.heat(date(now)).name());
 		if (task.exploitable) {
 			out.append(" exploitable");
 		}

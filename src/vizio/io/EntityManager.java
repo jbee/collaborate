@@ -1,7 +1,6 @@
 package vizio.io;
 
 import vizio.Area;
-import vizio.Cluster;
 import vizio.IDN;
 import vizio.Name;
 import vizio.Poll;
@@ -22,7 +21,6 @@ public interface EntityManager {
 	Task[] tasks(Criteria criteria);
 
 	void update(User user);
-	void update(Cluster cluster);
 	void update(Product product);
 	void update(Version version);
 	void update(Area area);

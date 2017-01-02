@@ -14,14 +14,14 @@ public class Task implements Comparable<Task> {
 	public Date start;
 	public String gist;
 
-	public Motive motive; 
+	public Motive motive;
 	public Purpose purpose;
 	public Status status;
 	public Names changeset;
 	public boolean exploitable;
 	// working with a task (data that might change)
 	public IDN cause; // direct predecessor
-	public IDN origin; // initial "impulse" that lead to this task 
+	public IDN origin; // initial "impulse" that lead to this task
 	public int heat;
 	public Area area;
 	/**
@@ -35,7 +35,6 @@ public class Task implements Comparable<Task> {
 	public Names enlistedBy;
 	public Names approachedBy;
 	public Names watchedBy; // OBS! this is the only real dynamic length field...
-	public boolean confirmed;
 	// resolving a task (closing record)
 	public Name solver;
 	public Date end;
@@ -46,18 +45,18 @@ public class Task implements Comparable<Task> {
 	 * {@link Task}s the task receives some heat. The actual amount depends on
 	 * the current heat of the {@link Task} and its age.
 	 */
-	public void heat(Date today) {
+	public void heatUp(Date today) {
 		int age = age(today);
 		int left = 100 * age - heat;
 		heat += max(age, left/2);
 	}
 
-	public int temp(Date today) {
+	public int heatNumeric(Date today) {
 		return min(100, heat / age(today));
 	}
 
-	public Temp temerature(Date today) {
-		return Temp.fromNumeric(temp(today));
+	public Heat heat(Date today) {
+		return Heat.fromNumeric(heatNumeric(today));
 	}
 
 	public int age(Date today) {
@@ -71,7 +70,7 @@ public class Task implements Comparable<Task> {
 	public boolean isVisibleTo(Name user) {
 		return !exploitable || reporter.equalTo(user) || area.maintainers.contains(user);
 	}
-	
+
 	public boolean canBeStressedBy(Name user) {
 		return (!area.exclusive || area.maintainers.contains(user));
 	}
@@ -80,12 +79,12 @@ public class Task implements Comparable<Task> {
 	public boolean equals(Object obj) {
 		return obj instanceof Task && id.num == ((Task)obj).id.num;
 	}
-	
+
 	@Override
 	public int compareTo(Task other) {
 		return Integer.compare(id.num, other.id.num);
 	}
-	
+
 	@Override
 	public String toString() {
 		return id.toString();

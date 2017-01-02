@@ -13,7 +13,6 @@ import java.io.IOException;
 import org.junit.Test;
 
 import vizio.Area;
-import vizio.Cluster;
 import vizio.IDN;
 import vizio.Name;
 import vizio.Poll;
@@ -30,7 +29,7 @@ import vizio.io.Streamer;
 public class TestStreamer {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(TestStreamer.this::tick, new Cluster("salt"));
+	private Tracker tracker = new Tracker(TestStreamer.this::tick, (l,n) -> true);
 
 	private long tick() {
 		now += 60000;
@@ -39,20 +38,20 @@ public class TestStreamer {
 
 	@Test
 	public void userStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd");
+		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		assertConsistentStream(new UserStreamer(), user1);
 	}
 
 	@Test
 	public void productStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd");
+		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Product prod1 = tracker.initiate(as("p1"), user1);
 		assertConsistentStream(new ProductStreamer(), prod1);
 	}
 
 	@Test
 	public void areaStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd");
+		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Product prod1 = tracker.initiate(as("p1"), user1);
 		Area area1 = tracker.compart(prod1, as("area1"), user1);
 		assertConsistentStream(new AreaStreamer(), area1);
@@ -60,7 +59,7 @@ public class TestStreamer {
 
 	@Test
 	public void versionStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd");
+		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Product prod1 = tracker.initiate(as("p1"), user1);
 		Version v1 = tracker.tag(prod1, as("v1"), user1);
 		assertConsistentStream(new VersionStreamer(), v1);
@@ -68,23 +67,18 @@ public class TestStreamer {
 
 	@Test
 	public void pollStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd");
+		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Product prod1 = tracker.initiate(as("p1"), user1);
-		User user2 = tracker.register(as("user2"), "user2@example.com", "user2pwd");
+		User user2 = tracker.register(as("user2"), "user2@example.com", "user2pwd", "salt");
 		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
 		assertConsistentStream(new PollStreamer(), poll1);
 	}
 
 	@Test
-	public void clusterStreamer() {
-		assertConsistentStream(new ClusterStreamer(), tracker.cluster);
-	}
-
-	@Test
 	public void taskStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd");
+		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Product prod1 = tracker.initiate(as("p1"), user1);
-		tracker.activate(user1, Tracker.md5("user1pwd"+tracker.cluster.salt));
+		tracker.activate(user1, Tracker.md5("user1pwd"+"salt"));
 		Task task1 = tracker.reportDefect(prod1, "broken", user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentStream(new TaskStreamer(), task1);
 	}
@@ -147,7 +141,7 @@ public class TestStreamer {
 			res.id = id;
 			return res;
 		}
-		
+
 		@Override
 		public Poll poll(Name product, Name area, IDN serial) {
 			Poll res = new Poll();
@@ -163,12 +157,6 @@ public class TestStreamer {
 
 		@Override
 		public void update(User user) {
-			// TODO Auto-generated method stub
-
-		}
-
-		@Override
-		public void update(Cluster cluster) {
 			// TODO Auto-generated method stub
 
 		}

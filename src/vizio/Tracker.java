@@ -5,6 +5,7 @@ import static vizio.Date.date;
 import static vizio.Motive.defect;
 import static vizio.Motive.intention;
 import static vizio.Motive.proposal;
+import static vizio.Name.limit;
 import static vizio.Outcome.consent;
 import static vizio.Outcome.dissent;
 import static vizio.Poll.Matter.participation;
@@ -27,35 +28,36 @@ import vizio.Poll.Matter;
  */
 public final class Tracker {
 
-	public final Cluster cluster;
-	private final Clock clock;
+	/**
+	 * The most global limit for changes of non-user entities.
+	 */
+	private static final Name LIMIT_EXTENDED = limit("extended");
 
-	public Tracker(Clock clock, Cluster cluster) {
+	/**
+	 * The most global limit for changes of user entities.
+	 */
+	private static final Name LIMIT_REGISTERED = limit("registered");
+
+
+	private final Clock clock;
+	private final Limits limits;
+
+	public Tracker(Clock clock, Limits limits) {
 		super();
 		this.clock = clock;
-		this.cluster = cluster;
-	}
-
-	/* Cluster */
-
-	private void extend(Cluster cluster, User originator) {
-		long now = clock.time();
-		expectExtendable(cluster, now);
-		expectRegistered(originator);
-		cluster.extended(now);
+		this.limits = limits;
 	}
 
 	/* Users + Accounts */
 
-	public User register(Name name, String email, String unsaltedMd5) {
+	public User register(Name name, String email, String unsaltedMd5, String salt) {
 		expectExternal(name);
 		long now = clock.time();
-		expectCanRegister(cluster, now);
-		cluster.registered(now);
+		approachNewUser(now);
 		User user = new User();
 		user.name = name;
 		user.email = email;
-		user.md5 = md5(unsaltedMd5+cluster.salt); // also acts as activationKey
+		user.md5 = md5(unsaltedMd5+salt); // also acts as activationKey
 		user.sites = new Site[0];
 		user.watches = new AtomicInteger(0);
 		touch(user);
@@ -68,11 +70,10 @@ public final class Tracker {
 			denyTransition("Wrong activation key");
 		}
 		user.activated = true;
-		cluster.unconfirmedRegistrationsToday--;
 	}
 
-	public void login(User user, String plainPass) {
-		if (!Arrays.equals(md5(md5(plainPass)+cluster.salt), user.md5)) {
+	public void login(User user, String plainPass, String salt) {
+		if (!Arrays.equals(md5(md5(plainPass)+salt), user.md5)) {
 			denyTransition("Wrong passphrase!");
 		}
 	}
@@ -97,12 +98,14 @@ public final class Tracker {
 	/* Products */
 
 	public Product initiate(Name product, User originator) {
-		extend(cluster, originator);
+		expectRegistered(originator);
 		expectExternal(product);
+		long now = clock.time();
+		approachNewProduct(now);
+		approachNewEntity(now);
 		Product p = new Product();
 		p.name = product;
 		p.tasks = new AtomicInteger(0);
-		p.unconfirmedTasks = new AtomicInteger(0);
 		p.origin = compart(p.name, Name.ORIGIN, originator);
 		p.somewhere = compart(p.name, Name.UNKNOWN, originator);
 		p.somewhen = tag(p, Name.UNKNOWN, originator);
@@ -112,8 +115,6 @@ public final class Tracker {
 	/* Areas */
 
 	public Area open(Product product, Name entrance, User originator, Motive motive, Purpose purpose) {
-		extend(cluster, originator);
-		expectOriginMaintainer(product, originator);
 		Area area = compart(product, entrance, originator);
 		area.entrance=true;
 		area.motive=motive;
@@ -122,13 +123,11 @@ public final class Tracker {
 	}
 
 	public Area compart(Product product, Name area, User originator) {
-		extend(cluster, originator);
 		expectOriginMaintainer(product, originator);
 		return compart(product.name, area, originator);
 	}
 
 	public Area compart(Area basis, Name partition, User originator, boolean subarea) {
-		extend(cluster, originator);
 		expectMaintainer(basis, originator);
 		Area area = compart(basis.product, partition, originator);
 		area.basis=basis.name;
@@ -139,7 +138,11 @@ public final class Tracker {
 	}
 
 	private Area compart(Name product, Name area, User originator) {
+		expectRegistered(originator);
 		expectExternal(area);
+		long now = clock.time();
+		approachNewArea(product, now);
+		approachNewEntity(now);
 		Area a = new Area();
 		a.name = area;
 		a.product = product;
@@ -175,9 +178,12 @@ public final class Tracker {
 	/* Versions */
 
 	public Version tag(Product product, Name version, User originator) {
-		extend(cluster, originator);
+		expectRegistered(originator);
 		expectExternal(version);
 		expectOriginMaintainer(product, originator);
+		long now = clock.time();
+		approachNewVersion(product, now);
+		approachNewEntity(now);
 		Version v = new Version();
 		v.product = product.name;
 		v.name = version;
@@ -223,13 +229,9 @@ public final class Tracker {
 		if (!area.name.isUnknown() && !area.entrance) { // NB. unknown is not an entrance since it does not dictate motive and goal
 			expectMaintainer(area, reporter);
 		}
+		expectCanReport(reporter);
 		long now = clock.time();
-		if (reporter.name.isInternal()) {
-			expectCanReportAnonymously(product);
-			product.unconfirmedTasks.incrementAndGet();
-		}
-		expectCanReport(reporter, now);
-		reporter.reported(now);
+		approachNewTask(product, reporter, now);
 		Task task = new Task();
 		task.id = new IDN(product.tasks.incrementAndGet());
 		task.product = product;
@@ -242,7 +244,6 @@ public final class Tracker {
 		task.purpose = purpose;
 		task.status = Status.unsolved;
 		task.exploitable = exploitable;
-		task.confirmed = task.reporter.isExternal();
 		task.enlistedBy = Names.empty();
 		task.approachedBy = Names.empty();
 		task.watchedBy = new Names(reporter.name);
@@ -252,11 +253,6 @@ public final class Tracker {
 		}
 		touch(reporter);
 		return task;
-	}
-
-	public void confirm(Product product, Task task) {
-		task.confirmed = true;
-		product.unconfirmedTasks.decrementAndGet();
 	}
 
 	/* task resolution */
@@ -306,7 +302,7 @@ public final class Tracker {
 		long now = clock.time();
 		if (voter.canStress(now) && task.canBeStressedBy(voter.name)) {
 			voter.stressed(now);
-			task.heat(date(now));
+			task.heatUp(date(now));
 			touch(voter);
 		}
 	}
@@ -315,6 +311,9 @@ public final class Tracker {
 		if (matter != participation) {
 			expectMaintainer(area, initiator);
 		}
+		long now = clock.time();
+		approachNewPoll(area, initiator, now);
+		approachNewEntity(now);
 		Poll poll = new Poll();
 		poll.serial = new IDN(area.polls.incrementAndGet());
 		poll.matter = matter;
@@ -340,6 +339,7 @@ public final class Tracker {
 
 	private void vote(Poll poll, User voter, Names removed, Names added) {
 		if (poll.canVote(voter.name)) {
+			approachNewVote(poll, voter, clock.time());
 			removed.remove(voter);
 			added.add(voter);
 			touch(voter);
@@ -371,6 +371,7 @@ public final class Tracker {
 
 	public void enlist(Task task, User user) {
 		expectCanBeInvolved(user, task);
+		approachQueue(task, user, clock.time());
 		task.approachedBy.remove(user);
 		task.enlistedBy.add(user);
 		touch(user);
@@ -428,6 +429,63 @@ public final class Tracker {
 		touch(initiator);
 	}
 
+	/* limit checks */
+
+	private void approachNewUser(long now) {
+		approachLimit(LIMIT_REGISTERED, now,"Too many users registered lately.");
+	}
+
+	private void approachNewEntity(long now) {
+		approachLimit(LIMIT_EXTENDED, now, "Too many new entities.");
+	}
+
+	private void approachNewProduct(long now) {
+		approachLimit(limit("x-product"), now, "Too many new products.");
+	}
+
+	private void approachNewArea(Name product, long now) {
+		approachLimit(limit("product-area", product), now, "Too many new areas for product: "+product);
+		approachLimit(limit("x-area"), now, "Too many new areas.");
+	}
+
+	private void approachNewVersion(Product product, long now) {
+		approachLimit(limit("product-version", product.name), now, "Too many new versions for product: "+product.name);
+		approachLimit(limit("x-version"), now, "Too many new versions.");
+	}
+
+	private void approachNewTask(Product product, User reporter, long now) {
+		if (reporter.name.isInternal()) {
+			approachLimit(limit("x-task", product.name), now, "Too many anonymous task reports.");
+		} else {
+			approachLimit(limit("user-task", reporter.name), now, "Too many new task by user: "+reporter.name);
+		}
+		approachLimit(limit("product-task", product.name), now, "Too many new task for product: "+product.name);
+	}
+
+	private void approachNewPoll(Area area, User initiator, long now) {
+		approachLimit(limit("user-poll", initiator.name), now, "Too many new polls by user: "+initiator.name);
+		approachLimit(limit("area-poll", area.name), now, "Too many new polls in area: "+area.name);
+		approachLimit(limit("x-poll"), now, "Too many new polls.");
+	}
+
+	private void approachNewVote(Poll poll, User voter, long now) {
+		approachLimit(limit("user-vote", voter.name), now, "Too many recent votes by user: "+voter.name);
+		approachLimit(limit("poll-vote", voter.name), now, "Too many recent votes in poll: "+poll.matter+" "+poll.affected);
+		approachLimit(limit("x-vote"), now, "Too many votes recently.");
+	}
+
+	private void approachQueue(Task task, User user, long now) {
+		approachLimit(limit("user-queue"), now, "Too many queue activities by user: "+user.name);
+		approachLimit(limit("task-queue"), now, "Too many queue activities for task: "+task.id);
+		approachLimit(limit("x-queue"), now, "Too many queue activities recently.");
+	}
+
+	private void approachLimit(Name limit, long now, String error) {
+		if (!limits.approach(limit, now)) {
+			denyTransition("Limit exceeded! "+error+" Please try again later!");
+		}
+	}
+
 	/* consistency rules */
 
 	private static void expectNoEntrance(Area area) {
@@ -478,18 +536,9 @@ public final class Tracker {
 		}
 	}
 
-	private static void expectExtendable(Cluster cluster, long now) {
-		if (!cluster.canExtend(now)) {
-			denyTransition("To many new products and areas in last 24h! Wait until tomorrow.");
-		}
-	}
-
-	private static void expectCanReport(User reporter, long now) {
+	private static void expectCanReport(User reporter) {
 		if (!reporter.activated) {
 			denyTransition("Only activated users can report tasks!");
-		}
-		if (!reporter.canReport(now)) {
-			denyTransition("User cannot report due to abuse protection limits!");
 		}
 	}
 
@@ -511,21 +560,9 @@ public final class Tracker {
 		}
 	}
 
-	private static void expectCanReportAnonymously(Product product) {
-		if (!product.allowsAnonymousReports()) {
-			denyTransition("To many unconfirmed anonymous reports. Try again later.");
-		}
-	}
-
 	private static void expectExternal(Name name) {
 		if (name.isInternal()) {
 			denyTransition("A registered user's name must not use '@' and be shorter than 17 characters!");
-		}
-	}
-
-	private static void expectCanRegister(Cluster cluster, long now) {
-		if (!cluster.canRegister(now)) {
-			denyTransition("To many unconfirmed accounts created today. Please try again tomorrow!");
 		}
 	}
 

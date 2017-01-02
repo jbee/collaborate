@@ -8,16 +8,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class User {
 
-	/**
-	 * The delay is not based on XP since this protection assumes that a users
-	 * account has been compromised an is abused to mass report bullsh*t.
-	 */
-	private static final long REPORT_DELAY = 60000L; //ms = 1min
-	/**
-	 * A user can report once per hour on average.
-	 */
-	private static final int REPORTS_PER_DAY = 24;
-
 	private static final int MINIMUM_WATCHES = 20;
 
 	public Name name;
@@ -39,9 +29,6 @@ public class User {
 	// supporting tasks
 	public long millisStressed;
 	public int stressedToday;
-	// reporting tasks (protection against compromised accounts or abuse of anonymous reports)
-	public long millisReported;
-	public int reportedToday;
 	//TODO maybe add a lock? user reporting to much are locked ...
 
 	public void mergeWith(User instance) {
@@ -60,8 +47,6 @@ public class User {
 		dissolved = max(dissolved, instance.dissolved);
 		millisStressed = max(millisStressed, instance.millisStressed);
 		stressedToday = max(stressedToday, instance.stressedToday);
-		millisReported = max(millisReported, instance.millisReported);
-		reportedToday = max(reportedToday, instance.reportedToday);
 	}
 
 	public int stressDelay() {
@@ -85,21 +70,6 @@ public class User {
 			stressedToday++;
 		}
 		millisStressed = now;
-	}
-
-	public boolean canReport(long now) {
-		return activated
-			&&	now - millisReported > REPORT_DELAY
-			&& (reportedToday < REPORTS_PER_DAY || date(now).after(date(millisReported)));
-	}
-
-	public void reported(long now) {
-		if (date(now).after(date(millisReported))) {
-			reportedToday =1;
-		} else {
-			reportedToday++;
-		}
-		millisReported = now;
 	}
 
 	public boolean hasSite(Name name) {

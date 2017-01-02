@@ -1,10 +1,10 @@
 package vizio;
 
-public enum Temp {
+public enum Heat {
 
 	cold, tepid, warm, hot, burning;
 
-	public static Temp fromNumeric(int temp) {
+	public static Heat fromNumeric(int temp) {
 		if (temp < 25)
 			return cold;
 		if (temp < 50)

@@ -16,6 +16,7 @@ import static vizio.Date.date;
  *
  * @author jan
  */
+@Deprecated // should be done using limits
 public class Cluster {
 
 	private static final long EXTENTION_DELAY = 30000; // ms = 30sec

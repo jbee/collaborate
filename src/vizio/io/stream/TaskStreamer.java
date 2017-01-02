@@ -35,7 +35,6 @@ public class TaskStreamer implements Streamer<Task> {
 		t.enlistedBy = Streamer.readNames(in);
 		t.approachedBy = Streamer.readNames(in);
 		t.watchedBy = Streamer.readNames(in);
-		t.confirmed = in.readBoolean();
 		t.solver = Streamer.readName(in);
 		t.end = Streamer.readDate(in);
 		t.conclusion = Streamer.readString(in);
@@ -63,7 +62,6 @@ public class TaskStreamer implements Streamer<Task> {
 		Streamer.writeNames(t.enlistedBy, out);
 		Streamer.writeNames(t.approachedBy, out);
 		Streamer.writeNames(t.watchedBy, out);
-		out.writeBoolean(t.confirmed);
 		Streamer.writeName(t.solver, out);
 		Streamer.writeDate(t.end, out);
 		Streamer.writeString(t.conclusion, out);

@@ -20,7 +20,7 @@ public class Criteria {
 		
 		public Comparable<?> access(Task t, Date today) {
 			switch (this) {
-			case temp: return t.temerature(today);
+			case temp: return t.heat(today);
 			case heat: return t.heat;
 			case status: return t.status;
 			case purpose: return t.purpose;
