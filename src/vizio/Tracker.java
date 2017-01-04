@@ -11,6 +11,7 @@ import static vizio.Outcome.consent;
 import static vizio.Outcome.dissent;
 import static vizio.Poll.Matter.participation;
 import static vizio.Purpose.clarification;
+import static vizio.Purpose.modification;
 import static vizio.Status.absolved;
 import static vizio.Status.dissolved;
 import static vizio.Status.resolved;
@@ -204,7 +205,7 @@ public final class Tracker {
 		return report(product, entrance.motive, entrance.purpose, gist, reporter, entrance, product.somewhen, false);
 	}
 
-	public Task reportSequel(Task cause, Purpose purpose, String gist, User reporter, Names changeset) {
+	public Task reportFollowUp(Task cause, Purpose purpose, String gist, User reporter, Names changeset) {
 		Area area = cause.area.entrance ? cause.product.somewhere : cause.area;
 		Task task = report(cause.product, cause.motive, purpose, gist, reporter, area, cause.base, cause.exploitable);
 		task.cause = cause.id;
@@ -251,6 +252,26 @@ public final class Tracker {
 
 	/* task resolution */
 
+	private int xp(Task task, int base) {
+		if (task.reporter.equalTo(task.solver))
+			return 0; // prevent XP mining by adding and resolving tasks using same user
+		Date today = date(clock.time());
+		int age = today.daysSince(task.start);
+		if (age <= 0)
+			return 0; // prevent XP mining by adding and resolving tasks using different users
+		int xp = (int) Math.max(base, base * (1f+((age-4f)/age))); // 1-2x base value, more with higher age
+		if (task.exploitable && task.purpose == modification) {
+			xp *= 2;
+		}
+		if (task.purpose != modification) {
+			xp /= 2;
+		}
+		if (task.heatNumeric(today) < 75) {
+			xp /= 2;
+		}
+		return xp;
+	}
+	
 	public Task absolve(Task task, User by, String conclusion) {
 		if (!task.area.name.isUnknown()) { // no change is a resolution even if no area has been specified before
 			expectMaintainer(task.area, by);
@@ -266,7 +287,7 @@ public final class Tracker {
 		expectMaintainer(task.area, by);
 		task = solve(task, by, conclusion);
 		task.status = resolved;
-		by.xp += 2;
+		by.xp += xp(task, 2);
 		by.resolved++;
 		touch(by);
 		if (!task.changeset.isEmpty()) { // publishing is something that is resolved when its done
@@ -281,7 +302,7 @@ public final class Tracker {
 		expectUnsolved(task);
 		task = solve(task, by, conclusion);
 		task.status = dissolved;
-		by.xp += 5;
+		by.xp += xp(task, 5);
 		by.dissolved++;
 		touch(by);
 		return task;
