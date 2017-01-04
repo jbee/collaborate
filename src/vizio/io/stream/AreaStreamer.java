@@ -5,11 +5,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import vizio.Area;
-import vizio.Motive;
-import vizio.Purpose;
 import vizio.engine.EntityManager;
 import vizio.io.Streamer;
+import vizio.model.Area;
+import vizio.model.Motive;
+import vizio.model.Purpose;
 
 public class AreaStreamer implements Streamer<Area> {
 

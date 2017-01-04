@@ -4,12 +4,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import vizio.Motive;
-import vizio.Purpose;
-import vizio.Status;
-import vizio.Task;
 import vizio.engine.EntityManager;
 import vizio.io.Streamer;
+import vizio.model.Motive;
+import vizio.model.Purpose;
+import vizio.model.Status;
+import vizio.model.Task;
 
 public class TaskStreamer implements Streamer<Task> {
 

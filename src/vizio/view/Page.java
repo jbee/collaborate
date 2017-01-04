@@ -1,6 +1,6 @@
 package vizio.view;
 
-import vizio.Task;
+import vizio.model.Task;
 
 public class Page {
 

@@ -4,10 +4,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import vizio.Name;
-import vizio.Site;
 import vizio.engine.EntityManager;
 import vizio.io.Streamer;
+import vizio.model.Name;
+import vizio.model.Site;
 
 public class SiteStreamer implements Streamer<Site> {
 

@@ -1,4 +1,4 @@
-package vizio;
+package vizio.model;
 
 import static java.lang.Integer.compare;
 

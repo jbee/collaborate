@@ -4,12 +4,12 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import vizio.IDN;
-import vizio.Outcome;
-import vizio.Poll;
-import vizio.Poll.Matter;
 import vizio.engine.EntityManager;
 import vizio.io.Streamer;
+import vizio.model.IDN;
+import vizio.model.Outcome;
+import vizio.model.Poll;
+import vizio.model.Poll.Matter;
 
 public class PollStreamer implements Streamer<Poll> {
 

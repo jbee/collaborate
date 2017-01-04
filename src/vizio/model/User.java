@@ -1,7 +1,7 @@
-package vizio;
+package vizio.model;
 
 import static java.lang.Math.max;
-import static vizio.Date.date;
+import static vizio.model.Date.date;
 
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;

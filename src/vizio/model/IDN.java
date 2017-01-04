@@ -1,4 +1,4 @@
-package vizio;
+package vizio.model;
 
 /**
  * An {@link IDN} is an identity number that is unique for a {@link Product} (but not globally unique!).

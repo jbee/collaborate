@@ -9,20 +9,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import vizio.Area;
-import vizio.Date;
-import vizio.IDN;
-import vizio.Motive;
-import vizio.Name;
-import vizio.Names;
-import vizio.Poll;
-import vizio.Product;
-import vizio.Purpose;
-import vizio.Site;
-import vizio.Status;
-import vizio.Task;
-import vizio.User;
-import vizio.Version;
 import vizio.engine.EntityManager;
 import vizio.io.Criteria.Property;
 import vizio.io.stream.AreaStreamer;
@@ -32,6 +18,20 @@ import vizio.io.stream.SiteStreamer;
 import vizio.io.stream.TaskStreamer;
 import vizio.io.stream.UserStreamer;
 import vizio.io.stream.VersionStreamer;
+import vizio.model.Area;
+import vizio.model.Date;
+import vizio.model.IDN;
+import vizio.model.Motive;
+import vizio.model.Name;
+import vizio.model.Names;
+import vizio.model.Poll;
+import vizio.model.Product;
+import vizio.model.Purpose;
+import vizio.model.Site;
+import vizio.model.Status;
+import vizio.model.Task;
+import vizio.model.User;
+import vizio.model.Version;
 
 /**
  * Paths:

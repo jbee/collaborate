@@ -1,20 +1,20 @@
 package vizio.http;
 
-import static vizio.Date.date;
+import static vizio.model.Date.date;
 
 import java.io.PrintWriter;
 
-import vizio.Motive;
-import vizio.Name;
-import vizio.Names;
-import vizio.Purpose;
-import vizio.Site;
-import vizio.Status;
-import vizio.Task;
-import vizio.Heat;
-import vizio.User;
 import vizio.ctrl.Action;
 import vizio.engine.Tracker;
+import vizio.model.Heat;
+import vizio.model.Motive;
+import vizio.model.Name;
+import vizio.model.Names;
+import vizio.model.Purpose;
+import vizio.model.Site;
+import vizio.model.Status;
+import vizio.model.Task;
+import vizio.model.User;
 import vizio.view.Coloring;
 import vizio.view.Menu;
 import vizio.view.Page;

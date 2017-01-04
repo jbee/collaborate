@@ -1,9 +1,9 @@
 package vizio.ctrl;
 
-import vizio.Name;
-import vizio.Task;
-import vizio.User;
 import vizio.io.Criteria;
+import vizio.model.Name;
+import vizio.model.Task;
+import vizio.model.User;
 import vizio.view.Menu;
 import vizio.view.View;
 

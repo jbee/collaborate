@@ -2,25 +2,25 @@ package vizio.http;
 
 import static java.lang.Character.isDigit;
 import static java.lang.Integer.parseInt;
-import static vizio.Name.as;
 import static vizio.ctrl.Action.view;
 import static vizio.ctrl.ContentType.Area;
 import static vizio.ctrl.ContentType.Product;
 import static vizio.ctrl.ContentType.Task;
 import static vizio.ctrl.ContentType.User;
 import static vizio.ctrl.ContentType.Version;
+import static vizio.model.Name.as;
 
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.util.Map;
 
-import vizio.IDN;
-import vizio.Name;
-import vizio.Task;
-import vizio.User;
 import vizio.ctrl.Action;
 import vizio.ctrl.Context;
 import vizio.ctrl.Controller;
+import vizio.model.IDN;
+import vizio.model.Name;
+import vizio.model.Task;
+import vizio.model.User;
 import vizio.view.Page;
 import vizio.view.View;
 import vizio.view.Widget;

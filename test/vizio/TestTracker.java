@@ -4,12 +4,16 @@ import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static vizio.Date.date;
-import static vizio.Name.as;
+import static vizio.model.Date.date;
+import static vizio.model.Name.as;
 
 import org.junit.Test;
 
 import vizio.engine.Tracker;
+import vizio.model.Date;
+import vizio.model.Product;
+import vizio.model.Task;
+import vizio.model.User;
 
 public class TestTracker {
 

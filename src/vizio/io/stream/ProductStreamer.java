@@ -5,10 +5,10 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import vizio.Name;
-import vizio.Product;
 import vizio.engine.EntityManager;
 import vizio.io.Streamer;
+import vizio.model.Name;
+import vizio.model.Product;
 
 /**
  * {@link Product} IO.

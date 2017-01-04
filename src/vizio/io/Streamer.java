@@ -5,11 +5,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
-import vizio.Date;
-import vizio.IDN;
-import vizio.Name;
-import vizio.Names;
 import vizio.engine.EntityManager;
+import vizio.model.Date;
+import vizio.model.IDN;
+import vizio.model.Name;
+import vizio.model.Names;
 
 public interface Streamer<T> {
 

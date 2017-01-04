@@ -1,4 +1,4 @@
-package vizio;
+package vizio.model;
 
 public enum Motive {
 

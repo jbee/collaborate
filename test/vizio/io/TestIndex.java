@@ -3,14 +3,14 @@ package vizio.io;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static vizio.Name.as;
+import static vizio.model.Name.as;
 
 import org.junit.Test;
 
-import vizio.IDN;
-import vizio.Name;
-import vizio.Status;
-import vizio.Task;
+import vizio.model.IDN;
+import vizio.model.Name;
+import vizio.model.Status;
+import vizio.model.Task;
 
 public class TestIndex {
 

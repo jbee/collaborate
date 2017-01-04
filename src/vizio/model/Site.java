@@ -1,4 +1,4 @@
-package vizio;
+package vizio.model;
 
 public class Site extends Entity<Site> {
 

@@ -1,7 +1,7 @@
 package vizio.io;
 
-import vizio.Date;
-import vizio.Task;
+import vizio.model.Date;
+import vizio.model.Task;
 
 public class Criteria {
 

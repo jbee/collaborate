@@ -5,11 +5,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import vizio.Name;
-import vizio.Site;
-import vizio.User;
 import vizio.engine.EntityManager;
 import vizio.io.Streamer;
+import vizio.model.Name;
+import vizio.model.Site;
+import vizio.model.User;
 
 public class UserStreamer implements Streamer<User> {
 

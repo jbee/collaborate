@@ -2,7 +2,7 @@ package vizio.io.stream;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
-import static vizio.Name.as;
+import static vizio.model.Name.as;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -12,20 +12,20 @@ import java.io.IOException;
 
 import org.junit.Test;
 
-import vizio.Area;
-import vizio.IDN;
-import vizio.Name;
-import vizio.Poll;
-import vizio.Poll.Matter;
-import vizio.Product;
-import vizio.Site;
-import vizio.Task;
-import vizio.User;
-import vizio.Version;
 import vizio.engine.EntityManager;
 import vizio.engine.Tracker;
 import vizio.io.Criteria;
 import vizio.io.Streamer;
+import vizio.model.Area;
+import vizio.model.IDN;
+import vizio.model.Name;
+import vizio.model.Poll;
+import vizio.model.Product;
+import vizio.model.Site;
+import vizio.model.Task;
+import vizio.model.User;
+import vizio.model.Version;
+import vizio.model.Poll.Matter;
 
 public class TestStreamer {
 

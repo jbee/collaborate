@@ -1,4 +1,6 @@
-package vizio;
+package vizio.engine;
+
+import vizio.model.Name;
 
 public interface Limits {
 

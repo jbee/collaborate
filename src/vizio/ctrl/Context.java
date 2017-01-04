@@ -1,7 +1,7 @@
 package vizio.ctrl;
 
-import vizio.IDN;
-import vizio.Name;
+import vizio.model.IDN;
+import vizio.model.Name;
 
 public class Context {
 

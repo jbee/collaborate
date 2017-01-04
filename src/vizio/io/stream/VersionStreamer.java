@@ -4,9 +4,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 
-import vizio.Version;
 import vizio.engine.EntityManager;
 import vizio.io.Streamer;
+import vizio.model.Version;
 
 public class VersionStreamer implements Streamer<Version> {
 

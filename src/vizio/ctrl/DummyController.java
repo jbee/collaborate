@@ -1,20 +1,20 @@
 package vizio.ctrl;
 
 import static java.lang.System.currentTimeMillis;
-import static vizio.Name.as;
+import static vizio.model.Name.as;
 
 import java.util.Arrays;
 import java.util.Random;
 
-import vizio.Area;
-import vizio.Name;
-import vizio.Product;
-import vizio.Site;
-import vizio.Task;
-import vizio.User;
-import vizio.Version;
 import vizio.engine.Tracker;
 import vizio.io.Criteria;
+import vizio.model.Area;
+import vizio.model.Name;
+import vizio.model.Product;
+import vizio.model.Site;
+import vizio.model.Task;
+import vizio.model.User;
+import vizio.model.Version;
 import vizio.view.Coloring;
 import vizio.view.Menu;
 import vizio.view.View;

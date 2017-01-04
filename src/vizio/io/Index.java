@@ -3,11 +3,11 @@ package vizio.io;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
-import vizio.IDN;
-import vizio.Name;
-import vizio.Names;
-import vizio.Task;
 import vizio.io.SimpleEntityManager.Key;
+import vizio.model.IDN;
+import vizio.model.Name;
+import vizio.model.Names;
+import vizio.model.Task;
 
 /**
  * An {@link Index} always has two key levels. 

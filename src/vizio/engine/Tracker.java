@@ -1,43 +1,41 @@
 package vizio.engine;
 
 import static java.lang.Math.min;
-import static vizio.Date.date;
-import static vizio.Motive.defect;
-import static vizio.Motive.intention;
-import static vizio.Motive.proposal;
-import static vizio.Name.ORIGIN;
-import static vizio.Name.limit;
-import static vizio.Outcome.consent;
-import static vizio.Outcome.dissent;
-import static vizio.Poll.Matter.participation;
-import static vizio.Purpose.clarification;
-import static vizio.Purpose.modification;
-import static vizio.Status.absolved;
-import static vizio.Status.dissolved;
-import static vizio.Status.resolved;
-import static vizio.Status.unsolved;
+import static vizio.model.Date.date;
+import static vizio.model.Motive.defect;
+import static vizio.model.Motive.intention;
+import static vizio.model.Motive.proposal;
+import static vizio.model.Name.ORIGIN;
+import static vizio.model.Name.limit;
+import static vizio.model.Outcome.consent;
+import static vizio.model.Outcome.dissent;
+import static vizio.model.Poll.Matter.participation;
+import static vizio.model.Purpose.clarification;
+import static vizio.model.Purpose.modification;
+import static vizio.model.Status.absolved;
+import static vizio.model.Status.dissolved;
+import static vizio.model.Status.resolved;
+import static vizio.model.Status.unsolved;
 
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-import vizio.Area;
-import vizio.Clock;
-import vizio.Date;
-import vizio.IDN;
-import vizio.Limits;
-import vizio.Motive;
-import vizio.Name;
-import vizio.Names;
-import vizio.Outcome;
-import vizio.Poll;
-import vizio.Product;
-import vizio.Purpose;
-import vizio.Site;
-import vizio.Status;
-import vizio.Task;
-import vizio.User;
-import vizio.Version;
-import vizio.Poll.Matter;
+import vizio.model.Area;
+import vizio.model.Date;
+import vizio.model.IDN;
+import vizio.model.Motive;
+import vizio.model.Name;
+import vizio.model.Names;
+import vizio.model.Outcome;
+import vizio.model.Poll;
+import vizio.model.Product;
+import vizio.model.Purpose;
+import vizio.model.Site;
+import vizio.model.Status;
+import vizio.model.Task;
+import vizio.model.User;
+import vizio.model.Version;
+import vizio.model.Poll.Matter;
 
 /**
  * Implementation of the tracker-business logic.

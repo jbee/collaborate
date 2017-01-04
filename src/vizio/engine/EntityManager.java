@@ -1,15 +1,15 @@
 package vizio.engine;
 
-import vizio.Area;
-import vizio.IDN;
-import vizio.Name;
-import vizio.Poll;
-import vizio.Product;
-import vizio.Site;
-import vizio.Task;
-import vizio.User;
-import vizio.Version;
 import vizio.io.Criteria;
+import vizio.model.Area;
+import vizio.model.IDN;
+import vizio.model.Name;
+import vizio.model.Poll;
+import vizio.model.Product;
+import vizio.model.Site;
+import vizio.model.Task;
+import vizio.model.User;
+import vizio.model.Version;
 
 public interface EntityManager {
 

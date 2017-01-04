@@ -1,4 +1,4 @@
-package vizio;
+package vizio.model;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
