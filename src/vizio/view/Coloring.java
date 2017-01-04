@@ -3,7 +3,7 @@ package vizio.view;
 public enum Coloring {
 
 	// tasks
-	temp, status, goal, motive,
+	heat, status, goal, motive,
 	// votes
 	outcome
 }

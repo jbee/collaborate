@@ -39,11 +39,11 @@ a.idn { float: right; }
 a.stress { clear: right; }
 
 /* We do this ob two levels to be able to render all actual propeties an chose by the scheme what is used */
-.scheme-temp .temp-cold          td { background-color: #eeeeff; } 
-.scheme-temp .temp-tepid         td { background-color: #ffffbb; } 
-.scheme-temp .temp-warm          td { background-color: #ffeeaa; } 
-.scheme-temp .temp-hot           td { background-color: #ffddaa; } 
-.scheme-temp .temp-burning       td { background-color: #ffccaa; } 
+.scheme-heat .heat-cold          td { background-color: #eeeeff; } 
+.scheme-heat .heat-tepid         td { background-color: #ffffbb; } 
+.scheme-heat .heat-warm          td { background-color: #ffeeaa; } 
+.scheme-heat .heat-hot           td { background-color: #ffddaa; } 
+.scheme-heat .heat-burning       td { background-color: #ffccaa; } 
 
 .scheme-goal .goal-clarification td { background-color: #ffddff; } 
 .scheme-goal .goal-modification  td { background-color: #ffffbb; } 

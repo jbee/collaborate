@@ -46,7 +46,7 @@ public class HTMLRenderer {
 		renderTable(Coloring.motive, Motive.class);
 		renderTable(Coloring.goal, Purpose.class);
 		renderTable(Coloring.status, Status.class);
-		renderTable(Coloring.temp, Heat.class);
+		renderTable(Coloring.heat, Heat.class);
 		out.append("</div></div>");
 		out.append("</body>");
 	}
@@ -216,7 +216,7 @@ public class HTMLRenderer {
 		out.append(" status-").append(task.status.name());
 		out.append(" goal-").append(task.purpose.name());
 		out.append(" motive-").append(task.motive.name());
-		out.append(" temp-").append(task.heat(date(now)).name());
+		out.append(" heat-").append(task.heat(date(now)).name());
 		if (task.exploitable) {
 			out.append(" exploitable");
 		}

@@ -8,8 +8,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import vizio.Area;
 import vizio.Motive;
 import vizio.Purpose;
-import vizio.io.EntityManager;
 import vizio.io.Streamer;
+import vizio.state.EntityManager;
 
 public class AreaStreamer implements Streamer<Area> {
 

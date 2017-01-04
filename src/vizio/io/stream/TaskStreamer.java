@@ -8,8 +8,8 @@ import vizio.Motive;
 import vizio.Purpose;
 import vizio.Status;
 import vizio.Task;
-import vizio.io.EntityManager;
 import vizio.io.Streamer;
+import vizio.state.EntityManager;
 
 public class TaskStreamer implements Streamer<Task> {
 

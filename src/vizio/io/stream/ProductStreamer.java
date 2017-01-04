@@ -7,8 +7,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import vizio.Name;
 import vizio.Product;
-import vizio.io.EntityManager;
 import vizio.io.Streamer;
+import vizio.state.EntityManager;
 
 /**
  * {@link Product} IO.

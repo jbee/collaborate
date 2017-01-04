@@ -18,6 +18,7 @@ import vizio.Names;
 import vizio.Poll;
 import vizio.Product;
 import vizio.Purpose;
+import vizio.Site;
 import vizio.Status;
 import vizio.Task;
 import vizio.User;
@@ -26,9 +27,11 @@ import vizio.io.Criteria.Property;
 import vizio.io.stream.AreaStreamer;
 import vizio.io.stream.PollStreamer;
 import vizio.io.stream.ProductStreamer;
+import vizio.io.stream.SiteStreamer;
 import vizio.io.stream.TaskStreamer;
 import vizio.io.stream.UserStreamer;
 import vizio.io.stream.VersionStreamer;
+import vizio.state.EntityManager;
 
 /**
  * Paths:
@@ -119,6 +122,11 @@ public class SimpleEntityManager implements EntityManager {
 		return load(new UserStreamer(), userFile(user));
 	}
 	@Override
+	public Site site(Name user, Name site) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
 	public Poll poll(Name product, Name area, IDN serial) {
 		return load(new PollStreamer(), pollFile(product, area, serial));
 	}
@@ -158,6 +166,10 @@ public class SimpleEntityManager implements EntityManager {
 	@Override
 	public void update(User user) {
 		store(user, new UserStreamer(), userFile(user.name));
+	}
+	@Override
+	public void update(Site site) {
+		store(site, new SiteStreamer(), null); //FIXME use duid (DB uniue IDs)
 	}
 	@Override
 	public void update(Product product) {

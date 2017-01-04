@@ -85,7 +85,7 @@ public final class Tracker {
 
 	/* Products */
 
-	public Product initiate(Name product, User originator) {
+	public Product found(Name product, User originator) {
 		expectRegistered(originator);
 		expectRegular(product);
 		stressNewProduct(originator);
@@ -205,7 +205,7 @@ public final class Tracker {
 		return report(product, entrance.motive, entrance.purpose, gist, reporter, entrance, product.somewhen, false);
 	}
 
-	public Task reportFollowUp(Task cause, Purpose purpose, String gist, User reporter, Names changeset) {
+	public Task reportFork(Task cause, Purpose purpose, String gist, User reporter, Names changeset) {
 		Area area = cause.area.entrance ? cause.product.somewhere : cause.area;
 		Task task = report(cause.product, cause.motive, purpose, gist, reporter, area, cause.base, cause.exploitable);
 		task.cause = cause.id;
@@ -476,7 +476,7 @@ public final class Tracker {
 		return s;
 	}
 
-	public Site update(Site site, String template, User owner) {
+	public Site restructure(Site site, String template, User owner) {
 		expectOwner(site, owner);
 		stressDoUpdate(site, owner);
 		site = site.clone();

@@ -39,7 +39,7 @@ public final class Name implements CharSequence, Comparable<Name> {
 	}
 
 	private static final Pattern VALID_NON_EDITABLE = Pattern.compile("(?:[@.][-a-zA-Z0-9_]+)+(?:[.][*~])?");
-	private static final Pattern VALID_EDITABLE = Pattern.compile("[a-zA-Z]+(?:(?:[-][a-zA-Z0-9])?[a-zA-Z0-9]*)+");
+	private static final Pattern VALID_EDITABLE = Pattern.compile("(?:\\d+(?:[.]\\d+)*)?(?:[-_a-zA-Z0-9]+)?");
 
 	public static final Name ANONYMOUS = as("@anonymous");
 	public static final Name MY = as("@my");

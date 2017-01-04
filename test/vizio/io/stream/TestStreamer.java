@@ -24,8 +24,8 @@ import vizio.Tracker;
 import vizio.User;
 import vizio.Version;
 import vizio.io.Criteria;
-import vizio.io.EntityManager;
 import vizio.io.Streamer;
+import vizio.state.EntityManager;
 
 public class TestStreamer {
 
@@ -53,14 +53,14 @@ public class TestStreamer {
 	@Test
 	public void productStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.initiate(as("p1"), user1);
+		Product prod1 = tracker.found(as("p1"), user1);
 		assertConsistentStream(new ProductStreamer(), prod1);
 	}
 
 	@Test
 	public void areaStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.initiate(as("p1"), user1);
+		Product prod1 = tracker.found(as("p1"), user1);
 		Area area1 = tracker.compart(prod1, as("area1"), user1);
 		assertConsistentStream(new AreaStreamer(), area1);
 	}
@@ -68,7 +68,7 @@ public class TestStreamer {
 	@Test
 	public void versionStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.initiate(as("p1"), user1);
+		Product prod1 = tracker.found(as("p1"), user1);
 		Version v1 = tracker.tag(prod1, as("v1"), user1);
 		assertConsistentStream(new VersionStreamer(), v1);
 	}
@@ -76,7 +76,7 @@ public class TestStreamer {
 	@Test
 	public void pollStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.initiate(as("p1"), user1);
+		Product prod1 = tracker.found(as("p1"), user1);
 		User user2 = tracker.register(as("user2"), "user2@example.com", "user2pwd", "salt");
 		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
 		assertConsistentStream(new PollStreamer(), poll1);
@@ -85,7 +85,7 @@ public class TestStreamer {
 	@Test
 	public void taskStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.initiate(as("p1"), user1);
+		Product prod1 = tracker.found(as("p1"), user1);
 		user1 = tracker.activate(user1, Tracker.md5("user1pwd"+"salt"));
 		Task task1 = tracker.reportDefect(prod1, "broken", user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentStream(new TaskStreamer(), task1);
@@ -117,6 +117,11 @@ public class TestStreamer {
 			User res = new User();
 			res.name = user;
 			return res;
+		}
+		
+		@Override
+		public Site site(Name user, Name site) {
+			return new Site(user, site, "");
 		}
 
 		@Override
@@ -167,6 +172,12 @@ public class TestStreamer {
 		public void update(User user) {
 			// TODO Auto-generated method stub
 
+		}
+		
+		@Override
+		public void update(Site site) {
+			// TODO Auto-generated method stub
+			
 		}
 
 		@Override

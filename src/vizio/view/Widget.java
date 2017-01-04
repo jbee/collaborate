@@ -41,7 +41,7 @@ public class Widget {
 		String range = section(others, '{', '}');
 		String orders = section(others, '<', '>');
 		String scheme = section(others, '#', '#');
-		Coloring coloring = scheme.isEmpty() ? Coloring.temp : Coloring.valueOf(scheme);
+		Coloring coloring = scheme.isEmpty() ? Coloring.heat : Coloring.valueOf(scheme);
 		return new Widget(caption, coloring, parseQuery(range, filters, orders));
 	}
 

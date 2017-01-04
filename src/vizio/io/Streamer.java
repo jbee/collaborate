@@ -9,6 +9,7 @@ import vizio.Date;
 import vizio.IDN;
 import vizio.Name;
 import vizio.Names;
+import vizio.state.EntityManager;
 
 public interface Streamer<T> {
 
