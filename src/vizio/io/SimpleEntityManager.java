@@ -23,6 +23,7 @@ import vizio.Status;
 import vizio.Task;
 import vizio.User;
 import vizio.Version;
+import vizio.engine.EntityManager;
 import vizio.io.Criteria.Property;
 import vizio.io.stream.AreaStreamer;
 import vizio.io.stream.PollStreamer;
@@ -31,7 +32,6 @@ import vizio.io.stream.SiteStreamer;
 import vizio.io.stream.TaskStreamer;
 import vizio.io.stream.UserStreamer;
 import vizio.io.stream.VersionStreamer;
-import vizio.state.EntityManager;
 
 /**
  * Paths:

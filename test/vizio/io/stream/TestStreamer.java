@@ -20,12 +20,12 @@ import vizio.Poll.Matter;
 import vizio.Product;
 import vizio.Site;
 import vizio.Task;
-import vizio.Tracker;
 import vizio.User;
 import vizio.Version;
+import vizio.engine.EntityManager;
+import vizio.engine.Tracker;
 import vizio.io.Criteria;
 import vizio.io.Streamer;
-import vizio.state.EntityManager;
 
 public class TestStreamer {
 

@@ -1,4 +1,4 @@
-package vizio;
+package vizio.engine;
 
 import static java.lang.Math.min;
 import static vizio.Date.date;
@@ -20,6 +20,23 @@ import static vizio.Status.unsolved;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
+import vizio.Area;
+import vizio.Clock;
+import vizio.Date;
+import vizio.IDN;
+import vizio.Limits;
+import vizio.Motive;
+import vizio.Name;
+import vizio.Names;
+import vizio.Outcome;
+import vizio.Poll;
+import vizio.Product;
+import vizio.Purpose;
+import vizio.Site;
+import vizio.Status;
+import vizio.Task;
+import vizio.User;
+import vizio.Version;
 import vizio.Poll.Matter;
 
 /**

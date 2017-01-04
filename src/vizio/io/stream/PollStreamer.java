@@ -8,8 +8,8 @@ import vizio.IDN;
 import vizio.Outcome;
 import vizio.Poll;
 import vizio.Poll.Matter;
+import vizio.engine.EntityManager;
 import vizio.io.Streamer;
-import vizio.state.EntityManager;
 
 public class PollStreamer implements Streamer<Poll> {
 

@@ -9,6 +9,8 @@ import static vizio.Name.as;
 
 import org.junit.Test;
 
+import vizio.engine.Tracker;
+
 public class TestTracker {
 
 	private long now = System.currentTimeMillis();

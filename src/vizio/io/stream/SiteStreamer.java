@@ -6,8 +6,8 @@ import java.io.IOException;
 
 import vizio.Name;
 import vizio.Site;
+import vizio.engine.EntityManager;
 import vizio.io.Streamer;
-import vizio.state.EntityManager;
 
 public class SiteStreamer implements Streamer<Site> {
 
