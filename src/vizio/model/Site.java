@@ -13,4 +13,8 @@ public class Site extends Entity<Site> {
 		this.template = template;
 	}
 
+	@Override
+	public ID uniqueID() {
+		return ID.id(Type.Site, owner, name);
+	}
 }

@@ -3,22 +3,19 @@ package vizio.model;
 import static java.lang.Math.max;
 import static vizio.model.Date.date;
 
-import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
-
 public class User extends Entity<User> {
 
-	private static final int MINIMUM_WATCHES = 20;
+	private static final int MINIMUM_WATCH_LIMIT = 20;
 
 	public Name name;
 	// account
 	public String email;
 	public byte[] md5;
 	public boolean activated;
+	
 	// user data
 	public Names sites;
-	public int watches;
-	/* merged properties ...*/
+	public int watches; // n tasks
 
 	// activity statistics
 	public long millisLastActive;
@@ -26,11 +23,16 @@ public class User extends Entity<User> {
 	public int absolved;
 	public int resolved;
 	public int dissolved;
-	// supporting tasks
+	
+	// voting tasks
 	public long millisEmphasised;
 	public int emphasisedToday;
-	//TODO maybe add a lock? user reporting to much are locked ...
 
+	@Override
+	public ID uniqueID() {
+		return ID.id(Type.User, name);
+	}
+	
 	public boolean isAnonymous() {
 		return name.isEmail();
 	}
@@ -63,7 +65,7 @@ public class User extends Entity<User> {
 	}
 
 	public boolean canWatch() {
-		return watches < MINIMUM_WATCHES + (xp / 10);
+		return watches < MINIMUM_WATCH_LIMIT + (xp / 10);
 	}
 
 	@Override

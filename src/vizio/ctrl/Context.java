@@ -1,5 +1,6 @@
 package vizio.ctrl;
 
+import vizio.model.Entity;
 import vizio.model.IDN;
 import vizio.model.Name;
 
@@ -13,7 +14,7 @@ public class Context {
 	public Name currentUser;
 
 	public Action action;
-	public ContentType type;
+	public Entity.Type type;
 
 	// SUBSTITUTION DATA (parameters that have been extracted from inputs like the URL)
 	public IDN serial;

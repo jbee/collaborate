@@ -1,7 +1,5 @@
 package vizio.model;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * A {@link Product}'s "counter" change when new {@link Task}s for that product
  * are created.
@@ -38,4 +36,8 @@ public class Product extends Entity<Product> {
 
 	public int tasks;
 
+	@Override
+	public ID uniqueID() {
+		return ID.id(Type.Product, name);
+	}
 }

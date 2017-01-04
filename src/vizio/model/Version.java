@@ -18,4 +18,8 @@ public class Version extends Entity<Version> {
 		return changeset.count() > 0;
 	}
 
+	@Override
+	public ID uniqueID() {
+		return ID.id(Type.Version, product, name);
+	}
 }

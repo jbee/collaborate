@@ -25,6 +25,6 @@ public final class IDN implements Comparable<IDN> {
 	}
 	
 	public Name asName() {
-		return Name.as("no_"+num);
+		return Name.as(String.valueOf(num));
 	}
 }

@@ -3,7 +3,7 @@ package vizio.model;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-public class Task extends Entity<Task> implements Comparable<Task> {
+public class Task extends Entity<Task> {
 
 	// creating a task
 	public Product product;
@@ -40,6 +40,11 @@ public class Task extends Entity<Task> implements Comparable<Task> {
 	public Date end;
 	public String conclusion;
 
+	@Override
+	public ID uniqueID() {
+		return ID.id(Type.Task, product.name, id.asName());
+	}
+	
 	/**
 	 * {@link Heat} is aggregated temperature. When {@link User} vote on
 	 * {@link Task}s the task receives some heat. The actual amount depends on
@@ -73,16 +78,6 @@ public class Task extends Entity<Task> implements Comparable<Task> {
 
 	public boolean canBeEmphasisedBy(Name user) {
 		return (!area.exclusive || area.maintainers.contains(user));
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof Task && id.num == ((Task)obj).id.num;
-	}
-
-	@Override
-	public int compareTo(Task other) {
-		return Integer.compare(id.num, other.id.num);
 	}
 
 	@Override

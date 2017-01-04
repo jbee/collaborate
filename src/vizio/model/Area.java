@@ -1,7 +1,5 @@
 package vizio.model;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 /**
  * The {@link Area} of {@link Task} can only be assigned by {@link #maintainers}
  *
@@ -40,6 +38,12 @@ public class Area extends Entity<Area> {
 	 */
 	public int tasks;
 	
+
+	/*
+	 * An example for an entrance area would be RFCs. The area would be named "RFC".
+	 * Tasks created would become "RFC-1" and so on.
+	 */
+	
 	/**
 	 * Open areas allow everyone to report new tasks.
 	 * 
@@ -51,8 +55,8 @@ public class Area extends Entity<Area> {
 		return name.isUnknown() || entrance;
 	}
 
-	/*
-	 * An example for an entrance area would be RFCs. The area would be named "RFC".
-	 * Tasks created would become "RFC-1" and so on.
-	 */
+	@Override
+	public ID uniqueID() {
+		return ID.id(Type.Area, product, name);
+	}
 }

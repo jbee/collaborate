@@ -21,6 +21,11 @@ public class Poll extends Entity<Poll> {
 	public Date end;
 	public Outcome outcome;
 
+	@Override
+	public ID uniqueID() {
+		return ID.id(Type.Poll, area.product, area.name, serial.asName());
+	}
+	
 	public boolean canVote(Name voter) {
 		return area.maintainers.contains(voter) && !affected.name.equalTo(voter) && !isSettled();
 	}
