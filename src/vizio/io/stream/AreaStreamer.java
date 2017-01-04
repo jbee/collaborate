@@ -20,8 +20,8 @@ public class AreaStreamer implements Streamer<Area> {
 		a.name = Streamer.readName(in);
 		a.basis = Streamer.readName(in);
 		a.maintainers = Streamer.readNames(in);
-		a.polls = new AtomicInteger(in.readInt());
-		a.tasks = new AtomicInteger(in.readInt());
+		a.polls = in.readInt();
+		a.tasks = in.readInt();
 		a.exclusive = in.readBoolean();
 		a.entrance = in.readBoolean();
 		a.motive = Streamer.readEnum(Motive.class, in);
@@ -35,8 +35,8 @@ public class AreaStreamer implements Streamer<Area> {
 		Streamer.writeName(a.name, out);
 		Streamer.writeName(a.basis, out);
 		Streamer.writeNames(a.maintainers, out);
-		out.writeInt(a.polls.get());
-		out.writeInt(a.tasks.get());
+		out.writeInt(a.polls);
+		out.writeInt(a.tasks);
 		out.writeBoolean(a.exclusive);
 		out.writeBoolean(a.entrance);
 		Streamer.writeEnum(a.motive, out);

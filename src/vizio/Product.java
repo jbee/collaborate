@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author jan
  */
-public class Product {
+public class Product extends Entity<Product> {
 
 	public Name name;
 	/**
@@ -36,6 +36,6 @@ public class Product {
 	 */
 	public Version somewhen;
 
-	public AtomicInteger tasks;
+	public int tasks;
 
 }

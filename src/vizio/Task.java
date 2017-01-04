@@ -3,7 +3,7 @@ package vizio;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-public class Task implements Comparable<Task> {
+public class Task extends Entity<Task> implements Comparable<Task> {
 
 	// creating a task
 	public Product product;
@@ -27,9 +27,9 @@ public class Task implements Comparable<Task> {
 	/**
 	 * The {@link Version} is usually the (already released) version that is the
 	 * basis of a modification. Such a modification is later released under one
-	 * or more version that include the base version in their change-set. Only
-	 * for such release tasks this field holds a now version that isn't the base
-	 * the the newly released version.
+	 * or more version that include this base version in their change-set. Only
+	 * for such release tasks this field holds a new version that isn't the base
+	 * but the newly released version.
 	 */
 	public Version base;
 	public Names enlistedBy;
@@ -71,7 +71,7 @@ public class Task implements Comparable<Task> {
 		return !exploitable || reporter.equalTo(user) || area.maintainers.contains(user);
 	}
 
-	public boolean canBeStressedBy(Name user) {
+	public boolean canBeEmphasisedBy(Name user) {
 		return (!area.exclusive || area.maintainers.contains(user));
 	}
 

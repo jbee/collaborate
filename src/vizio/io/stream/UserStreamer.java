@@ -22,21 +22,15 @@ public class UserStreamer implements Streamer<User> {
 		in.read(md5);
 		u.md5 = md5;
 		u.activated = in.readBoolean();
-		int sites = in.readUnsignedByte();
-		u.sites = new Site[sites];
-		for (int i = 0; i < sites; i++) {
-			Name name = Streamer.readName(in);
-			String template = Streamer.readString(in);
-			u.sites[i] = new Site(u.name, name, template);
-		}
-		u.watches = new AtomicInteger(in.readInt());
+		u.sites = Streamer.readNames(in);
+		u.watches = in.readInt();
 		u.millisLastActive = in.readLong();
 		u.xp = in.readInt();
 		u.absolved = in.readInt();
 		u.resolved = in.readInt();
 		u.dissolved = in.readInt();
-		u.millisStressed = in.readLong();
-		u.stressedToday = in.readInt();
+		u.millisEmphasised = in.readLong();
+		u.emphasisedToday = in.readInt();
 		return u;
 	}
 
@@ -47,20 +41,15 @@ public class UserStreamer implements Streamer<User> {
 		out.writeShort(u.md5.length);
 		out.write(u.md5);
 		out.writeBoolean(u.activated);
-		out.writeByte(u.sites.length);
-		for (int i = 0; i < u.sites.length; i++) {
-			Site s = u.sites[i];
-			Streamer.writeName(s.name, out);
-			Streamer.writeString(s.template, out);
-		}
-		out.writeInt(u.watches.get());
+		Streamer.writeNames(u.sites, out);
+		out.writeInt(u.watches);
 		out.writeLong(u.millisLastActive);
 		out.writeInt(u.xp);
 		out.writeInt(u.absolved);
 		out.writeInt(u.resolved);
 		out.writeInt(u.dissolved);
-		out.writeLong(u.millisStressed);
-		out.writeInt(u.stressedToday);
+		out.writeLong(u.millisEmphasised);
+		out.writeInt(u.emphasisedToday);
 	}
 
 }

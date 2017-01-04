@@ -18,6 +18,7 @@ import vizio.Name;
 import vizio.Poll;
 import vizio.Poll.Matter;
 import vizio.Product;
+import vizio.Site;
 import vizio.Task;
 import vizio.Tracker;
 import vizio.User;
@@ -29,7 +30,7 @@ import vizio.io.Streamer;
 public class TestStreamer {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(TestStreamer.this::tick, (l,n) -> true);
+	private Tracker tracker = new Tracker(TestStreamer.this::tick, (l) -> true);
 
 	private long tick() {
 		now += 60000;
@@ -40,6 +41,13 @@ public class TestStreamer {
 	public void userStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		assertConsistentStream(new UserStreamer(), user1);
+	}
+	
+	@Test
+	public void siteStreamer() {
+		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		Site site1 = tracker.launch(as("my-tasks"), "foobar", user1);
+		assertConsistentStream(new SiteStreamer(), site1);
 	}
 
 	@Test
@@ -78,7 +86,7 @@ public class TestStreamer {
 	public void taskStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Product prod1 = tracker.initiate(as("p1"), user1);
-		tracker.activate(user1, Tracker.md5("user1pwd"+"salt"));
+		user1 = tracker.activate(user1, Tracker.md5("user1pwd"+"salt"));
 		Task task1 = tracker.reportDefect(prod1, "broken", user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentStream(new TaskStreamer(), task1);
 	}

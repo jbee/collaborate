@@ -23,4 +23,8 @@ public final class IDN implements Comparable<IDN> {
 	public int compareTo(IDN other) {
 		return Integer.compare(num, other.num);
 	}
+	
+	public Name asName() {
+		return Name.as("no_"+num);
+	}
 }

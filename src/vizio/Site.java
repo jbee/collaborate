@@ -1,9 +1,9 @@
 package vizio;
 
-public class Site {
+public class Site extends Entity<Site> {
 
-	public Name owner;
 	public Name name; // of the site itself
+	public Name owner;
 	public String template;
 
 	public Site(Name owner, Name name, String template) {

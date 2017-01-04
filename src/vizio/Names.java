@@ -35,34 +35,36 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 		return -1;
 	}
 
-	public void remove(Name user) {
+	public Names remove(Name user) {
 		int idx = indexOf(user);
 		if (idx >= 0) {
 			if (idx == 0) {
-				names = copyOfRange(names, 1, names.length);
-			} else {
-				Name[] tmp = copyOf(names, names.length-1);
-				if (idx < names.length-1) {
-					arraycopy(names, idx+1, tmp, idx, names.length-idx-1);
-				}
-				names=tmp;
+				return new Names(copyOfRange(names, 1, names.length));
 			}
+			Name[] tmp = copyOf(names, names.length-1);
+			if (idx < names.length-1) {
+				arraycopy(names, idx+1, tmp, idx, names.length-idx-1);
+			}
+			return new Names(tmp);
 		}
+		return this;
 	}
 
-	public void remove(User user) {
-		remove(user.name);
+	public Names remove(User user) {
+		return remove(user.name);
 	}
 
-	public void add(Name user) {
+	public Names add(Name user) {
 		if (indexOf(user) < 0) {
-			names = copyOf(names, names.length+1);
-			names[names.length-1] = user;
+			Name[] res = copyOf(names, names.length+1);
+			res[names.length] = user;
+			return new Names(res);
 		}
+		return this;
 	}
 
-	public void add(User user) {
-		add(user.name);
+	public Names add(User user) {
+		return add(user.name);
 	}
 
 	public boolean contains(User user) {

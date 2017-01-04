@@ -6,7 +6,6 @@ import static vizio.Motive.defect;
 import static vizio.Motive.intention;
 import static vizio.Motive.proposal;
 import static vizio.Name.ORIGIN;
-import static vizio.Name.UNKNOWN;
 import static vizio.Name.limit;
 import static vizio.Outcome.consent;
 import static vizio.Outcome.dissent;
@@ -19,7 +18,6 @@ import static vizio.Status.unsolved;
 
 import java.security.MessageDigest;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import vizio.Poll.Matter;
 
@@ -42,26 +40,27 @@ public final class Tracker {
 	/* Users + Accounts */
 
 	public User register(Name name, String email, String unsaltedMd5, String salt) {
-		expectExternal(name);
-		long now = clock.time();
-		approachNewUser(now);
-		approachNewEntity(now);
+		expectRegular(name);
+		stressNewUser();
 		User user = new User();
 		user.name = name;
 		user.email = email;
 		user.md5 = md5(unsaltedMd5+salt); // also acts as activationKey
-		user.sites = new Site[0];
-		user.watches = new AtomicInteger(0);
+		user.sites = Names.empty();
+		user.watches = 0;
 		touch(user);
 		return user;
 	}
 
-	public void activate(User user, byte[] activationKey) {
+	public User activate(User user, byte[] activationKey) {
 		expectNotActivated(user);
 		if (!Arrays.equals(user.md5, activationKey)) {
 			denyTransition("Wrong activation key");
 		}
+		stressDoActivate();
+		user = user.clone();
 		user.activated = true;
+		return user;
 	}
 
 	public void login(User user, String plainPass, String salt) {
@@ -83,21 +82,15 @@ public final class Tracker {
 		user.millisLastActive = clock.time();
 	}
 
-	public static boolean canView(User user, Task task) {
-		return !task.exploitable || user.name.equalTo(task.reporter) || task.area.maintainers.contains(user);
-	}
-
 	/* Products */
 
 	public Product initiate(Name product, User originator) {
 		expectRegistered(originator);
-		expectExternal(product);
-		long now = clock.time();
-		approachNewProduct(now);
-		approachNewEntity(now);
+		expectRegular(product);
+		stressNewProduct(originator);
 		Product p = new Product();
 		p.name = product;
-		p.tasks = new AtomicInteger(0);
+		p.tasks = 0;
 		p.origin = compart(p.name, Name.ORIGIN, originator);
 		p.somewhere = compart(p.name, Name.UNKNOWN, originator);
 		p.somewhen = tag(p, Name.UNKNOWN, originator);
@@ -131,30 +124,34 @@ public final class Tracker {
 
 	private Area compart(Name product, Name area, User originator) {
 		expectRegistered(originator);
-		expectExternal(area);
-		long now = clock.time();
-		approachNewArea(product, now);
-		approachNewEntity(now);
+		if (area.isEditable()) {
+			expectRegular(area);
+		}
+		stressNewArea(product, originator);
 		Area a = new Area();
 		a.name = area;
 		a.product = product;
 		a.maintainers=new Names(originator.name);
-		a.tasks = new AtomicInteger(0);
-		a.polls = new AtomicInteger(0);
+		a.tasks = 0;
+		a.polls = 0;
 		touch(originator);
 		return a;
 	}
 
-	public void leave(Area area, User maintainer) {
+	public Area leave(Area area, User maintainer) {
 		if (area.maintainers.contains(maintainer)) {
-			area.maintainers.remove(maintainer);
+			stressUser(maintainer);
+			area = area.clone();
+			area.maintainers = area.maintainers.remove(maintainer);
 			touch(maintainer);
 			// NB: votes cannot 'get stuck' as voter can change their vote until a vote is settled
 		}
+		return area;
 	}
 
-	public void relocate(Task task, Area to, User originator) {
+	public Task relocate(Task task, Area to, User originator) {
 		expectNoEntrance(task.area);
+		stressDoRelocate(task, to, originator);
 		if (task.area.name.isUnknown()) {
 			expectMaintainer(to, originator); // pull from ~
 		} else {
@@ -163,19 +160,21 @@ public final class Tracker {
 				expectMaintainer(to, originator); // to some else than ~
 			}
 		}
+		task = task.clone();
 		task.area = to;
 		touch(originator);
+		return task;
 	}
 
 	/* Versions */
 
 	public Version tag(Product product, Name version, User originator) {
 		expectRegistered(originator);
-		expectExternal(version);
+		if (version.isEditable()) {
+			expectRegular(version);
+		}
 		expectOriginMaintainer(product, originator);
-		long now = clock.time();
-		approachNewVersion(product, now);
-		approachNewEntity(now);
+		stressNewVersion(product, originator);
 		Version v = new Version();
 		v.product = product.name;
 		v.name = version;
@@ -211,26 +210,32 @@ public final class Tracker {
 		task.cause = cause.id;
 		task.origin = cause.origin != null ? cause.origin : cause.id;
 		if (changeset != null && !changeset.isEmpty()) {
-			expectNoChangeset(task.base);
+			expectNotYetPublished(task.base);
 			task.changeset = changeset;
 		}
 		return task;
 	}
 
 	private Task report(Product product, Motive motive, Purpose purpose, String gist, User reporter, Area area, Version version, boolean exploitable) {
-		if (!area.name.isUnknown() && !area.entrance) { // NB. unknown is not an entrance since it does not dictate motive and goal
+		if (!area.isOpen()) {
 			expectMaintainer(area, reporter);
 		}
 		expectCanReport(reporter);
-		long now = clock.time();
-		approachNewTask(product, reporter, now);
+		stressNewTask(product, reporter);
 		Task task = new Task();
-		task.id = new IDN(product.tasks.incrementAndGet());
-		task.product = product;
-		task.area = area;
+		task.product = product.clone();
+		task.product.tasks++;
+		task.id = new IDN(task.product.tasks);
+		if (area.entrance) {
+			task.area = area.clone();
+			task.area.tasks++;
+			task.serial=new IDN(task.area.tasks);
+		} else {
+			task.area = area;
+		}
 		task.base = version;
 		task.reporter = reporter.name;
-		task.start = date(now);
+		task.start = date(clock.time());
 		task.gist = gist;
 		task.motive = motive;
 		task.purpose = purpose;
@@ -240,77 +245,81 @@ public final class Tracker {
 		task.approachedBy = Names.empty();
 		task.watchedBy = new Names(reporter.name);
 		task.changeset = Names.empty();
-		if (area.entrance) {
-			task.serial=new IDN(area.tasks.incrementAndGet());
-		}
 		touch(reporter);
 		return task;
 	}
 
 	/* task resolution */
 
-	public void absolve(Task task, User user, String conclusion) {
+	public Task absolve(Task task, User by, String conclusion) {
 		if (!task.area.name.isUnknown()) { // no change is a resolution even if no area has been specified before
-			expectMaintainer(task.area, user);
+			expectMaintainer(task.area, by);
 		}
-		solve(task, user, conclusion);
+		task = solve(task, by, conclusion);
 		task.status = absolved;
-		user.absolved++;
-		touch(user);
+		by.absolved++;
+		touch(by);
+		return task;
 	}
 
-	public void resolve(Task task, User user, String conclusion) {
-		expectMaintainer(task.area, user);
-		solve(task, user, conclusion);
+	public Task resolve(Task task, User by, String conclusion) {
+		expectMaintainer(task.area, by);
+		task = solve(task, by, conclusion);
 		task.status = resolved;
-		user.xp += 2;
-		user.resolved++;
-		touch(user);
-		if (!task.changeset.isEmpty()) { // publishing is something that is resolved
+		by.xp += 2;
+		by.resolved++;
+		touch(by);
+		if (!task.changeset.isEmpty()) { // publishing is something that is resolved when its done
+			task.base = task.base.clone();
 			task.base.changeset = task.changeset;
 		}
+		return task;
 	}
 
-	public void dissolve(Task task, User user, String conclusion) {
-		expectMaintainer(task.area, user);
+	public Task dissolve(Task task, User by, String conclusion) {
+		expectMaintainer(task.area, by);
 		expectUnsolved(task);
-		solve(task, user, conclusion);
+		task = solve(task, by, conclusion);
 		task.status = dissolved;
-		user.xp += 5;
-		user.dissolved++;
-		touch(user);
+		by.xp += 5;
+		by.dissolved++;
+		touch(by);
+		return task;
 	}
 
-	private void solve(Task task, User user, String conclusion) {
+	private Task solve(Task task, User by, String conclusion) {
 		expectUnsolved(task);
-		approchSolution(task, user, clock.time());
-		task.solver = user.name;
+		stressDoSolve(task, by);
+		task = task.clone();
+		task.solver = by.name;
 		task.end = date(clock.time());
 		task.conclusion = conclusion;
+		return task;
 	}
 
 	/* User voting */
 
-	public void stress(Task task, User voter) {
+	public Task emphasise(Task task, User voter) {
 		long now = clock.time();
-		if (voter.canStress(now) && task.canBeStressedBy(voter.name)) {
-			voter.stressed(now);
+		if (voter.canEmphasise(now) && task.canBeEmphasisedBy(voter.name)) {
+			voter.emphasised(now);
+			task = task.clone();
 			task.heatUp(date(now));
 			touch(voter);
 		}
+		return task;
 	}
 
 	public Poll poll(Matter matter, Area area, User initiator, User affected) {
 		if (matter != participation) {
 			expectMaintainer(area, initiator);
 		}
-		long now = clock.time();
-		approachNewPoll(area, initiator, now);
-		approachNewEntity(now);
+		stressNewPoll(area, initiator);
 		Poll poll = new Poll();
-		poll.serial = new IDN(area.polls.incrementAndGet());
+		poll.area = area.clone();
+		poll.area.polls++;
+		poll.serial = new IDN(poll.area.polls);
 		poll.matter = matter;
-		poll.area = area;
 		poll.initiator = initiator.name;
 		poll.affected = affected;
 		poll.start = date(clock.time());
@@ -322,24 +331,34 @@ public final class Tracker {
 		return poll;
 	}
 
-	public void consent(Poll poll, User voter) {
-		vote(poll, voter, poll.dissenting, poll.consenting);
+	public Poll consent(Poll poll, User voter) {
+		return vote(poll, voter, true);
 	}
 
-	public void dissent(Poll poll, User voter) {
-		vote(poll, voter, poll.consenting, poll.dissenting);
+	public Poll dissent(Poll poll, User voter) {
+		return vote(poll, voter, false);
 	}
 
-	private void vote(Poll poll, User voter, Names removed, Names added) {
-		if (poll.canVote(voter.name)) {
-			approachNewVote(poll, voter, clock.time());
-			removed.remove(voter);
-			added.add(voter);
+	private Poll vote(Poll poll, User voter, boolean consent) {
+		if (poll.canVote(voter.name) && (
+				consent && !poll.consenting.contains(voter.name)
+			|| !consent && !poll.dissenting.contains(voter.name))) {
+			stressDoVote(poll, voter);
+			poll = poll.clone();
+			if (consent) {
+				poll.consenting = poll.consenting.add(voter);
+				poll.dissenting = poll.dissenting.remove(voter);
+			} else {
+				poll.dissenting = poll.dissenting.add(voter);
+				poll.consenting = poll.consenting.remove(voter);				
+			}
 			touch(voter);
 			if (poll.isSettled()) {
+				poll.area = poll.area.clone();
 				settle(poll);
 			}
 		}
+		return poll;
 	}
 
 	private void settle(Poll poll) {
@@ -354,56 +373,74 @@ public final class Tracker {
 		case exclusion:
 			poll.area.exclusive=true; break;
 		case resignation:
-			poll.area.maintainers.remove(poll.affected); break;
+			poll.area.maintainers = poll.area.maintainers.remove(poll.affected); break;
 		case participation:
-			poll.area.maintainers.add(poll.affected);
+			poll.area.maintainers = poll.area.maintainers.add(poll.affected);
 		}
 	}
 
-	/* A user's task queue */
+	/* A user's task queues */
 
-	public void enlist(Task task, User user) {
+	public Task enlist(Task task, User user) {
 		expectCanBeInvolved(user, task);
-		approachQueue(task, user, clock.time());
-		task.approachedBy.remove(user);
-		task.enlistedBy.add(user);
-		touch(user);
+		if (task.approachedBy.contains(user) || !task.enlistedBy.contains(user)) {
+			stressDoList(task, user);
+			task = task.clone();
+			task.approachedBy = task.approachedBy.remove(user);
+			task.enlistedBy = task.enlistedBy.add(user);
+			touch(user);
+		}
+		return task;
 	}
 
-	public void abandon(Task task, User user) {
+	public Task abandon(Task task, User user) {
 		expectCanBeInvolved(user, task);
-		approachQueue(task, user, clock.time());
-		task.enlistedBy.remove(user);
-		task.approachedBy.remove(user);
-		touch(user);
+		if (task.enlistedBy.contains(user) || task.approachedBy.contains(user)) {
+			stressDoList(task, user);
+			task = task.clone();
+			task.enlistedBy = task.enlistedBy.remove(user);
+			task.approachedBy = task.approachedBy.remove(user);
+			touch(user);
+		}
+		return task;
 	}
 
-	public void approach(Task task, User user) {
+	public Task approach(Task task, User user) {
 		expectCanBeInvolved(user, task);
 		expectMaintainer(task.area, user);
-		approachQueue(task, user, clock.time());
-		task.approachedBy.add(user);
-		task.enlistedBy.remove(user);
-		touch(user);
+		if (!task.approachedBy.contains(user) || task.enlistedBy.contains(user)) {
+			stressDoList(task, user);
+			task = task.clone();
+			task.approachedBy = task.approachedBy.add(user);
+			task.enlistedBy = task.enlistedBy.remove(user);
+			touch(user);
+		}
+		return task;
 	}
 
 	/* A user's watch list */
 
-	public void watch(Task task, User user) {
+	public Task watch(Task task, User user) {
+		expectCanWatch(user);
 		if (!task.watchedBy.contains(user)) {
-			expectCanWatch(user);
-			task.watchedBy.add(user);
-			user.watches.incrementAndGet();
+			stressDoList(task, user);
+			task = task.clone();
+			task.watchedBy = task.watchedBy.add(user);
+			user.watches++;
 			touch(user);
 		}
+		return task;
 	}
 
-	public void unwatch(Task task, User user) {
+	public Task unwatch(Task task, User user) {
 		if (task.watchedBy.contains(user)) {
-			task.watchedBy.remove(user);
-			user.watches.decrementAndGet();
+			stressDoList(task, user);
+			task = task.clone();
+			task.watchedBy = task.watchedBy.remove(user);
+			user.watches--;
 			touch(user);
 		}
+		return task;
 	}
 
 	/* A user's sites */
@@ -411,78 +448,134 @@ public final class Tracker {
 	public Site launch(Name site, String template, User owner) {
 		expectNoUserSiteYet(site, owner);
 		expectCanHaveMoreSites(owner);
+		stessNewSite(owner);
 		Site s = new Site(owner.name, site, template);
-		owner.sites = Arrays.copyOf(owner.sites, owner.sites.length+1);
-		owner.sites[owner.sites.length-1] = s;
+		owner.sites = owner.sites.add(site);
 		touch(owner);
 		return s;
 	}
 
-	public void update(Site site, String template, User initiator) {
-		expectOwner(site, initiator);
+	public Site update(Site site, String template, User owner) {
+		expectOwner(site, owner);
+		stressDoUpdate(site, owner);
+		site = site.clone();
 		site.template = template;
-		touch(initiator);
+		touch(owner);
+		return site;
 	}
 
 	/* limit checks */
 	
-	private void approachNewEntity(long now) {
-		approachLimit(limit("x", ORIGIN), now, "Too many new entities.");
-	}
-
-	private void approachNewUser(long now) {
-		approachLimit(limit("user", ORIGIN), now,"Too many users registered lately.");
-	}
-
-	private void approachNewProduct(long now) {
-		approachLimit(limit("product", ORIGIN), now, "Too many new products.");
-	}
-
-	private void approachNewArea(Name product, long now) {
-		approachLimit(limit("area@product", product), now, "Too many new areas for product: "+product);
-		approachLimit(limit("area", ORIGIN), now, "Too many new areas.");
-	}
-
-	private void approachNewVersion(Product product, long now) {
-		approachLimit(limit("version@product", product.name), now, "Too many new versions for product: "+product.name);
-		approachLimit(limit("version", ORIGIN), now, "Too many new versions.");
-	}
-
-	private void approachNewTask(Product product, User reporter, long now) {
-		if (reporter.name.isNonEditable()) {
-			approachLimit(limit("task@user", UNKNOWN), now, "Too many anonymous task reports.");
-		} else {
-			approachLimit(limit("task@user", reporter.name), now, "Too many new task by user: "+reporter.name);
-		}
-		approachLimit(limit("task@product", product.name), now, "Too many new task for product: "+product.name);
-	}
-
-	private void approachNewPoll(Area area, User initiator, long now) {
-		approachLimit(limit("poll@user", initiator.name), now, "Too many new polls by user: "+initiator.name);
-		approachLimit(limit("poll@area", area.name), now, "Too many new polls in area: "+area.name);
-		approachLimit(limit("poll", ORIGIN), now, "Too many new polls.");
-	}
-
-	private void approachNewVote(Poll poll, User voter, long now) {
-		approachLimit(limit("vote@user", voter.name), now, "Too many recent votes by user: "+voter.name);
-		approachLimit(limit("vote@poll", voter.name), now, "Too many recent votes in poll: "+poll.matter+" "+poll.affected);
-		approachLimit(limit("vote", ORIGIN), now, "Too many votes recently.");
-	}
-
-	private void approachQueue(Task task, User user, long now) {
-		approachLimit(limit("queue@user-", user.name), now, "Too many queue activities by user: "+user.name);
-		approachLimit(limit("queue@task", Name.as("no-"+task.id)), now, "Too many queue activities for task: "+task.id);
-		approachLimit(limit("queue", ORIGIN), now, "Too many queue activities recently.");
+	private void stressAction() {
+		stressLimit(limit("action", ORIGIN), "Too many actions lately.");
 	}
 	
-	private void approchSolution(Task task, User user, long now) {
-		approachLimit(limit("solution@user-", user.name), now, "Too many solution activities by user: "+user.name);
-		approachLimit(limit("solution@task", Name.as("no-"+task.id)), now, "Too many solution activities for task: "+task.id);
-		approachLimit(limit("solution", ORIGIN), now, "Too many solution activities recently.");
+	private void stressNewContent() {
+		stressLimit(limit("content", ORIGIN), "Too many new entities.");
 	}
 
-	private void approachLimit(Name limit, long now, String error) {
-		if (!limits.approach(limit, now)) {
+	private void stressNewUser() {
+		stressLimit(limit("user", ORIGIN), "Too many users registered lately.");
+	}
+
+	private void stressUser(User reporter) {
+		stressLimit(limit("user", reporter.name), "Too many changes by user: "+reporter.name);
+	}
+
+	private void stressNewProduct(User originator) {
+		stressLimit(limit("product@user", originator.name), "Too many recent products by user: "+originator.name);
+		stressUser(originator);
+		stressLimit(limit("product", ORIGIN), "Too many new products.");
+		stressNewContent();
+	}
+
+	private void stressNewArea(Name product, User originator) {
+		stressLimit(limit("area@user", originator.name), "Too many recent areas by user: "+originator.name);
+		stressUser(originator);
+		stressLimit(limit("area@product", product), "Too many new areas for product: "+product);
+		stressLimit(limit("area", ORIGIN), "Too many new areas.");
+		stressNewContent();
+	}
+
+	private void stressNewVersion(Product product, User originator) {
+		stressLimit(limit("version@user", originator.name), "Too many recent versions by user: "+originator.name);
+		stressUser(originator);
+		stressLimit(limit("version@product", product.name), "Too many new versions for product: "+product.name);
+		stressLimit(limit("version", ORIGIN), "Too many new versions.");
+		stressNewContent();
+	}
+
+	private void stressNewTask(Product product, User reporter) {
+		stressLimit(limit("task@user", reporter.name), "Too many recent tasks by user: "+reporter.name);
+		stressUser(reporter);
+		stressLimit(limit("task@product", product.name), "Too many new task for product: "+product.name);
+		stressLimit(limit("task", ORIGIN), "Too many new tasks.");
+		stressNewContent();
+	}
+
+	private void stressNewPoll(Area area, User initiator) {
+		stressLimit(limit("poll@user", initiator.name), "Too many new polls by user: "+initiator.name);
+		stressUser(initiator);
+		stressLimit(limit("poll@area", area.name), "Too many new polls in area: "+area.name);
+		stressLimit(limit("poll", ORIGIN), "Too many new polls.");
+		stressNewContent();
+	}
+
+	private void stessNewSite(User owner) {
+		stressLimit(limit("site@user", owner.name), "Too many new sites by user: "+owner.name);
+		stressUser(owner);
+		stressLimit(limit("site", ORIGIN), "Too many new sites.");
+		stressNewContent();
+	}
+	
+	private void stressDoUpdate(Site site, User owner) {
+		stressLimit(limit("update@user", owner.name), "Too many recent site updates by user: "+owner.name);
+		stressUser(owner);
+		stressLimit(limit("update", site.name), "Too many site updates for site: "+site.name);
+		stressLimit(limit("update", ORIGIN), "Too many site updates recently.");
+		stressAction();		
+	}
+
+	private void stressDoRelocate(Task task, Area to, User originator) {
+		stressLimit(limit("move@user", originator.name), "Too many recent relocations by user: "+originator.name);
+		stressUser(originator);
+		stressLimit(limit("move@area", to.name), "Too many relocations for area: "+to.name);
+		stressLimit(limit("move@task", task.id.asName()), "Too many queue activities for task: "+task.id);
+		stressLimit(limit("move", ORIGIN), "Too many relocations recently.");
+		stressAction();
+	}
+
+	private void stressDoVote(Poll poll, User voter) {
+		stressLimit(limit("vote@user", voter.name), "Too many recent votes by user: "+voter.name);
+		stressUser(voter);
+		stressLimit(limit("vote@poll", voter.name), "Too many recent votes in poll: "+poll.matter+" "+poll.affected);
+		stressLimit(limit("vote", ORIGIN), "Too many votes recently.");
+		stressAction();
+	}
+
+	private void stressDoList(Task task, User user) {
+		stressLimit(limit("list@user", user.name), "Too many queue activities by user: "+user.name);
+		stressUser(user);
+		stressLimit(limit("list@task", task.id.asName()), "Too many queue activities for task: "+task.id);
+		stressLimit(limit("list", ORIGIN), "Too many queue activities recently.");
+		stressAction();
+	}
+	
+	private void stressDoSolve(Task task, User by) {
+		stressLimit(limit("solve@user", by.name), "Too many solution activities by user: "+by.name);
+		stressUser(by);
+		stressLimit(limit("solve@task", task.id.asName()), "Too many solution activities for task: "+task.id);
+		stressLimit(limit("solve", ORIGIN), "Too many solution activities recently.");
+		stressAction();
+	}
+	
+	private void stressDoActivate() {
+		stressLimit(limit("activate", ORIGIN), "Too many recent user activations.");
+		stressAction();
+	}
+
+	private void stressLimit(Name limit, String error) {
+		if (!limits.approach(limit)) {
 			denyTransition("Limit exceeded! "+error+" Please try again later!");
 		}
 	}
@@ -501,14 +594,14 @@ public final class Tracker {
 		}
 	}
 
-	private static void expectNoChangeset(Version version) {
-		if (version.changeset.count() > 0) {
+	private static void expectNotYetPublished(Version version) {
+		if (version.isPublished()) {
 			denyTransition("This version is already released");
 		}
 	}
 
 	private static void expectCanHaveMoreSites(User owner) {
-		if (owner.sites.length >= 10) {
+		if (owner.sites.count() >= 10) {
 			denyTransition("Currently each user can only have 10 sites!");
 		}
 	}
@@ -532,7 +625,7 @@ public final class Tracker {
 	}
 
 	private static void expectRegistered(User user) {
-		if (user.name.isNonEditable()) { // a anonymous user
+		if (user.isAnonymous()) {
 			denyTransition("Only registered users can create products and areas!");
 		}
 	}
@@ -561,9 +654,9 @@ public final class Tracker {
 		}
 	}
 
-	private static void expectExternal(Name name) {
-		if (name.isNonEditable()) {
-			denyTransition("A registered user's name must not use '@' and be shorter than 17 characters!");
+	private static void expectRegular(Name name) {
+		if (!name.isRegular()) {
+			denyTransition("A registered user's name must not use '@' and be shorter than 17 characters! but was: "+name);
 		}
 	}
 

@@ -38,7 +38,7 @@ public final class Name implements CharSequence, Comparable<Name> {
 		return new Name(name);
 	}
 
-	private static final Pattern VALID_NON_EDITABLE = Pattern.compile("@[a-zA-Z]+(?:(?:[-.][a-zA-Z0-9])?[a-zA-Z0-9]*)*(?:[.][*~])?");
+	private static final Pattern VALID_NON_EDITABLE = Pattern.compile("(?:[@.][-a-zA-Z0-9_]+)+(?:[.][*~])?");
 	private static final Pattern VALID_EDITABLE = Pattern.compile("[a-zA-Z]+(?:(?:[-][a-zA-Z0-9])?[a-zA-Z0-9]*)+");
 
 	public static final Name ANONYMOUS = as("@anonymous");
@@ -73,6 +73,14 @@ public final class Name implements CharSequence, Comparable<Name> {
 		}
 		throw new IllegalArgumentException("Not a valid name: "+name);
 	}
+	
+	private int indexOf(char c) {
+		for (int i = 0; i < symbols.length; i++) {
+			if (symbols[i] == c)
+				return i;
+		}
+		return -1;
+	}
 
 	/**
 	 * @return not editable names cannot be created by user but they might exist,
@@ -80,6 +88,10 @@ public final class Name implements CharSequence, Comparable<Name> {
 	 */
 	public boolean isNonEditable() {
 		return indexOf('@') == 0 || symbols.length == 1;
+	}
+	
+	public boolean isEmail() {
+		return indexOf('@') > 0;
 	}
 
 	/**
@@ -89,12 +101,8 @@ public final class Name implements CharSequence, Comparable<Name> {
 		return !isNonEditable();
 	}
 
-	private int indexOf(char c) {
-		for (int i = 0; i < symbols.length; i++) {
-			if (symbols[i] == c)
-				return i;
-		}
-		return -1;
+	public boolean isRegular() {
+		return isEditable() && !isEmail();
 	}
 
 	public boolean isUnknown() {
@@ -105,10 +113,11 @@ public final class Name implements CharSequence, Comparable<Name> {
 		return symbols[0] == '*';
 	}
 
+	/**
+	 * @return this is not the same as external, internal names like @my are ok to display while emails are not.
+	 */
 	public Name display() {
-		// this is not the same as external, internal names like @my are ok to display while emails are not.
-		int idx = indexOf('@');
-		return idx == 0 ? subSequence(1, symbols.length) : idx > 0 ? ANONYMOUS : this;
+		return isEmail() ? ANONYMOUS : this;
 	}
 
 	@Override
@@ -155,4 +164,5 @@ public final class Name implements CharSequence, Comparable<Name> {
 	public byte[] bytes() {
 		return symbols;
 	}
+
 }

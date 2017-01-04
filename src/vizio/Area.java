@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author jan
  */
-public class Area {
+public class Area extends Entity<Area> {
 
 	public Name product;
 	public Name name;
@@ -24,7 +24,7 @@ public class Area {
 	/**
 	 * {@link Poll}s have a {@link Poll#serial} that is unique within the affected {@link Area}.
 	 */
-	public AtomicInteger polls;
+	public int polls;
 
 	// entrance areas:
 	/**
@@ -38,7 +38,18 @@ public class Area {
 	/**
 	 * A per area counter that is used in case of {@link #entrance} areas.
 	 */
-	public AtomicInteger tasks;
+	public int tasks;
+	
+	/**
+	 * Open areas allow everyone to report new tasks.
+	 * 
+	 * NB. {@link Name#UNKNOWN} is not an entrance since it does not dictate motive and goal.
+	 * 
+	 * @return true in case anyone can report {@link Task}s in this {@link Area}, else false.
+	 */
+	public boolean isOpen() {
+		return name.isUnknown() || entrance;
+	}
 
 	/*
 	 * An example for an entrance area would be RFCs. The area would be named "RFC".

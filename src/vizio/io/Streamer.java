@@ -32,12 +32,12 @@ public interface Streamer<T> {
 	}
 
 	static Names readNames(DataInputStream in) throws IOException {
-		Names names = Names.empty();
 		int c = in.readUnsignedShort();
+		Name[] names = new Name[c];
 		for (int i = 0; i < c; i++) {
-			names.add(readName(in));
+			names[i] = readName(in);
 		}
-		return names;
+		return new Names(names);
 	}
 
 	static void writeName(Name name, DataOutputStream out) throws IOException {

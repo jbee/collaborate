@@ -33,7 +33,7 @@ public class DummyController implements Controller {
 
 	private void init() {
 		now = currentTimeMillis();
-		Tracker tracker = new Tracker(() -> { now += 70000; return now; }, (l,n) -> true );
+		Tracker tracker = new Tracker(() -> { now += 70000; return now; }, (l) -> true );
 		tasks = new Task[5];
 		user = tracker.register(as("tester"), "test@example.com", "xxx", "salt");
 		tracker.activate(user, user.md5);

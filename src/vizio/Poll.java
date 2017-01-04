@@ -1,6 +1,6 @@
 package vizio;
 
-public class Poll {
+public class Poll extends Entity<Poll> {
 
 	public static enum Matter {
 		// on maintainers

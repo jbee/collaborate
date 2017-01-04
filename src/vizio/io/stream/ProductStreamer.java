@@ -28,7 +28,7 @@ public class ProductStreamer implements Streamer<Product> {
 	public Product read(DataInputStream in, EntityManager em) throws IOException {
 		Product p = new Product();
 		p.name = Streamer.readName(in);
-		p.tasks = new AtomicInteger(in.readInt());
+		p.tasks = in.readInt();
 
 		p.origin = em.area(p.name, Name.ORIGIN);
 		p.somewhere = em.area(p.name, Name.UNKNOWN);
@@ -39,7 +39,7 @@ public class ProductStreamer implements Streamer<Product> {
 	@Override
 	public void write(Product p, DataOutputStream out) throws IOException {
 		Streamer.writeName(p.name, out);
-		out.writeInt(p.tasks.get());
+		out.writeInt(p.tasks);
 	}
 
 }

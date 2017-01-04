@@ -129,12 +129,12 @@ public class HTMLRenderer {
 		out.append(">");
 		out.append("<td>");
 		renderTaskLink(task);
-		if (viewer.canStress(now) && task.canBeStressedBy(viewer.name)) {
+		if (viewer.canEmphasise(now) && task.canBeEmphasisedBy(viewer.name)) {
 			renderStressLink(task);
 		}
 		out.append("</td>");
 		out.append("<td><h5>");
-		if (Tracker.canView(viewer, task)) {
+		if (task.isVisibleTo(viewer.name)) {
 			out.append(task.gist);
 		} else {
 			out.append("<i>(protected)</i>");
@@ -196,8 +196,8 @@ public class HTMLRenderer {
 	}
 
 	private void renderUserLink(Name user) {
-		if (user.isEditable()) {
-			out.append(" <a href='/user/").append(user).append("/'>").append(user).append("</a>");
+		if (user.isRegular()) {
+			out.append(" <a href='/user/").append(user.display()).append("/'>").append(user).append("</a>");
 		} else {
 			out.append(" <i>").append(user.display()).append("</i>");
 		}

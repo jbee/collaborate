@@ -8,5 +8,5 @@ public interface Limits {
 	 * @param limit the limit to use.
 	 * @return true in case the limit is not reached so the operation can be done.
 	 */
-	boolean approach(Name limit, long now);
+	boolean approach(Name limit);
 }
