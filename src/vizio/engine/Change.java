@@ -2,6 +2,7 @@ package vizio.engine;
 
 import vizio.engine.DB.Tx;
 import vizio.model.IDN;
+import vizio.model.URL;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
@@ -10,8 +11,6 @@ import vizio.model.Purpose;
 
 /**
  * All the possible changes wrapped as lazy 'action'.
- * 
- * @author jan
  */
 @FunctionalInterface
 public interface Change {
@@ -31,8 +30,8 @@ public interface Change {
 		return (t, tx) -> { tx.put(t.activate(tx.user(user), activationKey)); };
 	}
 	
-	static Change found(Name product, Name originator) {
-		return (t, tx) -> { tx.put(t.found(product, tx.user(originator))); };
+	static Change constitute(Name product, Name originator) {
+		return (t, tx) -> { tx.put(t.constitute(product, tx.user(originator))); };
 	}
 	
 	static Change open(Name product, Name entrance, Name originator, Motive motive, Purpose purpose) {
@@ -93,6 +92,10 @@ public interface Change {
 	
 	static Change emphasise(Name product, IDN task, Name voter) {
 		return (t, tx) -> { tx.put(t.emphasise(tx.task(product, task), tx.user(voter))); };
+	}
+	
+	static Change attach(Name product, IDN task, Name byUser, URL... attachments) {
+		return (t, tx) -> { tx.put(t.attach(tx.task(product, task), tx.user(byUser), attachments)); };
 	}
 	
 	static Change poll(Matter matter, Name product, Name area, Name initiator, Name affected) {

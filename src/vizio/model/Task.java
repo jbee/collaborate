@@ -24,6 +24,8 @@ public class Task extends Entity<Task> {
 	public IDN origin; // initial "impulse" that lead to this task
 	public int heat;
 	public Area area;
+	public URL[] attachments;
+
 	/**
 	 * The {@link Version} is usually the (already released) version that is the
 	 * basis of a modification. Such a modification is later released under one

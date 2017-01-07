@@ -37,7 +37,7 @@ public class DummyController implements Controller {
 		tasks = new Task[5];
 		user = tracker.register(as("tester"), "test@example.com", "xxx", "salt");
 		user = tracker.activate(user, user.md5);
-		Product product = tracker.found(as("vizio"), user);
+		Product product = tracker.constitute(as("vizio"), user);
 		Area area = tracker.compart(product, as("core"), user);
 		Area ui = tracker.compart(product, as("ui"), user);
 		Version v0_1 = tracker.tag(product, as("0.1"), user);

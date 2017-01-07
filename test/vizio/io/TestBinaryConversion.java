@@ -2,28 +2,29 @@ package vizio.io;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
-import static vizio.io.BinaryConversion.area2bin;
-import static vizio.io.BinaryConversion.bin2area;
-import static vizio.io.BinaryConversion.bin2poll;
-import static vizio.io.BinaryConversion.bin2product;
-import static vizio.io.BinaryConversion.bin2site;
-import static vizio.io.BinaryConversion.bin2task;
-import static vizio.io.BinaryConversion.bin2user;
-import static vizio.io.BinaryConversion.bin2version;
-import static vizio.io.BinaryConversion.poll2bin;
-import static vizio.io.BinaryConversion.product2bin;
-import static vizio.io.BinaryConversion.site2bin;
-import static vizio.io.BinaryConversion.task2bin;
-import static vizio.io.BinaryConversion.user2bin;
-import static vizio.io.BinaryConversion.version2bin;
+import static vizio.engine.BinaryConversion.area2bin;
+import static vizio.engine.BinaryConversion.bin2area;
+import static vizio.engine.BinaryConversion.bin2poll;
+import static vizio.engine.BinaryConversion.bin2product;
+import static vizio.engine.BinaryConversion.bin2site;
+import static vizio.engine.BinaryConversion.bin2task;
+import static vizio.engine.BinaryConversion.bin2user;
+import static vizio.engine.BinaryConversion.bin2version;
+import static vizio.engine.BinaryConversion.poll2bin;
+import static vizio.engine.BinaryConversion.product2bin;
+import static vizio.engine.BinaryConversion.site2bin;
+import static vizio.engine.BinaryConversion.task2bin;
+import static vizio.engine.BinaryConversion.user2bin;
+import static vizio.engine.BinaryConversion.version2bin;
 import static vizio.model.Name.as;
 
 import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
-import vizio.engine.Tracker;
+import vizio.engine.BinaryConversion;
 import vizio.engine.DB.Tx;
+import vizio.engine.Tracker;
 import vizio.model.Area;
 import vizio.model.Entity;
 import vizio.model.IDN;
@@ -62,14 +63,14 @@ public class TestBinaryConversion {
 	@Test
 	public void productStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.found(as("p1"), user1);
+		Product prod1 = tracker.constitute(as("p1"), user1);
 		assertConsistentConversion(bin2product, product2bin, prod1);
 	}
 
 	@Test
 	public void areaStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.found(as("p1"), user1);
+		Product prod1 = tracker.constitute(as("p1"), user1);
 		Area area1 = tracker.compart(prod1, as("area1"), user1);
 		assertConsistentConversion(bin2area, area2bin, area1);
 	}
@@ -77,7 +78,7 @@ public class TestBinaryConversion {
 	@Test
 	public void versionStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.found(as("p1"), user1);
+		Product prod1 = tracker.constitute(as("p1"), user1);
 		Version v1 = tracker.tag(prod1, as("v1"), user1);
 		assertConsistentConversion(bin2version, version2bin, v1);
 	}
@@ -85,7 +86,7 @@ public class TestBinaryConversion {
 	@Test
 	public void pollStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.found(as("p1"), user1);
+		Product prod1 = tracker.constitute(as("p1"), user1);
 		User user2 = tracker.register(as("user2"), "user2@example.com", "user2pwd", "salt");
 		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
 		assertConsistentConversion(bin2poll, poll2bin, poll1);
@@ -94,7 +95,7 @@ public class TestBinaryConversion {
 	@Test
 	public void taskStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		Product prod1 = tracker.found(as("p1"), user1);
+		Product prod1 = tracker.constitute(as("p1"), user1);
 		user1 = tracker.activate(user1, Tracker.md5("user1pwd"+"salt"));
 		Task task1 = tracker.reportDefect(prod1, "broken", user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentConversion(bin2task, task2bin, task1);

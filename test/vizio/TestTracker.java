@@ -31,7 +31,7 @@ public class TestTracker {
 		Date today = date(now);
 		User user = tracker.register(as("moos"), "moos@example.com", "xxx", "salt");
 		user = tracker.activate(user, user.md5);
-		Product product = tracker.found(as("test"), user);
+		Product product = tracker.constitute(as("test"), user);
 		Task task = tracker.reportDefect(product, "A problem", user, product.somewhere, product.somewhen, false);
 
 		task = tracker.emphasise(task, user);

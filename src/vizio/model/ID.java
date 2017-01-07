@@ -1,13 +1,13 @@
 package vizio.model;
 
-import java.util.Arrays;
+import java.nio.charset.StandardCharsets;
 
 /**
  * A (database wide) unique identifier.
- * 
- * @author jan
  */
-public final class ID implements Comparable<ID> {
+public final class ID extends Identifier<ID> {
+
+	private static final char DIVIDER = '#';
 
 	public enum Type {
 	
@@ -15,46 +15,18 @@ public final class ID implements Comparable<ID> {
 	}
 
 	public final Type type;
-	private final byte[] symbols;
 	
 	private ID(Type type, byte[] symbols) {
-		super();
-		this.symbols = symbols;
+		super(symbols);
 		this.type = type;
 	}
 
 	private static ID id(Type type, Name name, Name... names) {
-		String id = "."+type.name()+"."+name;
+		String id = DIVIDER+type.name()+DIVIDER+name;
 		for (Name n : names) {
-			id += "."+n;
+			id += DIVIDER+n.toString();
 		}
-		return new ID(type, id.getBytes());
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof ID && equalTo((ID) obj);
-	}
-
-	public boolean equalTo(ID other) {
-		return this == other || Arrays.equals(symbols, other.symbols);
-	}
-
-	@Override
-	public int hashCode() {
-		return Arrays.hashCode(symbols);
-	}
-
-	@Override
-	public int compareTo(ID other) {
-		if (this == other)
-			return 0;
-		return new String(symbols).compareTo(new String(other.symbols));
-	}
-
-	@Override
-	public String toString() {
-		return new String(symbols);
+		return new ID(type, id.getBytes(StandardCharsets.US_ASCII));
 	}
 
 	public static ID productId(Name product) {

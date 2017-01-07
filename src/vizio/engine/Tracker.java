@@ -23,6 +23,7 @@ import java.util.Arrays;
 import vizio.model.Area;
 import vizio.model.Date;
 import vizio.model.IDN;
+import vizio.model.URL;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
@@ -100,7 +101,7 @@ public final class Tracker {
 
 	/* Products */
 
-	public Product found(Name product, User originator) {
+	public Product constitute(Name product, User originator) {
 		expectRegistered(originator);
 		expectRegular(product);
 		stressNewProduct(originator);
@@ -261,7 +262,18 @@ public final class Tracker {
 		task.approachedBy = Names.empty();
 		task.watchedBy = new Names(reporter.name);
 		task.changeset = Names.empty();
+		task.attachments = URL.NONE;
 		touch(reporter);
+		return task;
+	}
+	
+	public Task attach(Task task, User initiator, URL... attachments) {
+		if (!task.area.isOpen()) {
+			expectMaintainer(task.area, initiator);
+		}
+		stressDoAttach(task, initiator);
+		task = task.clone();
+		task.attachments = attachments;
 		return task;
 	}
 
@@ -603,6 +615,14 @@ public final class Tracker {
 		stressLimit(limit("solve@task", task.id.asName()), "Too many solution activities for task: "+task.id);
 		stressLimit(limit("solve", ORIGIN), "Too many solution activities recently.");
 		stressAction();
+	}
+	
+	private void stressDoAttach(Task task, User by) {
+		stressLimit(limit("attach@user", by.name), "Too many recent attachments by user: "+by.name);
+		stressUser(by);
+		stressLimit(limit("attach@task", task.id.asName()), "Too many recent attachments for task: "+task.id);
+		stressLimit(limit("attach", ORIGIN), "Too many recent attachments.");
+		stressAction();		
 	}
 	
 	private void stressDoActivate() {

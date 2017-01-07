@@ -1,4 +1,4 @@
-package vizio.io;
+package vizio.engine;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -7,6 +7,7 @@ import vizio.engine.DB.Tx;
 import vizio.model.Area;
 import vizio.model.Date;
 import vizio.model.IDN;
+import vizio.model.URL;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
@@ -103,6 +104,7 @@ public interface BinaryConversion<I,O> {
 		t.solver = bin2name(from);
 		t.end = bin2date(from);
 		t.conclusion = bin2text(from);
+		t.attachments =  bin2urls(from);
 		return t;
 	};
 
@@ -129,9 +131,10 @@ public interface BinaryConversion<I,O> {
 		name2bin(t.solver, to);
 		date2bin(t.end, to);
 		text2bin(t.conclusion, to);
+		urls2bin(t.attachments, to);
 		return to;
 	};
-	
+
 	BinaryConversion<Tx, Site> bin2site = (tx,from) -> { 
 		Name owner = bin2name(from);
 		Name name = bin2name(from);
@@ -307,5 +310,37 @@ public interface BinaryConversion<I,O> {
 		byte[] bytes = new byte[len];
 		from.get(bytes);
 		return new String(bytes, StandardCharsets.UTF_16);
+	}
+	
+	static URL bin2url(ByteBuffer from) {
+		int len = from.getShort();
+		if (len < 0)
+			return null;
+		byte[] bytes = new byte[len];
+		from.get(bytes);
+		return URL.fromBytes(bytes);
+	}
+	
+	static void url2bin(URL url, ByteBuffer to) {
+		to.putShort((short) url.length());
+		byte[] bytes = url.bytes();
+		to.put((byte) bytes.length);
+		to.put(bytes);
+	}
+	
+	static URL[] bin2urls(ByteBuffer from) {
+		int c = from.get();
+		URL[] attachments = new URL[c];
+		for (int i = 0; i < c; i++) {
+			attachments[i] = bin2url(from);
+		}
+		return attachments;
+	}
+	
+	static void urls2bin(URL[] urls, ByteBuffer to) {
+		to.put((byte) urls.length);
+		for (int i = 0; i < urls.length; i++) {
+			url2bin(urls[i], to);
+		}
 	}
 }
