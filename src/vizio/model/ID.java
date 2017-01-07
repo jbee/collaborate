@@ -2,8 +2,6 @@ package vizio.model;
 
 import java.util.Arrays;
 
-import vizio.model.Entity.Type;
-
 /**
  * A (database wide) unique identifier.
  * 
@@ -11,19 +9,26 @@ import vizio.model.Entity.Type;
  */
 public final class ID implements Comparable<ID> {
 
-	private final byte[] symbols;
+	public enum Type {
 	
-	public ID(byte[] symbols) {
-		super();
-		this.symbols = symbols;
+		User, Site, Product, Area, Version, Task, Poll
 	}
 
-	public static ID id(Type type, Name name, Name... names) {
-		String duid = "."+type.name()+"."+name;
+	public final Type type;
+	private final byte[] symbols;
+	
+	private ID(Type type, byte[] symbols) {
+		super();
+		this.symbols = symbols;
+		this.type = type;
+	}
+
+	private static ID id(Type type, Name name, Name... names) {
+		String id = "."+type.name()+"."+name;
 		for (Name n : names) {
-			duid += "."+n;
+			id += "."+n;
 		}
-		return new ID(duid.getBytes());
+		return new ID(type, id.getBytes());
 	}
 
 	@Override
@@ -50,5 +55,33 @@ public final class ID implements Comparable<ID> {
 	@Override
 	public String toString() {
 		return new String(symbols);
+	}
+
+	public static ID productId(Name product) {
+		return id(ID.Type.Product, product);
+	}
+
+	public static ID pollId(Name product, Name area, IDN serial) {
+		return id(ID.Type.Poll, product, area, serial.asName());
+	}
+
+	public static ID siteId(Name owner, Name name) {
+		return id(ID.Type.Site, owner, name);
+	}
+
+	public static ID userId(Name name) {
+		return id(ID.Type.User, name);
+	}
+
+	public static ID areaId(Name product, Name area) {
+		return id(ID.Type.Area, product, area);
+	}
+
+	public static ID versionId(Name product, Name version) {
+		return id(ID.Type.Version, product, version);
+	}
+
+	public static ID taskId(Name product, IDN id) {
+		return ID.id(ID.Type.Task, product, id.asName());
 	}
 }

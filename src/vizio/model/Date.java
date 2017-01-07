@@ -2,6 +2,8 @@ package vizio.model;
 
 import static java.lang.Integer.compare;
 
+import java.time.LocalDate;
+
 public final class Date implements Comparable<Date> {
 
 	private static final int MS_PER_DAY = 1000*60*60*24;
@@ -36,6 +38,11 @@ public final class Date implements Comparable<Date> {
 
 	public static Date today() {
 		return date(System.currentTimeMillis());
+	}
+	
+	@Override
+	public String toString() {
+		return LocalDate.ofEpochDay(daysSinceEra).toString();
 	}
 
 }

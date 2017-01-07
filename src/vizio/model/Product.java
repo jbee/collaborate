@@ -38,6 +38,6 @@ public class Product extends Entity<Product> {
 
 	@Override
 	public ID uniqueID() {
-		return ID.id(Type.Product, name);
+		return ID.productId(name);
 	}
 }

@@ -2,11 +2,6 @@ package vizio.model;
 
 public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparable<T> {
 
-	public enum Type {
-
-		User, Site, Product, Area, Version, Task, Poll
-	}
-	
 	/**
 	 * @return A database unique identifier. That means the type of the entity
 	 *         is also encoded in the value. Two different entities can never

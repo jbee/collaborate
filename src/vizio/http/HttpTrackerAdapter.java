@@ -3,7 +3,11 @@ package vizio.http;
 import static java.lang.Character.isDigit;
 import static java.lang.Integer.parseInt;
 import static vizio.ctrl.Action.view;
-import static vizio.model.Entity.Type.*;
+import static vizio.model.ID.Type.Area;
+import static vizio.model.ID.Type.Product;
+import static vizio.model.ID.Type.Task;
+import static vizio.model.ID.Type.User;
+import static vizio.model.ID.Type.Version;
 import static vizio.model.Name.as;
 
 import java.io.PrintWriter;

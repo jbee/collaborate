@@ -1,11 +1,12 @@
 package vizio.engine;
 
+import vizio.engine.DB.Tx;
 import vizio.model.IDN;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
-import vizio.model.Purpose;
 import vizio.model.Poll.Matter;
+import vizio.model.Purpose;
 
 /**
  * All the possible changes wrapped as lazy 'action'.
@@ -15,118 +16,123 @@ import vizio.model.Poll.Matter;
 @FunctionalInterface
 public interface Change {
 
-	void apply(Tracker t, EntityManager em);
+	void apply(Tracker t, Tx tx);
+	
+	
+	default Change and(Change next) {
+		return (t, tx) -> { this.apply(t, tx); next.apply(t, tx); };
+	}
 	
 	static Change register(Name user, String email, String unsaltedMd5, String salt) {
-		return (t, em) -> { em.update(t.register(user, email, unsaltedMd5, salt)); };
+		return (t, tx) -> { tx.put(t.register(user, email, unsaltedMd5, salt)); };
 	}
 	
 	static Change activate(Name user, byte[] activationKey) {
-		return (t, em) -> { em.update(t.activate(em.user(user), activationKey)); };
+		return (t, tx) -> { tx.put(t.activate(tx.user(user), activationKey)); };
 	}
 	
 	static Change found(Name product, Name originator) {
-		return (t, em) -> { em.update(t.found(product, em.user(originator))); };
+		return (t, tx) -> { tx.put(t.found(product, tx.user(originator))); };
 	}
 	
 	static Change open(Name product, Name entrance, Name originator, Motive motive, Purpose purpose) {
-		return (t, em) -> { em.update(t.open(em.product(product), entrance, em.user(originator), motive, purpose)); };
+		return (t, tx) -> { tx.put(t.open(tx.product(product), entrance, tx.user(originator), motive, purpose)); };
 	}
 	
 	static Change compart(Name product, Name area, Name originator) {
-		return (t, em) -> { em.update(t.compart(em.product(product), area, em.user(originator))); };
+		return (t, tx) -> { tx.put(t.compart(tx.product(product), area, tx.user(originator))); };
 	}
 	
 	static Change compart(Name product, Name basis, Name partition, Name originator, boolean subarea) {
-		return (t, em) -> { em.update(t.compart(em.area(product, basis), partition, em.user(originator), subarea)); };
+		return (t, tx) -> { tx.put(t.compart(tx.area(product, basis), partition, tx.user(originator), subarea)); };
 	}
 	
 	static Change leave(Name product, Name area, Name maintainer) {
-		return (t, em) -> { em.update(t.leave(em.area(product, area), em.user(maintainer))); };
+		return (t, tx) -> { tx.put(t.leave(tx.area(product, area), tx.user(maintainer))); };
 	}
 	
 	static Change relocate(Name product, IDN task, Name toArea, Name originator) {
-		return (t, em) -> { em.update(t.relocate(em.task(product, task), em.area(product, toArea), em.user(originator))); };
+		return (t, tx) -> { tx.put(t.relocate(tx.task(product, task), tx.area(product, toArea), tx.user(originator))); };
 	}
 	
 	static Change tag(Name product, Name version, Name originator) {
-		return (t, em) -> { em.update(t.tag(em.product(product), version, em.user(originator))); };
+		return (t, tx) -> { tx.put(t.tag(tx.product(product), version, tx.user(originator))); };
 	}
 	
 	static Change propose(Name product, String gist, Name reporter, Name area) {
-		return (t, em) -> { em.update(t.reportProposal(em.product(product), gist, em.user(reporter), em.area(product, area))); };
+		return (t, tx) -> { tx.put(t.reportProposal(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
 	}
 	
 	static Change indicate(Name product, String gist, Name reporter, Name area) {
-		return (t, em) -> { em.update(t.reportIntention(em.product(product), gist, em.user(reporter), em.area(product, area))); };
+		return (t, tx) -> { tx.put(t.reportIntention(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
 	}
 	
 	static Change warn(Name product, String gist, Name reporter, Name area, Name version, boolean exploitable) {
-		return (t, em) -> { em.update(t.reportDefect(em.product(product), gist, em.user(reporter), em.area(product, area), em.version(product, version), exploitable)); };
+		return (t, tx) -> { tx.put(t.reportDefect(tx.product(product), gist, tx.user(reporter), tx.area(product, area), tx.version(product, version), exploitable)); };
 	}
 	
 	static Change request(Name product, String gist, Name reporter, Name entrance) {
-		return (t, em) -> { em.update(t.reportRequest(em.product(product), gist, em.user(reporter), em.area(product, entrance))); };
+		return (t, tx) -> { tx.put(t.reportRequest(tx.product(product), gist, tx.user(reporter), tx.area(product, entrance))); };
 	}
 	
 	static Change fork(Name product, IDN basis, Purpose purpose, String gist, Name reporter, Names changeset) {
-		return (t, em) -> { em.update(t.reportFork(em.task(product, basis), purpose, gist, em.user(reporter), changeset)); };
+		return (t, tx) -> { tx.put(t.reportFork(tx.task(product, basis), purpose, gist, tx.user(reporter), changeset)); };
 	}
 	
 	static Change absolve(Name product, IDN task, Name byUser, String conclusion) {
-		return (t, em) -> { em.update(t.absolve(em.task(product, task), em.user(byUser), conclusion)); };
+		return (t, tx) -> { tx.put(t.absolve(tx.task(product, task), tx.user(byUser), conclusion)); };
 	}
 	
 	static Change resolve(Name product, IDN task, Name byUser, String conclusion) {
-		return (t, em) -> { em.update(t.resolve(em.task(product, task), em.user(byUser), conclusion)); };
+		return (t, tx) -> { tx.put(t.resolve(tx.task(product, task), tx.user(byUser), conclusion)); };
 	}
 	
 	static Change dissolve(Name product, IDN task, Name byUser, String conclusion) {
-		return (t, em) -> { em.update(t.dissolve(em.task(product, task), em.user(byUser), conclusion)); };
+		return (t, tx) -> { tx.put(t.dissolve(tx.task(product, task), tx.user(byUser), conclusion)); };
 	}
 	
 	static Change emphasise(Name product, IDN task, Name voter) {
-		return (t, em) -> { em.update(t.emphasise(em.task(product, task), em.user(voter))); };
+		return (t, tx) -> { tx.put(t.emphasise(tx.task(product, task), tx.user(voter))); };
 	}
 	
 	static Change poll(Matter matter, Name product, Name area, Name initiator, Name affected) {
-		return (t, em) -> { em.update(t.poll(matter, em.area(product, area), em.user(initiator), em.user(affected))); };
+		return (t, tx) -> { tx.put(t.poll(matter, tx.area(product, area), tx.user(initiator), tx.user(affected))); };
 	}
 	
 	static Change consent(Name product, Name area, IDN serial, Name voter) {
-		return (t, em) -> { em.update(t.consent(em.poll(product, area, serial), em.user(voter))); };
+		return (t, tx) -> { tx.put(t.consent(tx.poll(product, area, serial), tx.user(voter))); };
 	}
 	
 	static Change dissent(Name product, Name area, IDN serial, Name voter) {
-		return (t, em) -> { em.update(t.dissent(em.poll(product, area, serial), em.user(voter))); };
+		return (t, tx) -> { tx.put(t.dissent(tx.poll(product, area, serial), tx.user(voter))); };
 	}
 	
 	static Change enlist(Name product, IDN task, Name user) {
-		return (t, em) -> { em.update(t.enlist(em.task(product, task), em.user(user))); };
+		return (t, tx) -> { tx.put(t.enlist(tx.task(product, task), tx.user(user))); };
 	}
 
 	static Change abandon(Name product, IDN task, Name user) {
-		return (t, em) -> { em.update(t.abandon(em.task(product, task), em.user(user))); };
+		return (t, tx) -> { tx.put(t.abandon(tx.task(product, task), tx.user(user))); };
 	}
 
 	static Change approach(Name product, IDN task, Name user) {
-		return (t, em) -> { em.update(t.approach(em.task(product, task), em.user(user))); };
+		return (t, tx) -> { tx.put(t.approach(tx.task(product, task), tx.user(user))); };
 	}
 
 	static Change watch(Name product, IDN task, Name user) {
-		return (t, em) -> { em.update(t.watch(em.task(product, task), em.user(user))); };
+		return (t, tx) -> { tx.put(t.watch(tx.task(product, task), tx.user(user))); };
 	}
 	
 	static Change unwatch(Name product, IDN task, Name user) {
-		return (t, em) -> { em.update(t.unwatch(em.task(product, task), em.user(user))); };
+		return (t, tx) -> { tx.put(t.unwatch(tx.task(product, task), tx.user(user))); };
 	}
 	
 	static Change launch(Name site, String template, Name owner) {
-		return (t, em) -> { em.update(t.launch(site, template, em.user(owner))); };
+		return (t, tx) -> { tx.put(t.launch(site, template, tx.user(owner))); };
 	}
 	
 	static Change restructure(Name site, String template, Name owner) {
-		return (t, em) -> { em.update(t.restructure(em.site(owner, site), template, em.user(owner))); };
+		return (t, tx) -> { tx.put(t.restructure(tx.site(owner, site), template, tx.user(owner))); };
 	}
 	
 }

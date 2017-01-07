@@ -42,7 +42,7 @@ public class Task extends Entity<Task> {
 
 	@Override
 	public ID uniqueID() {
-		return ID.id(Type.Task, product.name, id.asName());
+		return ID.taskId(product.name, id);
 	}
 	
 	/**

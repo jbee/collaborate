@@ -30,7 +30,7 @@ public class User extends Entity<User> {
 
 	@Override
 	public ID uniqueID() {
-		return ID.id(Type.User, name);
+		return ID.userId(name);
 	}
 	
 	public boolean isAnonymous() {

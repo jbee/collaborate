@@ -3,7 +3,7 @@ package vizio.io;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 
-import vizio.io.SimpleEntityManager.Key;
+import vizio.io.SimpleCache.Key;
 import vizio.model.IDN;
 import vizio.model.Name;
 import vizio.model.Names;

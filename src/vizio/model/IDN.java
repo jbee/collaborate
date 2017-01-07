@@ -27,4 +27,18 @@ public final class IDN implements Comparable<IDN> {
 	public Name asName() {
 		return Name.as(String.valueOf(num));
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof IDN && equalTo((IDN) obj);
+	}
+
+	public boolean equalTo(IDN other) {
+		return num == other.num;
+	}
+	
+	@Override
+	public int hashCode() {
+		return num;
+	}
 }

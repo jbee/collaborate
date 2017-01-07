@@ -1,7 +1,5 @@
 package vizio.engine;
 
-import vizio.model.Name;
-
 public interface Limits {
 
 	/**
@@ -10,5 +8,6 @@ public interface Limits {
 	 * @param limit the limit to use.
 	 * @return true in case the limit is not reached so the operation can be done.
 	 */
-	boolean approach(Name limit);
+	boolean stress(Limit limit) throws IllegalStateException;
+	
 }

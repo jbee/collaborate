@@ -55,18 +55,6 @@ public final class Name implements CharSequence, Comparable<Name> {
 		this.symbols = symbols;
 	}
 
-	public static Name limit(String type, Name name) {
-		return as("@limit."+type+"."+name);
-	}
-	
-	public static Name duid(String type, Name name, Name... names) {
-		String duid = "."+type+"."+name;
-		for (Name n : names) {
-			duid += "."+n;
-		}
-		return as(duid);
-	}
-
 	public static Name as(String name) {
 		if ("*".equals(name))
 			return ORIGIN;

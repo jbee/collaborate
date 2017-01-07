@@ -1,36 +1,45 @@
-package vizio.io.stream;
+package vizio.io;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
+import static vizio.io.BinaryConversion.area2bin;
+import static vizio.io.BinaryConversion.bin2area;
+import static vizio.io.BinaryConversion.bin2poll;
+import static vizio.io.BinaryConversion.bin2product;
+import static vizio.io.BinaryConversion.bin2site;
+import static vizio.io.BinaryConversion.bin2task;
+import static vizio.io.BinaryConversion.bin2user;
+import static vizio.io.BinaryConversion.bin2version;
+import static vizio.io.BinaryConversion.poll2bin;
+import static vizio.io.BinaryConversion.product2bin;
+import static vizio.io.BinaryConversion.site2bin;
+import static vizio.io.BinaryConversion.task2bin;
+import static vizio.io.BinaryConversion.user2bin;
+import static vizio.io.BinaryConversion.version2bin;
 import static vizio.model.Name.as;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
-import vizio.engine.EntityManager;
 import vizio.engine.Tracker;
-import vizio.io.Criteria;
-import vizio.io.Streamer;
+import vizio.engine.DB.Tx;
 import vizio.model.Area;
+import vizio.model.Entity;
 import vizio.model.IDN;
 import vizio.model.Name;
 import vizio.model.Poll;
+import vizio.model.Poll.Matter;
 import vizio.model.Product;
 import vizio.model.Site;
 import vizio.model.Task;
 import vizio.model.User;
 import vizio.model.Version;
-import vizio.model.Poll.Matter;
 
-public class TestStreamer {
+public class TestBinaryConversion {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(TestStreamer.this::tick, (l) -> true);
+	private Tracker tracker = new Tracker(TestBinaryConversion.this::tick, (l) -> true);
 
 	private long tick() {
 		now += 60000;
@@ -40,21 +49,21 @@ public class TestStreamer {
 	@Test
 	public void userStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		assertConsistentStream(new UserStreamer(), user1);
+		assertConsistentConversion(bin2user, user2bin, user1);
 	}
 	
 	@Test
 	public void siteStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Site site1 = tracker.launch(as("my-tasks"), "foobar", user1);
-		assertConsistentStream(new SiteStreamer(), site1);
+		assertConsistentConversion(bin2site, site2bin, site1);
 	}
 
 	@Test
 	public void productStreamer() {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Product prod1 = tracker.found(as("p1"), user1);
-		assertConsistentStream(new ProductStreamer(), prod1);
+		assertConsistentConversion(bin2product, product2bin, prod1);
 	}
 
 	@Test
@@ -62,7 +71,7 @@ public class TestStreamer {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Product prod1 = tracker.found(as("p1"), user1);
 		Area area1 = tracker.compart(prod1, as("area1"), user1);
-		assertConsistentStream(new AreaStreamer(), area1);
+		assertConsistentConversion(bin2area, area2bin, area1);
 	}
 
 	@Test
@@ -70,7 +79,7 @@ public class TestStreamer {
 		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
 		Product prod1 = tracker.found(as("p1"), user1);
 		Version v1 = tracker.tag(prod1, as("v1"), user1);
-		assertConsistentStream(new VersionStreamer(), v1);
+		assertConsistentConversion(bin2version, version2bin, v1);
 	}
 
 	@Test
@@ -79,7 +88,7 @@ public class TestStreamer {
 		Product prod1 = tracker.found(as("p1"), user1);
 		User user2 = tracker.register(as("user2"), "user2@example.com", "user2pwd", "salt");
 		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
-		assertConsistentStream(new PollStreamer(), poll1);
+		assertConsistentConversion(bin2poll, poll2bin, poll1);
 	}
 
 	@Test
@@ -88,29 +97,26 @@ public class TestStreamer {
 		Product prod1 = tracker.found(as("p1"), user1);
 		user1 = tracker.activate(user1, Tracker.md5("user1pwd"+"salt"));
 		Task task1 = tracker.reportDefect(prod1, "broken", user1, prod1.somewhere, prod1.somewhen, true);
-		assertConsistentStream(new TaskStreamer(), task1);
+		assertConsistentConversion(bin2task, task2bin, task1);
 	}
 
-	static <T> void assertConsistentStream(Streamer<T> streamer, T value) {
-		try {
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			DataOutputStream out = new DataOutputStream(bos);
-			streamer.write(value, out);
-			byte[] written = bos.toByteArray();
-			assertTrue(written.length > 0);
-			DataInputStream in = new DataInputStream(new ByteArrayInputStream(written));
-			T read = streamer.read(in, new TestPM());
-			bos = new ByteArrayOutputStream();
-			out = new DataOutputStream(bos);
-			streamer.write(read, out);
-			byte[] rewritten = bos.toByteArray();
-			assertArrayEquals(written, rewritten);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+	static <T> void assertConsistentConversion(BinaryConversion<Tx,T> reader, BinaryConversion<T, ByteBuffer> writer, T value) {
+		ByteBuffer buf = ByteBuffer.allocate(2048);
+		writer.convert(value, buf);
+		byte[] written = new byte[buf.position()];
+		buf.flip();
+		buf.get(written);
+		assertTrue(written.length > 0);
+		T read = reader.convert(new TestPM(), ByteBuffer.wrap(written));
+		buf = ByteBuffer.allocate(2048);
+		writer.convert(read, buf);
+		byte[] rewritten = new byte[buf.position()];
+		buf.flip();
+		buf.get(rewritten);
+		assertArrayEquals(written, rewritten);
 	}
 
-	static class TestPM implements EntityManager {
+	static class TestPM implements Tx {
 
 		@Override
 		public User user(Name user) {
@@ -164,50 +170,9 @@ public class TestStreamer {
 		}
 
 		@Override
-		public Task[] tasks(Criteria criteria) {
-			return new Task[0];
-		}
-
-		@Override
-		public void update(User user) {
-			// TODO Auto-generated method stub
-
-		}
-		
-		@Override
-		public void update(Site site) {
+		public void put(Entity<?> e) {
 			// TODO Auto-generated method stub
 			
-		}
-
-		@Override
-		public void update(Product product) {
-			// TODO Auto-generated method stub
-
-		}
-
-		@Override
-		public void update(Version version) {
-			// TODO Auto-generated method stub
-
-		}
-
-		@Override
-		public void update(Area area) {
-			// TODO Auto-generated method stub
-
-		}
-
-		@Override
-		public void update(Poll poll) {
-			// TODO Auto-generated method stub
-
-		}
-
-		@Override
-		public void update(Task task) {
-			// TODO Auto-generated method stub
-
 		}
 
 	}

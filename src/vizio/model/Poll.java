@@ -23,7 +23,7 @@ public class Poll extends Entity<Poll> {
 
 	@Override
 	public ID uniqueID() {
-		return ID.id(Type.Poll, area.product, area.name, serial.asName());
+		return ID.pollId(area.product, area.name, serial);
 	}
 	
 	public boolean canVote(Name voter) {

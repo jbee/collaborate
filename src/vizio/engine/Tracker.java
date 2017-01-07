@@ -1,12 +1,12 @@
 package vizio.engine;
 
 import static java.lang.Math.min;
+import static vizio.engine.Limit.limit;
 import static vizio.model.Date.date;
 import static vizio.model.Motive.defect;
 import static vizio.model.Motive.intention;
 import static vizio.model.Motive.proposal;
 import static vizio.model.Name.ORIGIN;
-import static vizio.model.Name.limit;
 import static vizio.model.Outcome.consent;
 import static vizio.model.Outcome.dissent;
 import static vizio.model.Poll.Matter.participation;
@@ -28,6 +28,7 @@ import vizio.model.Name;
 import vizio.model.Names;
 import vizio.model.Outcome;
 import vizio.model.Poll;
+import vizio.model.Poll.Matter;
 import vizio.model.Product;
 import vizio.model.Purpose;
 import vizio.model.Site;
@@ -35,7 +36,6 @@ import vizio.model.Status;
 import vizio.model.Task;
 import vizio.model.User;
 import vizio.model.Version;
-import vizio.model.Poll.Matter;
 
 /**
  * Implementation of the tracker-business logic.
@@ -390,7 +390,6 @@ public final class Tracker {
 			}
 			touch(voter);
 			if (poll.isSettled()) {
-				poll.area = poll.area.clone();
 				settle(poll);
 			}
 		}
@@ -403,6 +402,7 @@ public final class Tracker {
 		poll.outcome = accepted ? consent : dissent;
 		if (!accepted)
 			return;
+		poll.area = poll.area.clone();
 		switch (poll.matter) {
 		case inclusion:
 			poll.area.exclusive=false; break;
@@ -610,8 +610,8 @@ public final class Tracker {
 		stressAction();
 	}
 
-	private void stressLimit(Name limit, String error) {
-		if (!limits.approach(limit)) {
+	private void stressLimit(Limit limit, String error) {
+		if (!limits.stress(limit)) {
 			denyTransition("Limit exceeded! "+error+" Please try again later!");
 		}
 	}

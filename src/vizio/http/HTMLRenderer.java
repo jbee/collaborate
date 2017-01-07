@@ -5,7 +5,6 @@ import static vizio.model.Date.date;
 import java.io.PrintWriter;
 
 import vizio.ctrl.Action;
-import vizio.engine.Tracker;
 import vizio.model.Heat;
 import vizio.model.Motive;
 import vizio.model.Name;

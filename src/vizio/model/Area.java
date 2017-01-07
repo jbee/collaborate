@@ -57,6 +57,6 @@ public class Area extends Entity<Area> {
 
 	@Override
 	public ID uniqueID() {
-		return ID.id(Type.Area, product, name);
+		return ID.areaId(product, name);
 	}
 }
