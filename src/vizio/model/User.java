@@ -17,8 +17,11 @@ public class User extends Entity<User> {
 	public Names sites;
 	public int watches; // n tasks
 
-	// activity statistics
+	// change log
 	public long millisLastActive;
+	public int version;
+	
+	// activity statistics
 	public int xp;
 	public int absolved;
 	public int resolved;
@@ -29,7 +32,7 @@ public class User extends Entity<User> {
 	public int emphasisedToday;
 
 	@Override
-	public ID uniqueID() {
+	public ID computeID() {
 		return ID.userId(name);
 	}
 	
@@ -66,11 +69,6 @@ public class User extends Entity<User> {
 
 	public boolean canWatch() {
 		return watches < MINIMUM_WATCH_LIMIT + (xp / 10);
-	}
-
-	@Override
-	public String toString() {
-		return name != null ? name.toString() : email.toString();
 	}
 
 }

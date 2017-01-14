@@ -22,7 +22,7 @@ public class Poll extends Entity<Poll> {
 	public Outcome outcome;
 
 	@Override
-	public ID uniqueID() {
+	public ID computeID() {
 		return ID.pollId(area.product, area.name, serial);
 	}
 	

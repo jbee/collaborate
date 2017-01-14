@@ -1,13 +1,12 @@
 package vizio.engine;
 
-import vizio.engine.DB.Tx;
 import vizio.model.IDN;
-import vizio.model.URL;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
 import vizio.model.Poll.Matter;
 import vizio.model.Purpose;
+import vizio.model.URL;
 
 /**
  * All the possible changes wrapped as lazy 'action'.

@@ -43,7 +43,7 @@ public class Task extends Entity<Task> {
 	public String conclusion;
 
 	@Override
-	public ID uniqueID() {
+	public ID computeID() {
 		return ID.taskId(product.name, id);
 	}
 	

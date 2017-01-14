@@ -19,7 +19,7 @@ public class Version extends Entity<Version> {
 	}
 
 	@Override
-	public ID uniqueID() {
+	public ID computeID() {
 		return ID.versionId(product, name);
 	}
 }

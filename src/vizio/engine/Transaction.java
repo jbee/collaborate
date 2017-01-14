@@ -24,10 +24,12 @@ import static vizio.model.ID.versionId;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import vizio.engine.DB.Tx;
+import vizio.db.DB;
+import vizio.db.DB.TxW;
 import vizio.model.Area;
 import vizio.model.Entity;
 import vizio.model.ID;
@@ -40,50 +42,59 @@ import vizio.model.Task;
 import vizio.model.User;
 import vizio.model.Version;
 
-public class Transaction implements Tx, Limits {
+public class Transaction implements Tx, Limits, AutoCloseable {
 
-	public static void run(Change set, LimitControl lc, DB db) {
-		Transaction tx = new Transaction(lc, db);
-		try {
-			set.apply(new Tracker(lc.clock, tx), tx);
-			tx.commit();
-		} catch (Exception e) {
-			tx.rollback();
+	public static boolean run(Change set, LimitControl lc, DB db) throws ConcurrentModification {
+		try (Transaction tx = new Transaction(lc, db)) {
+			try {
+				set.apply(new Tracker(lc.clock, tx), tx);
+				return tx.commit();
+			} finally {
+				tx.freeAllocatedLimits();
+			}
 		}
 	}
 	
-	private final HashMap<ID, Entity<?>> after = new HashMap<>();
-	private final HashMap<ID, Entity<?>> before = new HashMap<>();
+	private final LinkedHashMap<ID, Entity<?>> changed = new LinkedHashMap<>();
+	private final HashMap<ID, Entity<?>> loaded = new HashMap<>();
+	private final HashMap<User, Integer> loadedUserVersions = new HashMap<>();
 	private final Set<Limit> allocated = new HashSet<>();
 	
 	private final LimitControl lc;
 	private final DB db;
+	private final DB.TxR txr;
 	
 	public Transaction(LimitControl lc, DB db) {
 		super();
 		this.lc = lc;
 		this.db = db;
+		this.txr = db.read();
+	}
+	
+	@Override
+	public void close() {
+		txr.close();
 	}
 
 	@SuppressWarnings("unchecked")
 	private <T extends Entity<T>> T load(ID id, BinaryConversion<Tx, T> reader) {
-		Object res = reused(id);
+		Object res = possiblyChanged(id);
 		if (res != null)
 			return (T) res;		
-		T e = reader.convert(this, db.get(id));
-		before.put(id, e);
+		T e = reader.convert(this, txr.get(id));
+		loaded.put(id, e);
 		return e;
 	}
 	
-	private Object reused(ID id) {
-		Object res = after.get(id);
-		return res != null ? res : before.get(id);
+	private Object possiblyChanged(ID id) {
+		Object res = changed.get(id);
+		return res != null ? res : loaded.get(id);
 	}
 	
 	@Override
 	public void put(Entity<?> e) {
 		ID id = e.uniqueID();
-		if (e != reused(id)) { // only do real updates
+		if (e != possiblyChanged(id)) { // only do real updates
 			// but "auto"-update fields with updates
 			if (e instanceof Poll) {
 				put(((Poll) e).area);
@@ -93,13 +104,15 @@ public class Transaction implements Tx, Limits {
 				put(t.area);
 				put(t.base);
 			}
-			after.put(id, e);
+			changed.put(id, e);
 		}
 	}
 	
 	@Override
 	public User user(Name user) {
-		return load(userId(user), bin2user);
+		User res = load(userId(user), bin2user);
+		loadedUserVersions.put(res, res.version);
+		return res;
 	}
 
 	@Override
@@ -132,37 +145,45 @@ public class Transaction implements Tx, Limits {
 		return load(ID.taskId(product, id), bin2task);
 	}
 	
-	public void commit() {
-		try {
-			ByteBuffer buf = ByteBuffer.allocateDirect(1024);
-			for (Entry<ID,Entity<?>> e : after.entrySet()) {
+	private boolean commit() {
+		txr.close(); // no more writing
+		if (changed.isEmpty())
+			return false;
+		// add touched users to changeset
+		for (Entry<User, Integer> u : loadedUserVersions.entrySet()) {
+			if (u.getKey().version > u.getValue().intValue()) {
+				changed.put(u.getKey().uniqueID(), u.getKey());
+			}
+		}
+		loadedUserVersions.clear();
+		ByteBuffer buf = ByteBuffer.allocateDirect(1024);
+		try (TxW tx = db.write()) {
+			for (Entry<ID,Entity<?>> e : changed.entrySet()) {
 				ID id = e.getKey();
 				Entity<?> val = e.getValue();
 				switch (id.type) {
-				case Area: store(id, (Area)val, area2bin, buf); break;
-				case Poll: store(id, (Poll)val, poll2bin, buf); break;
-				case Site: store(id, (Site)val, site2bin, buf); break;
-				case Task: store(id, (Task)val, task2bin, buf); break;
-				case User: store(id, (User)val, user2bin, buf); break;
-				case Product: store(id, (Product)val, product2bin, buf); break;
-				case Version: store(id, (Version)val, version2bin, buf); break;
+				case Area: store(tx, id, (Area)val, area2bin, buf); break;
+				case Poll: store(tx, id, (Poll)val, poll2bin, buf); break;
+				case Site: store(tx, id, (Site)val, site2bin, buf); break;
+				case Task: store(tx, id, (Task)val, task2bin, buf); break;
+				case User: store(tx, id, (User)val, user2bin, buf); break;
+				case Product: store(tx, id, (Product)val, product2bin, buf); break;
+				case Version: store(tx, id, (Version)val, version2bin, buf); break;
 				default: throw new UnsupportedOperationException("Cannot store entities of type: "+id);
 				}
+				buf.clear();
 			}
-		} finally {
-			freeAllocatedLimits();
+			tx.commit();
+			return true;
 		}
 	}
 	
-	private <T> void store(ID id, T e, BinaryConversion<T, ByteBuffer> writer, ByteBuffer buf) {
+	private static <T> void store(TxW tx, ID id, T e, BinaryConversion<T, ByteBuffer> writer, ByteBuffer buf) {
 		writer.convert(e, buf).flip();
-		db.put(id, writer.convert(e, buf));
+		tx.put(id, buf);
+		buf.clear();
 	}
 	
-	public void rollback() {
-		freeAllocatedLimits();
-	}
-
 	private void freeAllocatedLimits() {
 		for (Limit l : allocated) {
 			lc.free(l);
@@ -171,10 +192,12 @@ public class Transaction implements Tx, Limits {
 	}
 	
 	@Override
-	public boolean stress(Limit limit) throws IllegalStateException {
+	public boolean stress(Limit limit) throws ConcurrentModification {
 		if (!limit.isSpecific()) {
 			return lc.stress(limit);
 		}
+		if (allocated.contains(limit))
+			return true;
 		if (lc.alloc(limit)) {
 			allocated.add(limit);
 			return true;

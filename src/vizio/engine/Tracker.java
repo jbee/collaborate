@@ -23,7 +23,6 @@ import java.util.Arrays;
 import vizio.model.Area;
 import vizio.model.Date;
 import vizio.model.IDN;
-import vizio.model.URL;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
@@ -35,13 +34,12 @@ import vizio.model.Purpose;
 import vizio.model.Site;
 import vizio.model.Status;
 import vizio.model.Task;
+import vizio.model.URL;
 import vizio.model.User;
 import vizio.model.Version;
 
 /**
  * Implementation of the tracker-business logic.
- *
- * @author jan
  */
 public final class Tracker {
 
@@ -97,6 +95,7 @@ public final class Tracker {
 
 	private void touch(User user) {
 		user.millisLastActive = clock.time();
+		user.version++;
 	}
 
 	/* Products */

@@ -37,7 +37,7 @@ public class Product extends Entity<Product> {
 	public int tasks;
 
 	@Override
-	public ID uniqueID() {
+	public ID computeID() {
 		return ID.productId(name);
 	}
 }

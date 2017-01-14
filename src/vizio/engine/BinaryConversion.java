@@ -3,11 +3,9 @@ package vizio.engine;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-import vizio.engine.DB.Tx;
 import vizio.model.Area;
 import vizio.model.Date;
 import vizio.model.IDN;
-import vizio.model.URL;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
@@ -19,6 +17,7 @@ import vizio.model.Purpose;
 import vizio.model.Site;
 import vizio.model.Status;
 import vizio.model.Task;
+import vizio.model.URL;
 import vizio.model.User;
 import vizio.model.Version;
 

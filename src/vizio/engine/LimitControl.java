@@ -41,17 +41,17 @@ public final class LimitControl implements Limits {
 		return stats(l).stress(clock.time());
 	}
 
-	public boolean alloc(Limit l) throws IllegalStateException {
+	public boolean alloc(Limit l) throws ConcurrentModification {
 		LimitStats ls = stats(l);
 		if (!ls.allocated.compareAndSet(false, true)) {
-			throw new IllegalStateException("Limit already allocated: "+l);
+			throw new ConcurrentModification(l);
 		}
 		return ls.stress(clock.time());
 	}
 	
 	public void free(Limit l) {
 		if (!stats(l).allocated.compareAndSet(true, false)) {
-			throw new IllegalStateException("Cannot free non-allocated limit: "+l);
+			System.err.println("Tried to free non allocated limit: "+l);
 		}
 	}
 
@@ -131,7 +131,7 @@ public final class LimitControl implements Limits {
 			}
 			if (count.get() >= limit) // already larger?
 				return false;
-			return count.incrementAndGet() >= limit; // could we inc it without overflow?
+			return count.incrementAndGet() < limit; // could we inc it without overflow?
 		}
 		
 	}

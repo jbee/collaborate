@@ -14,7 +14,7 @@ public class Site extends Entity<Site> {
 	}
 
 	@Override
-	public ID uniqueID() {
+	public ID computeID() {
 		return ID.siteId(owner, name);
 	}
 }
