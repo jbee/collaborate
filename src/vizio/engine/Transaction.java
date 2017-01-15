@@ -1,19 +1,19 @@
 package vizio.engine;
 
-import static vizio.engine.BinaryConversion.area2bin;
-import static vizio.engine.BinaryConversion.bin2area;
-import static vizio.engine.BinaryConversion.bin2poll;
-import static vizio.engine.BinaryConversion.bin2product;
-import static vizio.engine.BinaryConversion.bin2site;
-import static vizio.engine.BinaryConversion.bin2task;
-import static vizio.engine.BinaryConversion.bin2user;
-import static vizio.engine.BinaryConversion.bin2version;
-import static vizio.engine.BinaryConversion.poll2bin;
-import static vizio.engine.BinaryConversion.product2bin;
-import static vizio.engine.BinaryConversion.site2bin;
-import static vizio.engine.BinaryConversion.task2bin;
-import static vizio.engine.BinaryConversion.user2bin;
-import static vizio.engine.BinaryConversion.version2bin;
+import static vizio.engine.Convert.area2bin;
+import static vizio.engine.Convert.bin2area;
+import static vizio.engine.Convert.bin2poll;
+import static vizio.engine.Convert.bin2product;
+import static vizio.engine.Convert.bin2site;
+import static vizio.engine.Convert.bin2task;
+import static vizio.engine.Convert.bin2user;
+import static vizio.engine.Convert.bin2version;
+import static vizio.engine.Convert.poll2bin;
+import static vizio.engine.Convert.product2bin;
+import static vizio.engine.Convert.site2bin;
+import static vizio.engine.Convert.task2bin;
+import static vizio.engine.Convert.user2bin;
+import static vizio.engine.Convert.version2bin;
 import static vizio.model.ID.areaId;
 import static vizio.model.ID.pollId;
 import static vizio.model.ID.productId;
@@ -87,7 +87,7 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <T extends Entity<T>> T load(ID id, BinaryConversion<Tx, T> reader) {
+	private <T extends Entity<T>> T load(ID id, Convert<Tx, T> reader) {
 		Object res = possiblyChanged(id);
 		if (res != null)
 			return (T) res;		
@@ -192,7 +192,7 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 		}
 	}
 	
-	private static <T> void store(TxW tx, ID id, T e, BinaryConversion<T, ByteBuffer> writer, ByteBuffer buf) {
+	private static <T> void store(TxW tx, ID id, T e, Convert<T, ByteBuffer> writer, ByteBuffer buf) {
 		writer.convert(e, buf).flip();
 		tx.put(id, buf);
 		buf.clear();

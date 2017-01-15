@@ -20,7 +20,7 @@ import org.lmdbjava.Txn;
 
 import vizio.db.DB.TxR;
 import vizio.db.DB.TxW;
-import vizio.engine.BinaryConversion;
+import vizio.engine.Convert;
 import vizio.engine.Change;
 import vizio.engine.LimitControl;
 import vizio.engine.Transaction;
@@ -79,15 +79,15 @@ public class TestLMDB {
 			u1.md5 = "foo".getBytes();
 			try (TxW tx = db.write()) {
 				ByteBuffer buf = ByteBuffer.allocateDirect(1024);
-				BinaryConversion.site2bin.convert(s1, buf);
+				Convert.site2bin.convert(s1, buf);
 				buf.flip();
 				tx.put(s1.uniqueID(), buf);
 				buf.clear();
-				BinaryConversion.site2bin.convert(s2, buf);
+				Convert.site2bin.convert(s2, buf);
 				buf.flip();
 				tx.put(s2.uniqueID(), buf);
 				buf.clear();
-				BinaryConversion.user2bin.convert(u1, buf);
+				Convert.user2bin.convert(u1, buf);
 				buf.flip();
 				tx.put(u1.uniqueID(), buf);
 				buf.clear();
@@ -98,11 +98,11 @@ public class TestLMDB {
 			User u1r;
 			try (TxR tx = db.read()) {
 				ByteBuffer buf = tx.get(s1.uniqueID());
-				s1r = BinaryConversion.bin2site.convert(null, buf);
+				s1r = Convert.bin2site.convert(null, buf);
 				buf = tx.get(s2.uniqueID());
-				s2r = BinaryConversion.bin2site.convert(null, buf);
+				s2r = Convert.bin2site.convert(null, buf);
 				buf = tx.get(u1.uniqueID());
-				u1r = BinaryConversion.bin2user.convert(null, buf);
+				u1r = Convert.bin2user.convert(null, buf);
 			}
 			assertEquals(s1.name, s1r.name);
 			assertEquals(s2.name, s2r.name);
@@ -134,9 +134,9 @@ public class TestLMDB {
 			User u;
 			try (TxR tx = db.read()) {
 				ByteBuffer buf = tx.get(ID.siteId(user, name));
-				s = BinaryConversion.bin2site.convert(null, buf);
+				s = Convert.bin2site.convert(null, buf);
 				buf = tx.get(ID.userId(user));
-				u = BinaryConversion.bin2user.convert(null, buf);
+				u = Convert.bin2user.convert(null, buf);
 			}
 			assertEquals(name, s.name);
 			assertEquals(user, u.name);

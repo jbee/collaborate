@@ -23,11 +23,21 @@ import vizio.model.User;
 import vizio.model.Version;
 
 @FunctionalInterface
-public interface BinaryConversion<I,O> {
+public interface Convert<I,O> {
 
+	/**
+	 * Two way binary conversion.
+	 * 
+	 * Entity to binary: Entity is input, the passed {@link ByteBuffer} the output
+	 * Binary to entity: {@link Tx} and {@link ByteBuffer} are input, a entity the output.
+	 * 
+	 * @param from an entity (to binary) or a {@link Tx} context (from binary)
+	 * @param buf a buffer used for input or output depending on the case.
+	 * @return the passed buffer (to binary) or an entity (from binary)
+	 */
 	O convert(I from, ByteBuffer buf);
 	
-	BinaryConversion<Tx, User> bin2user = (tx,from) -> { 
+	Convert<Tx, User> bin2user = (tx,from) -> { 
 		User u = new User();
 		u.name = bin2name(from);
 		u.email = bin2text(from);
@@ -47,7 +57,7 @@ public interface BinaryConversion<I,O> {
 		return u;
 	};
 	
-	BinaryConversion<User,ByteBuffer> user2bin = (u,to) -> { 
+	Convert<User,ByteBuffer> user2bin = (u,to) -> { 
 		name2bin(u.name, to);
 		text2bin(u.email, to);
 		to.put((byte) u.md5.length);
@@ -65,7 +75,7 @@ public interface BinaryConversion<I,O> {
 		return to; 
 	};
 
-	BinaryConversion<Tx, Version> bin2version = (tx,from) -> { 
+	Convert<Tx, Version> bin2version = (tx,from) -> { 
 		Version v = new Version();
 		v.product = bin2name(from);
 		v.name = bin2name(from);
@@ -73,14 +83,14 @@ public interface BinaryConversion<I,O> {
 		return v;
 	};
 
-	BinaryConversion<Version,ByteBuffer> version2bin = (v,to) -> { 
+	Convert<Version,ByteBuffer> version2bin = (v,to) -> { 
 		name2bin(v.product, to);
 		name2bin(v.name, to);
 		names2bin(v.changeset, to);
 		return to;
 	};
 	
-	BinaryConversion<Tx, Task> bin2task = (tx,from) -> { 
+	Convert<Tx, Task> bin2task = (tx,from) -> { 
 		Task t = new Task();
 		t.product = tx.product(bin2name(from));
 		t.area = tx.area(t.product.name, bin2name(from));
@@ -108,7 +118,7 @@ public interface BinaryConversion<I,O> {
 		return t;
 	};
 
-	BinaryConversion<Task,ByteBuffer> task2bin = (t,to) -> { 
+	Convert<Task,ByteBuffer> task2bin = (t,to) -> { 
 		name2bin(t.product.name, to);
 		name2bin(t.area.name, to);
 		IDN2bin(t.id, to);
@@ -135,21 +145,21 @@ public interface BinaryConversion<I,O> {
 		return to;
 	};
 
-	BinaryConversion<Tx, Site> bin2site = (tx,from) -> { 
+	Convert<Tx, Site> bin2site = (tx,from) -> { 
 		Name owner = bin2name(from);
 		Name name = bin2name(from);
 		String template = bin2text(from);
 		return new Site(owner, name, template);
 	};
 
-	BinaryConversion<Site,ByteBuffer> site2bin = (site,to) -> { 
+	Convert<Site,ByteBuffer> site2bin = (site,to) -> { 
 		name2bin(site.owner, to);
 		name2bin(site.name, to);
 		text2bin(site.template, to);
 		return to;
 	};
 	
-	BinaryConversion<Tx, Product> bin2product = (tx,from) -> { 
+	Convert<Tx, Product> bin2product = (tx,from) -> { 
 		Product p = new Product();
 		p.name = bin2name(from);
 		p.tasks = from.getInt();
@@ -160,13 +170,13 @@ public interface BinaryConversion<I,O> {
 		return p;
 	};
 
-	BinaryConversion<Product,ByteBuffer> product2bin = (p,to) -> { 
+	Convert<Product,ByteBuffer> product2bin = (p,to) -> { 
 		name2bin(p.name, to);
 		to.putInt(p.tasks);
 		return to;
 	};
 	
-	BinaryConversion<Tx, Poll> bin2poll = (tx,from) -> { 
+	Convert<Tx, Poll> bin2poll = (tx,from) -> { 
 		Poll p = new Poll();
 		p.serial = new IDN(from.getInt());
 		p.area = tx.area(bin2name(from), bin2name(from));
@@ -182,7 +192,7 @@ public interface BinaryConversion<I,O> {
 		return p;
 	};
 
-	BinaryConversion<Poll,ByteBuffer> poll2bin = (p,to) -> { 
+	Convert<Poll,ByteBuffer> poll2bin = (p,to) -> { 
 		IDN2bin(p.serial, to);
 		name2bin(p.area.product, to);
 		name2bin(p.area.name, to);
@@ -198,7 +208,7 @@ public interface BinaryConversion<I,O> {
 		return to;
 	};
 	
-	BinaryConversion<Tx, Area> bin2area = (tx,from) -> { 
+	Convert<Tx, Area> bin2area = (tx,from) -> { 
 		Area a = new Area();
 		a.product = bin2name(from);
 		a.name = bin2name(from);
@@ -213,7 +223,7 @@ public interface BinaryConversion<I,O> {
 		return a;
 	};
 
-	BinaryConversion<Area,ByteBuffer> area2bin = (a,to) -> { 
+	Convert<Area,ByteBuffer> area2bin = (a,to) -> { 
 		name2bin(a.product, to);
 		name2bin(a.name, to);
 		name2bin(a.basis, to);

@@ -2,27 +2,27 @@ package vizio.io;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
-import static vizio.engine.BinaryConversion.area2bin;
-import static vizio.engine.BinaryConversion.bin2area;
-import static vizio.engine.BinaryConversion.bin2poll;
-import static vizio.engine.BinaryConversion.bin2product;
-import static vizio.engine.BinaryConversion.bin2site;
-import static vizio.engine.BinaryConversion.bin2task;
-import static vizio.engine.BinaryConversion.bin2user;
-import static vizio.engine.BinaryConversion.bin2version;
-import static vizio.engine.BinaryConversion.poll2bin;
-import static vizio.engine.BinaryConversion.product2bin;
-import static vizio.engine.BinaryConversion.site2bin;
-import static vizio.engine.BinaryConversion.task2bin;
-import static vizio.engine.BinaryConversion.user2bin;
-import static vizio.engine.BinaryConversion.version2bin;
+import static vizio.engine.Convert.area2bin;
+import static vizio.engine.Convert.bin2area;
+import static vizio.engine.Convert.bin2poll;
+import static vizio.engine.Convert.bin2product;
+import static vizio.engine.Convert.bin2site;
+import static vizio.engine.Convert.bin2task;
+import static vizio.engine.Convert.bin2user;
+import static vizio.engine.Convert.bin2version;
+import static vizio.engine.Convert.poll2bin;
+import static vizio.engine.Convert.product2bin;
+import static vizio.engine.Convert.site2bin;
+import static vizio.engine.Convert.task2bin;
+import static vizio.engine.Convert.user2bin;
+import static vizio.engine.Convert.version2bin;
 import static vizio.model.Name.as;
 
 import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
-import vizio.engine.BinaryConversion;
+import vizio.engine.Convert;
 import vizio.engine.Change;
 import vizio.engine.Tracker;
 import vizio.model.Area;
@@ -101,7 +101,7 @@ public class TestBinaryConversion {
 		assertConsistentConversion(bin2task, task2bin, task1);
 	}
 
-	static <T> void assertConsistentConversion(BinaryConversion<Change.Tx,T> reader, BinaryConversion<T, ByteBuffer> writer, T value) {
+	static <T> void assertConsistentConversion(Convert<Change.Tx,T> reader, Convert<T, ByteBuffer> writer, T value) {
 		ByteBuffer buf = ByteBuffer.allocate(2048);
 		writer.convert(value, buf);
 		byte[] written = new byte[buf.position()];
