@@ -3,6 +3,9 @@ package vizio.db;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
+import static vizio.engine.Change.activate;
+import static vizio.engine.Change.launch;
+import static vizio.engine.Change.register;
 import static vizio.model.Name.as;
 
 import java.io.File;
@@ -23,6 +26,7 @@ import vizio.db.DB.TxW;
 import vizio.engine.Convert;
 import vizio.engine.Change;
 import vizio.engine.LimitControl;
+import vizio.engine.Tracker;
 import vizio.engine.Transaction;
 import vizio.model.Entity;
 import vizio.model.ID;
@@ -121,8 +125,9 @@ public class TestLMDB {
 			Name user = as("abc");
 			Name name = as("def");
 			Change change = 
-					Change.register(user, "test@example.com", "foo", "salt").and(
-					Change.launch(name, "ghi", user));
+					register(user, "test@example.com", "foo", "salt")
+					.and(activate(user, Tracker.md5("foo"+"salt")))
+					.and(launch(name, "ghi", user));
 					
 			Entity<?>[] changed = Transaction.run(change, new LimitControl(() -> System.currentTimeMillis(), 5) ,db);
 			

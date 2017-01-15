@@ -60,7 +60,7 @@ public final class Tracker {
 		User user = new User();
 		user.name = name;
 		user.email = email;
-		user.md5 = md5(unsaltedMd5+salt); // also acts as activationKey
+		user.md5 = md5(unsaltedMd5+salt); // acts as activationKey
 		user.sites = Names.empty();
 		user.watches = 0;
 		touch(user);
@@ -79,6 +79,7 @@ public final class Tracker {
 	}
 
 	public void login(User user, String plainPass, String salt) {
+		expectActivated(user);
 		if (!Arrays.equals(md5(md5(plainPass)+salt), user.md5)) {
 			denyTransition("Wrong passphrase!");
 		}
@@ -102,6 +103,7 @@ public final class Tracker {
 
 	public Product constitute(Name product, User originator) {
 		expectRegistered(originator);
+		expectActivated(originator);
 		expectRegular(product);
 		stressNewProduct(originator);
 		Product p = new Product();
@@ -140,6 +142,7 @@ public final class Tracker {
 
 	private Area compart(Name product, Name area, User originator) {
 		expectRegistered(originator);
+		expectActivated(originator);
 		if (area.isEditable()) {
 			expectRegular(area);
 		}
@@ -167,7 +170,7 @@ public final class Tracker {
 
 	public Task relocate(Task task, Area to, User originator) {
 		expectNoEntrance(task.area);
-		stressDoRelocate(task, to, originator);
+		expectActivated(originator);
 		if (task.area.name.isUnknown()) {
 			expectMaintainer(to, originator); // pull from ~
 		} else {
@@ -176,6 +179,7 @@ public final class Tracker {
 				expectMaintainer(to, originator); // to some else than ~
 			}
 		}
+		stressDoRelocate(task, to, originator);
 		task = task.clone();
 		task.area = to;
 		touch(originator);
@@ -186,6 +190,7 @@ public final class Tracker {
 
 	public Version tag(Product product, Name version, User originator) {
 		expectRegistered(originator);
+		expectActivated(originator);
 		if (version.isEditable()) {
 			expectRegular(version);
 		}
@@ -234,6 +239,7 @@ public final class Tracker {
 
 	private Task report(Product product, Motive motive, Purpose purpose, String gist, User reporter, Area area, Version version, boolean exploitable) {
 		if (!area.isOpen()) {
+			expectActivated(reporter);
 			expectMaintainer(area, reporter);
 		}
 		expectCanReport(reporter);
@@ -268,6 +274,7 @@ public final class Tracker {
 	
 	public Task attach(Task task, User initiator, URL... attachments) {
 		if (!task.area.isOpen()) {
+			expectActivated(initiator);
 			expectMaintainer(task.area, initiator);
 		}
 		stressDoAttach(task, initiator);
@@ -335,6 +342,8 @@ public final class Tracker {
 	}
 
 	private Task solve(Task task, User by, String conclusion) {
+		expectRegistered(by);
+		expectActivated(by);
 		expectUnsolved(task);
 		stressDoSolve(task, by);
 		task = task.clone();
@@ -358,6 +367,8 @@ public final class Tracker {
 	}
 
 	public Poll poll(Matter matter, Area area, User initiator, User affected) {
+		expectRegistered(initiator);
+		expectActivated(initiator);
 		if (matter != participation) {
 			expectMaintainer(area, initiator);
 		}
@@ -387,6 +398,8 @@ public final class Tracker {
 	}
 
 	private Poll vote(Poll poll, User voter, boolean consent) {
+		expectRegistered(voter);
+		expectActivated(voter);
 		if (poll.canVote(voter.name) && (
 				consent && !poll.consenting.contains(voter.name)
 			|| !consent && !poll.dissenting.contains(voter.name))) {
@@ -429,6 +442,8 @@ public final class Tracker {
 	/* A user's task queues */
 
 	public Task enlist(Task task, User user) {
+		expectRegistered(user);
+		expectActivated(user);
 		expectCanBeInvolved(user, task);
 		if (task.approachedBy.contains(user) || !task.enlistedBy.contains(user)) {
 			stressDoList(task, user);
@@ -441,6 +456,8 @@ public final class Tracker {
 	}
 
 	public Task abandon(Task task, User user) {
+		expectRegistered(user);
+		expectActivated(user);
 		expectCanBeInvolved(user, task);
 		if (task.enlistedBy.contains(user) || task.approachedBy.contains(user)) {
 			stressDoList(task, user);
@@ -453,6 +470,8 @@ public final class Tracker {
 	}
 
 	public Task approach(Task task, User user) {
+		expectRegistered(user);
+		expectActivated(user);
 		expectCanBeInvolved(user, task);
 		expectMaintainer(task.area, user);
 		if (!task.approachedBy.contains(user) || task.enlistedBy.contains(user)) {
@@ -468,6 +487,8 @@ public final class Tracker {
 	/* A user's watch list */
 
 	public Task watch(Task task, User user) {
+		expectRegistered(user);
+		expectActivated(user);
 		expectCanWatch(user);
 		if (!task.watchedBy.contains(user)) {
 			stressDoList(task, user);
@@ -493,6 +514,7 @@ public final class Tracker {
 	/* A user's sites */
 
 	public Site launch(Name site, String template, User owner) {
+		expectActivated(owner);
 		expectNoUserSiteYet(site, owner);
 		expectCanHaveMoreSites(owner);
 		stessNewSite(owner);
@@ -503,6 +525,8 @@ public final class Tracker {
 	}
 
 	public Site restructure(Site site, String template, User owner) {
+		expectRegistered(owner);
+		expectActivated(owner);
 		expectOwner(site, owner);
 		stressDoUpdate(site, owner);
 		site = site.clone();
@@ -718,6 +742,12 @@ public final class Tracker {
 	private static void expectNotActivated(User user) {
 		if (user.activated) {
 			denyTransition("User account already activated!");
+		}
+	}
+
+	private static void expectActivated(User user) {
+		if (!user.activated) {
+			denyTransition("User account must be activated first!");
 		}
 	}
 

@@ -37,10 +37,10 @@ import vizio.model.Task;
 import vizio.model.User;
 import vizio.model.Version;
 
-public class TestBinaryConversion {
+public class TestConvert {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(TestBinaryConversion.this::tick, (l) -> true);
+	private Tracker tracker = new Tracker(TestConvert.this::tick, (l) -> true);
 
 	private long tick() {
 		now += 60000;
@@ -49,27 +49,27 @@ public class TestBinaryConversion {
 
 	@Test
 	public void userStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		User user1 = registerUser();
 		assertConsistentConversion(bin2user, user2bin, user1);
 	}
 	
 	@Test
 	public void siteStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		User user1 = registerUser();
 		Site site1 = tracker.launch(as("my-tasks"), "foobar", user1);
 		assertConsistentConversion(bin2site, site2bin, site1);
 	}
 
 	@Test
 	public void productStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		User user1 = registerUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		assertConsistentConversion(bin2product, product2bin, prod1);
 	}
 
 	@Test
 	public void areaStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		User user1 = registerUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		Area area1 = tracker.compart(prod1, as("area1"), user1);
 		assertConsistentConversion(bin2area, area2bin, area1);
@@ -77,7 +77,7 @@ public class TestBinaryConversion {
 
 	@Test
 	public void versionStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		User user1 = registerUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		Version v1 = tracker.tag(prod1, as("v1"), user1);
 		assertConsistentConversion(bin2version, version2bin, v1);
@@ -85,7 +85,7 @@ public class TestBinaryConversion {
 
 	@Test
 	public void pollStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		User user1 = registerUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		User user2 = tracker.register(as("user2"), "user2@example.com", "user2pwd", "salt");
 		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
@@ -94,11 +94,16 @@ public class TestBinaryConversion {
 
 	@Test
 	public void taskStreamer() {
-		User user1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		User user1 = registerUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
-		user1 = tracker.activate(user1, Tracker.md5("user1pwd"+"salt"));
 		Task task1 = tracker.reportDefect(prod1, "broken", user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentConversion(bin2task, task2bin, task1);
+	}
+	
+	private User registerUser() {
+		User u1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		u1 = tracker.activate(u1, Tracker.md5("user1pwdsalt"));
+		return u1;
 	}
 
 	static <T> void assertConsistentConversion(Convert<Change.Tx,T> reader, Convert<T, ByteBuffer> writer, T value) {
