@@ -1,6 +1,6 @@
 package vizio.model;
 
-public class Version extends Entity<Version> {
+public final class Version extends Entity<Version> {
 
 	public Name product;
 	public Name name;
@@ -18,6 +18,10 @@ public class Version extends Entity<Version> {
 		return changeset.count() > 0;
 	}
 
+	public Version(int version) {
+		super(version);
+	}
+	
 	@Override
 	public ID computeID() {
 		return ID.versionId(product, name);

@@ -1,4 +1,4 @@
-package vizio.http;
+package vizio.ui.http;
 
 import java.io.PrintWriter;
 import java.util.Map;

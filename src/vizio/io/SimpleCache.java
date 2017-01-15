@@ -1,6 +1,5 @@
 package vizio.io;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -13,26 +12,12 @@ import vizio.model.Purpose;
 import vizio.model.Status;
 import vizio.model.Task;
 
-/**
- * Paths:
- * <pre>
- * Product /<product>/product.dat
- * Area    /<product>/area/<area>.dat
- * Poll    /<product>/poll/<area>/<matter>/<affected>.dat
- * Version /<product>/version/<version>.dat
- * Task    /<product>/task/<IDN>.dat
- * </pre>
- *
- * @author jan
- */
 public class SimpleCache implements Cache {
 
 	// Problems:
 	// - update index consistently so that queries either see "old" or "new" data but nothing in-between
 	// - update Task entities when Areas change
 	// - queries that are not constrained by either product or user
-
-	private static final String FILE_EXT = ".dat";
 
 	static interface Key<K> {
 		K key(Task task);
@@ -48,8 +33,6 @@ public class SimpleCache implements Cache {
 	static final Key<Motive> motive      = (Task task) -> task.motive;
 	static final Key<Purpose> purpose    = (Task task) -> task.purpose;
 
-	private final File basePath;
-
 	private Index<Name> idxProductVersion = Index.init();
 	private Index<Name> idxProductArea = Index.init();
 	private Index<Name> idxProductUser = Index.init();
@@ -61,9 +44,8 @@ public class SimpleCache implements Cache {
 	private Index<Status> idxApprochingUsersStatus = Index.init();
 	private Index<Status> idxWatchingUsersStatus = Index.init();
 
-	public SimpleCache(File basePath) {
+	public SimpleCache() {
 		super();
-		this.basePath = basePath;
 	}
 
 	@Override

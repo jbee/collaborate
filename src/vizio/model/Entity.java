@@ -2,10 +2,19 @@ package vizio.model;
 
 public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparable<T> {
 
+	public final transient int initalVersion;
+	public int version;
+	
 	private transient ID uniqueId;
 	
 	protected abstract ID computeID();
 	
+	public Entity(int initalVersion) {
+		super();
+		this.initalVersion = initalVersion;
+		this.version = initalVersion;
+	}
+
 	/**
 	 * @return A database unique identifier. That means the type of the entity
 	 *         is also encoded in the value. Two different entities can never
@@ -53,6 +62,6 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	
 	@Override
 	public String toString() {
-		return uniqueID().toString();
+		return uniqueID().toString()+":"+version+":"+initalVersion;
 	}
 }

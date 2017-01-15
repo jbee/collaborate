@@ -1,4 +1,4 @@
-package vizio.http;
+package vizio.ui.http;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -16,7 +16,7 @@ import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 
-import vizio.ctrl.DummyController;
+import vizio.ui.ctrl.DummyController;
 
 public class HttpTrackerServer extends AbstractHandler {
 

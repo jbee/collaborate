@@ -1,10 +1,9 @@
-package vizio.http;
+package vizio.ui.http;
 
 import static vizio.model.Date.date;
 
 import java.io.PrintWriter;
 
-import vizio.ctrl.Action;
 import vizio.model.Heat;
 import vizio.model.Motive;
 import vizio.model.Name;
@@ -14,12 +13,13 @@ import vizio.model.Site;
 import vizio.model.Status;
 import vizio.model.Task;
 import vizio.model.User;
-import vizio.view.Coloring;
-import vizio.view.Menu;
-import vizio.view.Page;
-import vizio.view.View;
-import vizio.view.View.Silo;
-import vizio.view.Widget;
+import vizio.ui.ctrl.Action;
+import vizio.ui.view.Coloring;
+import vizio.ui.view.Menu;
+import vizio.ui.view.Page;
+import vizio.ui.view.View;
+import vizio.ui.view.Widget;
+import vizio.ui.view.View.Silo;
 
 public class HTMLRenderer {
 

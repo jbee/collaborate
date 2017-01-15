@@ -69,7 +69,7 @@ public class TestIndex {
 	}
 
 	private Task task(int num) {
-		Task task = new Task();
+		Task task = new Task(1);
 		task.id = new IDN(num);
 		return task;
 	}

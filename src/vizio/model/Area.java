@@ -5,7 +5,7 @@ package vizio.model;
  *
  * @author jan
  */
-public class Area extends Entity<Area> {
+public final class Area extends Entity<Area> {
 
 	public Name product;
 	public Name name;
@@ -37,7 +37,10 @@ public class Area extends Entity<Area> {
 	 * A per area counter that is used in case of {@link #entrance} areas.
 	 */
 	public int tasks;
-	
+
+	public Area(int version) {
+		super(version);
+	}
 
 	/*
 	 * An example for an entrance area would be RFCs. The area would be named "RFC".

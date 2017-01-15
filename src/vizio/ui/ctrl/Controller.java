@@ -1,11 +1,11 @@
-package vizio.ctrl;
+package vizio.ui.ctrl;
 
 import vizio.io.Criteria;
 import vizio.model.Name;
 import vizio.model.Task;
 import vizio.model.User;
-import vizio.view.Menu;
-import vizio.view.View;
+import vizio.ui.view.Menu;
+import vizio.ui.view.View;
 
 public interface Controller {
 

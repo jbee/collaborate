@@ -1,4 +1,4 @@
-package vizio.view;
+package vizio.ui.view;
 
 import vizio.model.Task;
 

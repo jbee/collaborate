@@ -1,29 +1,29 @@
-package vizio.http;
+package vizio.ui.http;
 
 import static java.lang.Character.isDigit;
 import static java.lang.Integer.parseInt;
-import static vizio.ctrl.Action.view;
 import static vizio.model.ID.Type.Area;
 import static vizio.model.ID.Type.Product;
 import static vizio.model.ID.Type.Task;
 import static vizio.model.ID.Type.User;
 import static vizio.model.ID.Type.Version;
 import static vizio.model.Name.as;
+import static vizio.ui.ctrl.Action.view;
 
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.util.Map;
 
-import vizio.ctrl.Action;
-import vizio.ctrl.Context;
-import vizio.ctrl.Controller;
 import vizio.model.IDN;
 import vizio.model.Name;
 import vizio.model.Task;
 import vizio.model.User;
-import vizio.view.Page;
-import vizio.view.View;
-import vizio.view.Widget;
+import vizio.ui.ctrl.Action;
+import vizio.ui.ctrl.Context;
+import vizio.ui.ctrl.Controller;
+import vizio.ui.view.Page;
+import vizio.ui.view.View;
+import vizio.ui.view.Widget;
 
 /**
  * Connects the HTTP world with the general {@link Controller} abstraction. Its

@@ -1,4 +1,4 @@
-package vizio.ctrl;
+package vizio.ui.ctrl;
 
 import static java.lang.System.currentTimeMillis;
 import static vizio.model.Name.as;
@@ -15,11 +15,11 @@ import vizio.model.Site;
 import vizio.model.Task;
 import vizio.model.User;
 import vizio.model.Version;
-import vizio.view.Coloring;
-import vizio.view.Menu;
-import vizio.view.View;
-import vizio.view.View.Silo;
-import vizio.view.Widget;
+import vizio.ui.view.Coloring;
+import vizio.ui.view.Menu;
+import vizio.ui.view.View;
+import vizio.ui.view.Widget;
+import vizio.ui.view.View.Silo;
 
 public class DummyController implements Controller {
 
@@ -68,10 +68,10 @@ public class DummyController implements Controller {
 	@Override
 	public Menu[] menus(Context ctx) {
 		return new Menu[] {
-				new Menu("My", Action.my, new Site(Name.MY, Name.as("dashboard"), "")),
+				new Menu("My", Action.my, new Site(1, Name.MY, Name.as("dashboard"), "")),
 				new Menu("jan's", Action.user,
-						new Site(as("jan"), Name.as("@home"), ""),
-						new Site(as("jan"), Name.as("special"), "")
+						new Site(1, as("jan"), Name.as("@home"), ""),
+						new Site(1, as("jan"), Name.as("special"), "")
 						)
 				};
 	}

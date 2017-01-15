@@ -42,6 +42,10 @@ public class Task extends Entity<Task> {
 	public Date end;
 	public String conclusion;
 
+	public Task(int version) {
+		super(version);
+	}
+	
 	@Override
 	public ID computeID() {
 		return ID.taskId(product.name, id);

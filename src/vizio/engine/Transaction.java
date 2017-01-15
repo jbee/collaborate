@@ -67,7 +67,7 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 	
 	private final LinkedHashMap<ID, Entity<?>> changed = new LinkedHashMap<>();
 	private final HashMap<ID, Entity<?>> loaded = new HashMap<>();
-	private final HashMap<User, Integer> loadedUserVersions = new HashMap<>();
+	private final HashMap<ID, User> loadedUsers = new HashMap<>();
 	private final Set<Limit> allocated = new HashSet<>();
 	
 	private final LimitControl lc;
@@ -115,11 +115,10 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 				put(t.base);
 			}
 			changed.put(id, e);
-			for (Entry<User, Integer> u : loadedUserVersions.entrySet()) {
-				User user = u.getKey();
-				if (user.version > u.getValue().intValue()) {
+			for (User user : loadedUsers.values()) {
+				if (user.version > user.initalVersion) {
 					changed.put(user.uniqueID(), user);
-					loadedUserVersions.remove(user);			
+					loadedUsers.remove(user);			
 				}
 			}
 		}
@@ -127,10 +126,9 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 	
 	@Override
 	public User user(Name user) {
-		User res = load(userId(user), bin2user);
-		if (!loadedUserVersions.containsKey(res)) {
-			loadedUserVersions.put(res, res.version);
-		}
+		ID id = userId(user);
+		User res = load(id, bin2user);
+		loadedUsers.put(id, res);
 		return res;
 	}
 

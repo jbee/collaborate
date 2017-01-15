@@ -3,7 +3,7 @@ package vizio.model;
 import static java.lang.Math.max;
 import static vizio.model.Date.date;
 
-public class User extends Entity<User> {
+public final class User extends Entity<User> {
 
 	private static final int MINIMUM_WATCH_LIMIT = 20;
 
@@ -19,7 +19,6 @@ public class User extends Entity<User> {
 
 	// change log
 	public long millisLastActive;
-	public int version;
 	
 	// activity statistics
 	public int xp;
@@ -31,6 +30,10 @@ public class User extends Entity<User> {
 	public long millisEmphasised;
 	public int emphasisedToday;
 
+	public User(int version) {
+		super(version);
+	}
+	
 	@Override
 	public ID computeID() {
 		return ID.userId(name);

@@ -1,4 +1,4 @@
-package vizio.view;
+package vizio.ui.view;
 
 import java.util.ArrayList;
 import java.util.List;

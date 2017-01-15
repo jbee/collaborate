@@ -1,4 +1,4 @@
-package vizio.ctrl;
+package vizio.ui.ctrl;
 
 import vizio.model.ID;
 import vizio.model.IDN;

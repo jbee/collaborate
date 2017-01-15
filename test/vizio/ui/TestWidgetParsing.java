@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import vizio.view.Widget;
+import vizio.ui.view.Widget;
 
 public class TestWidgetParsing {
 

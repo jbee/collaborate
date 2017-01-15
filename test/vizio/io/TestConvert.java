@@ -16,6 +16,7 @@ import static vizio.engine.Convert.site2bin;
 import static vizio.engine.Convert.task2bin;
 import static vizio.engine.Convert.user2bin;
 import static vizio.engine.Convert.version2bin;
+import static vizio.engine.Tracker.activationKey;
 import static vizio.model.Name.as;
 
 import java.nio.ByteBuffer;
@@ -49,27 +50,27 @@ public class TestConvert {
 
 	@Test
 	public void userStreamer() {
-		User user1 = registerUser();
+		User user1 = testUser();
 		assertConsistentConversion(bin2user, user2bin, user1);
 	}
 	
 	@Test
 	public void siteStreamer() {
-		User user1 = registerUser();
+		User user1 = testUser();
 		Site site1 = tracker.launch(as("my-tasks"), "foobar", user1);
 		assertConsistentConversion(bin2site, site2bin, site1);
 	}
 
 	@Test
 	public void productStreamer() {
-		User user1 = registerUser();
+		User user1 = testUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		assertConsistentConversion(bin2product, product2bin, prod1);
 	}
 
 	@Test
 	public void areaStreamer() {
-		User user1 = registerUser();
+		User user1 = testUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		Area area1 = tracker.compart(prod1, as("area1"), user1);
 		assertConsistentConversion(bin2area, area2bin, area1);
@@ -77,7 +78,7 @@ public class TestConvert {
 
 	@Test
 	public void versionStreamer() {
-		User user1 = registerUser();
+		User user1 = testUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		Version v1 = tracker.tag(prod1, as("v1"), user1);
 		assertConsistentConversion(bin2version, version2bin, v1);
@@ -85,7 +86,7 @@ public class TestConvert {
 
 	@Test
 	public void pollStreamer() {
-		User user1 = registerUser();
+		User user1 = testUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		User user2 = tracker.register(as("user2"), "user2@example.com", "user2pwd", "salt");
 		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
@@ -94,15 +95,15 @@ public class TestConvert {
 
 	@Test
 	public void taskStreamer() {
-		User user1 = registerUser();
+		User user1 = testUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		Task task1 = tracker.reportDefect(prod1, "broken", user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentConversion(bin2task, task2bin, task1);
 	}
 	
-	private User registerUser() {
+	private User testUser() {
 		User u1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
-		u1 = tracker.activate(u1, Tracker.md5("user1pwdsalt"));
+		u1 = tracker.activate(u1, activationKey("user1pwd", "salt"));
 		return u1;
 	}
 
@@ -126,26 +127,26 @@ public class TestConvert {
 
 		@Override
 		public User user(Name user) {
-			User res = new User();
+			User res = new User(1);
 			res.name = user;
 			return res;
 		}
 		
 		@Override
 		public Site site(Name user, Name site) {
-			return new Site(user, site, "");
+			return new Site(1, user, site, "");
 		}
 
 		@Override
 		public Product product(Name product) {
-			Product res = new Product();
+			Product res = new Product(1);
 			res.name = product;
 			return res;
 		}
 
 		@Override
 		public Area area(Name product, Name area) {
-			Area res = new Area();
+			Area res = new Area(1);
 			res.product = product;
 			res.name = area;
 			return res;
@@ -153,7 +154,7 @@ public class TestConvert {
 
 		@Override
 		public Version version(Name product, Name version) {
-			Version res = new Version();
+			Version res = new Version(1);
 			res.product = product;
 			res.name = version;
 			return res;
@@ -161,7 +162,7 @@ public class TestConvert {
 
 		@Override
 		public Task task(Name product, IDN id) {
-			Task res = new Task();
+			Task res = new Task(1);
 			res.product = product(product);
 			res.id = id;
 			return res;
@@ -169,7 +170,7 @@ public class TestConvert {
 
 		@Override
 		public Poll poll(Name product, Name area, IDN serial) {
-			Poll res = new Poll();
+			Poll res = new Poll(1);
 			res.serial = serial;
 			res.area = area(product, area);
 			return res;

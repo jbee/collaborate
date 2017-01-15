@@ -1,6 +1,6 @@
 package vizio.model;
 
-public class Poll extends Entity<Poll> {
+public final class Poll extends Entity<Poll> {
 
 	public static enum Matter {
 		// on maintainers
@@ -21,6 +21,10 @@ public class Poll extends Entity<Poll> {
 	public Date end;
 	public Outcome outcome;
 
+	public Poll(int version) {
+		super(version);
+	}
+	
 	@Override
 	public ID computeID() {
 		return ID.pollId(area.product, area.name, serial);

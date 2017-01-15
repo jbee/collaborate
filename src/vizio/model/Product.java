@@ -6,7 +6,7 @@ package vizio.model;
  *
  * @author jan
  */
-public class Product extends Entity<Product> {
+public final class Product extends Entity<Product> {
 
 	public Name name;
 	/**
@@ -36,6 +36,10 @@ public class Product extends Entity<Product> {
 
 	public int tasks;
 
+	public Product(int version) {
+		super(version);
+	}
+	
 	@Override
 	public ID computeID() {
 		return ID.productId(name);

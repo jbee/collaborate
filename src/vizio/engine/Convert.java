@@ -38,7 +38,7 @@ public interface Convert<I,O> {
 	O convert(I from, ByteBuffer buf);
 	
 	Convert<Tx, User> bin2user = (tx,from) -> { 
-		User u = new User();
+		User u = new User(from.getInt());
 		u.name = bin2name(from);
 		u.email = bin2text(from);
 		byte[] md5 = new byte[from.get()];
@@ -58,6 +58,7 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<User,ByteBuffer> user2bin = (u,to) -> { 
+		to.putInt(u.version);
 		name2bin(u.name, to);
 		text2bin(u.email, to);
 		to.put((byte) u.md5.length);
@@ -76,7 +77,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Tx, Version> bin2version = (tx,from) -> { 
-		Version v = new Version();
+		Version v = new Version(from.getInt());
 		v.product = bin2name(from);
 		v.name = bin2name(from);
 		v.changeset = bin2names(from);
@@ -84,6 +85,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Version,ByteBuffer> version2bin = (v,to) -> { 
+		to.putInt(v.version);
 		name2bin(v.product, to);
 		name2bin(v.name, to);
 		names2bin(v.changeset, to);
@@ -91,7 +93,7 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<Tx, Task> bin2task = (tx,from) -> { 
-		Task t = new Task();
+		Task t = new Task(from.getInt());
 		t.product = tx.product(bin2name(from));
 		t.area = tx.area(t.product.name, bin2name(from));
 		t.id = bin2IDN(from);
@@ -119,6 +121,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Task,ByteBuffer> task2bin = (t,to) -> { 
+		to.putInt(t.version);
 		name2bin(t.product.name, to);
 		name2bin(t.area.name, to);
 		IDN2bin(t.id, to);
@@ -146,13 +149,15 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Tx, Site> bin2site = (tx,from) -> { 
+		int version = from.getInt();
 		Name owner = bin2name(from);
 		Name name = bin2name(from);
 		String template = bin2text(from);
-		return new Site(owner, name, template);
+		return new Site(version, owner, name, template);
 	};
 
 	Convert<Site,ByteBuffer> site2bin = (site,to) -> { 
+		to.putInt(site.version);
 		name2bin(site.owner, to);
 		name2bin(site.name, to);
 		text2bin(site.template, to);
@@ -160,10 +165,10 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<Tx, Product> bin2product = (tx,from) -> { 
-		Product p = new Product();
+		Product p = new Product(from.getInt());
 		p.name = bin2name(from);
 		p.tasks = from.getInt();
-
+		// not stored as part of product
 		p.origin = tx.area(p.name, Name.ORIGIN);
 		p.somewhere = tx.area(p.name, Name.UNKNOWN);
 		p.somewhen = tx.version(p.name, Name.UNKNOWN);
@@ -171,13 +176,14 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Product,ByteBuffer> product2bin = (p,to) -> { 
+		to.putInt(p.version);
 		name2bin(p.name, to);
 		to.putInt(p.tasks);
 		return to;
 	};
 	
 	Convert<Tx, Poll> bin2poll = (tx,from) -> { 
-		Poll p = new Poll();
+		Poll p = new Poll(from.getInt());
 		p.serial = new IDN(from.getInt());
 		p.area = tx.area(bin2name(from), bin2name(from));
 		p.matter = bin2enum(Matter.class, from);
@@ -193,6 +199,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Poll,ByteBuffer> poll2bin = (p,to) -> { 
+		to.putInt(p.version);
 		IDN2bin(p.serial, to);
 		name2bin(p.area.product, to);
 		name2bin(p.area.name, to);
@@ -209,7 +216,7 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<Tx, Area> bin2area = (tx,from) -> { 
-		Area a = new Area();
+		Area a = new Area(from.getInt());
 		a.product = bin2name(from);
 		a.name = bin2name(from);
 		a.basis = bin2name(from);
@@ -224,6 +231,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Area,ByteBuffer> area2bin = (a,to) -> { 
+		to.putInt(a.version);
 		name2bin(a.product, to);
 		name2bin(a.name, to);
 		name2bin(a.basis, to);

@@ -3,8 +3,17 @@ package vizio.io;
 import vizio.model.Date;
 import vizio.model.Task;
 
-public class Criteria {
+public final class Criteria {
 
+	public Range range;
+	public Filter[] filters;
+	public Property[] orders;
+
+	@Override
+	public String toString() {
+		return String.format("%s[%s]<%s>", range, join(filters), join(orders));
+	}
+	
 	/**
 	 * Properties a task can be filtered by
 	 */
@@ -110,15 +119,6 @@ public class Criteria {
 		public int length() {
 			return end-start+1;
 		}
-	}
-
-	public Range range;
-	public Filter[] filters;
-	public Property[] orders;
-
-	@Override
-	public String toString() {
-		return String.format("%s[%s]<%s>", range, join(filters), join(orders));
 	}
 
 	static String join(Object[] values) {

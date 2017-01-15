@@ -1,7 +1,7 @@
-package vizio.view;
+package vizio.ui.view;
 
-import vizio.ctrl.Action;
 import vizio.model.Site;
+import vizio.ui.ctrl.Action;
 
 public class Menu {
 

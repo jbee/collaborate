@@ -54,16 +54,16 @@ public final class Tracker {
 
 	/* Users + Accounts */
 
-	public User register(Name name, String email, String unsaltedMd5, String salt) {
+	public User register(Name name, String email, String pass, String salt) {
 		expectRegular(name);
 		stressNewUser();
-		User user = new User();
+		User user = new User(1);
 		user.name = name;
 		user.email = email;
-		user.md5 = md5(unsaltedMd5+salt); // acts as activationKey
+		user.md5 = activationKey(pass, salt); // acts as activationKey
 		user.sites = Names.empty();
 		user.watches = 0;
-		touch(user);
+		user.millisLastActive=clock.time(); // cannot use touch as version should stay same
 		return user;
 	}
 
@@ -75,6 +75,7 @@ public final class Tracker {
 		stressDoActivate();
 		user = user.clone();
 		user.activated = true;
+		touch(user);
 		return user;
 	}
 
@@ -85,13 +86,17 @@ public final class Tracker {
 		}
 	}
 
-	public static byte[] md5(String pass) {
+	private static byte[] md5(String pass) {
 		try {
 			return MessageDigest.getInstance("MD5").digest(pass.getBytes("UTF-8"));
 		} catch (Exception e) {
 			denyTransition(e.getMessage());
 			return null;
 		}
+	}
+	
+	public static byte[] activationKey(String pass, String salt) {
+		return md5(pass+salt);
 	}
 
 	private void touch(User user) {
@@ -106,7 +111,7 @@ public final class Tracker {
 		expectActivated(originator);
 		expectRegular(product);
 		stressNewProduct(originator);
-		Product p = new Product();
+		Product p = new Product(1);
 		p.name = product;
 		p.tasks = 0;
 		p.origin = compart(p.name, Name.ORIGIN, originator);
@@ -147,7 +152,7 @@ public final class Tracker {
 			expectRegular(area);
 		}
 		stressNewArea(product, originator);
-		Area a = new Area();
+		Area a = new Area(1);
 		a.name = area;
 		a.product = product;
 		a.maintainers=new Names(originator.name);
@@ -196,7 +201,7 @@ public final class Tracker {
 		}
 		expectOriginMaintainer(product, originator);
 		stressNewVersion(product, originator);
-		Version v = new Version();
+		Version v = new Version(1);
 		v.product = product.name;
 		v.name = version;
 		v.changeset = Names.empty();
@@ -244,7 +249,7 @@ public final class Tracker {
 		}
 		expectCanReport(reporter);
 		stressNewTask(product, reporter);
-		Task task = new Task();
+		Task task = new Task(1);
 		task.product = product.clone();
 		task.product.tasks++;
 		task.id = new IDN(task.product.tasks);
@@ -373,7 +378,7 @@ public final class Tracker {
 			expectMaintainer(area, initiator);
 		}
 		stressNewPoll(area, initiator);
-		Poll poll = new Poll();
+		Poll poll = new Poll(1);
 		poll.area = area.clone();
 		poll.area.polls++;
 		poll.serial = new IDN(poll.area.polls);
@@ -518,7 +523,7 @@ public final class Tracker {
 		expectNoUserSiteYet(site, owner);
 		expectCanHaveMoreSites(owner);
 		stessNewSite(owner);
-		Site s = new Site(owner.name, site, template);
+		Site s = new Site(1, owner.name, site, template);
 		owner.sites = owner.sites.add(site);
 		touch(owner);
 		return s;

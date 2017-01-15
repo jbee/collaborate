@@ -1,4 +1,4 @@
-package vizio.ctrl;
+package vizio.ui.ctrl;
 
 public enum Action {
 
