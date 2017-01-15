@@ -3,6 +3,7 @@ package vizio.engine;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import vizio.engine.Change.Tx;
 import vizio.model.Area;
 import vizio.model.Date;
 import vizio.model.IDN;

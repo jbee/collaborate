@@ -1,6 +1,7 @@
 package vizio.model;
 
-import java.nio.charset.StandardCharsets;
+import static vizio.model.Bytes.asciiBytes;
+
 import java.util.regex.Pattern;
 
 /**
@@ -55,10 +56,10 @@ public final class Name extends Identifier<Name> {
 			return UNKNOWN;
 		final int len = name.length();
 		if (len <= 16 && VALID_EDITABLE.matcher(name).matches()) {
-			return new Name(name.getBytes(StandardCharsets.US_ASCII));
+			return new Name(asciiBytes(name));
 		}
 		if (len <= 32 && VALID_NON_EDITABLE.matcher(name).matches()) {
-			return new Name(name.getBytes(StandardCharsets.US_ASCII));
+			return new Name(asciiBytes(name));
 		}
 		throw new IllegalArgumentException("Not a valid name: "+name);
 	}

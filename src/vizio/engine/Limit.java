@@ -1,20 +1,20 @@
 package vizio.engine;
 
-import java.nio.charset.StandardCharsets;
-
+import static vizio.model.Bytes.asciiBytes;
+import static vizio.model.Bytes.join;
 import vizio.model.Identifier;
 import vizio.model.Name;
 
 public final class Limit extends Identifier<Limit> {
 
-	private static final char DIVIDER = ':';
+	private static final byte[] DIVIDER = {':'};
 	
 	private Limit(byte[] symbols) {
 		super(symbols);
 	}
 
 	public static Limit limit(String type, Name name) {
-		return new Limit((DIVIDER+type+DIVIDER+name).getBytes(StandardCharsets.US_ASCII));
+		return new Limit(join(DIVIDER, asciiBytes(type), DIVIDER, name.bytes()));
 	}
 	
 	public int factor() {

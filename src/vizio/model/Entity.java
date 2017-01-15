@@ -14,7 +14,7 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	public final ID uniqueID() {
 		if (uniqueId != null)
 			return uniqueId;
-		uniqueId = uniqueID();
+		uniqueId = computeID();
 		return uniqueId;
 	}
 	

@@ -30,6 +30,7 @@ import java.util.Set;
 
 import vizio.db.DB;
 import vizio.db.DB.TxW;
+import vizio.engine.Change.Tx;
 import vizio.model.Area;
 import vizio.model.Entity;
 import vizio.model.ID;
@@ -42,9 +43,18 @@ import vizio.model.Task;
 import vizio.model.User;
 import vizio.model.Version;
 
+/**
+ * A {@link Transaction} keeps track of a change applied as a whole or not at
+ * all.
+ * 
+ * It is "smart" in the sense that it will keep track of entities already
+ * changed so that when they are loaded more then once the changed entity is
+ * returned. It will also keep track of updated user entities without the need
+ * to {@link #put(Entity)} them explicitly.
+ */
 public class Transaction implements Tx, Limits, AutoCloseable {
 
-	public static boolean run(Change set, LimitControl lc, DB db) throws ConcurrentModification {
+	public static Entity<?>[] run(Change set, LimitControl lc, DB db) throws ConcurrentModification {
 		try (Transaction tx = new Transaction(lc, db)) {
 			try {
 				set.apply(new Tracker(lc.clock, tx), tx);
@@ -105,13 +115,22 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 				put(t.base);
 			}
 			changed.put(id, e);
+			for (Entry<User, Integer> u : loadedUserVersions.entrySet()) {
+				User user = u.getKey();
+				if (user.version > u.getValue().intValue()) {
+					changed.put(user.uniqueID(), user);
+					loadedUserVersions.remove(user);			
+				}
+			}
 		}
 	}
 	
 	@Override
 	public User user(Name user) {
 		User res = load(userId(user), bin2user);
-		loadedUserVersions.put(res, res.version);
+		if (!loadedUserVersions.containsKey(res)) {
+			loadedUserVersions.put(res, res.version);
+		}
 		return res;
 	}
 
@@ -145,17 +164,12 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 		return load(ID.taskId(product, id), bin2task);
 	}
 	
-	private boolean commit() {
+	private static final Entity<?>[] EMPTY = new Entity[0];
+	
+	private Entity<?>[] commit() {
 		txr.close(); // no more writing
 		if (changed.isEmpty())
-			return false;
-		// add touched users to changeset
-		for (Entry<User, Integer> u : loadedUserVersions.entrySet()) {
-			if (u.getKey().version > u.getValue().intValue()) {
-				changed.put(u.getKey().uniqueID(), u.getKey());
-			}
-		}
-		loadedUserVersions.clear();
+			return EMPTY;
 		ByteBuffer buf = ByteBuffer.allocateDirect(1024);
 		try (TxW tx = db.write()) {
 			for (Entry<ID,Entity<?>> e : changed.entrySet()) {
@@ -174,7 +188,7 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 				buf.clear();
 			}
 			tx.commit();
-			return true;
+			return changed.values().toArray(EMPTY);
 		}
 	}
 	

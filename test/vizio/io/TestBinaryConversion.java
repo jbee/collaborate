@@ -23,8 +23,8 @@ import java.nio.ByteBuffer;
 import org.junit.Test;
 
 import vizio.engine.BinaryConversion;
+import vizio.engine.Change;
 import vizio.engine.Tracker;
-import vizio.engine.Tx;
 import vizio.model.Area;
 import vizio.model.Entity;
 import vizio.model.IDN;
@@ -101,7 +101,7 @@ public class TestBinaryConversion {
 		assertConsistentConversion(bin2task, task2bin, task1);
 	}
 
-	static <T> void assertConsistentConversion(BinaryConversion<Tx,T> reader, BinaryConversion<T, ByteBuffer> writer, T value) {
+	static <T> void assertConsistentConversion(BinaryConversion<Change.Tx,T> reader, BinaryConversion<T, ByteBuffer> writer, T value) {
 		ByteBuffer buf = ByteBuffer.allocate(2048);
 		writer.convert(value, buf);
 		byte[] written = new byte[buf.position()];
@@ -117,7 +117,7 @@ public class TestBinaryConversion {
 		assertArrayEquals(written, rewritten);
 	}
 
-	static class TestPM implements Tx {
+	static class TestPM implements Change.Tx {
 
 		@Override
 		public User user(Name user) {

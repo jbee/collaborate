@@ -1,17 +1,24 @@
 package vizio.model;
 
-import java.nio.charset.StandardCharsets;
+import static vizio.model.Bytes.join;
 
 /**
  * A (database wide) unique identifier.
  */
 public final class ID extends Identifier<ID> {
 
-	private static final char DIVIDER = '#';
+	private static final byte[] DIVIDER = {'#'};
 
 	public enum Type {
 	
-		User, Site, Product, Area, Version, Task, Poll
+		User, Site, Product, Area, Version, Task, Poll;
+		
+		final byte[] symbol;
+
+		private Type() {
+			this.symbol = new byte[] { (byte) name().toLowerCase().charAt(0) };
+		}
+		
 	}
 
 	public final Type type;
@@ -22,11 +29,11 @@ public final class ID extends Identifier<ID> {
 	}
 
 	private static ID id(Type type, Name name, Name... names) {
-		String id = DIVIDER+type.name()+DIVIDER+name;
+		byte[] id = join(DIVIDER, type.symbol, DIVIDER, name.bytes());
 		for (Name n : names) {
-			id += DIVIDER+n.toString();
+			id = join(id, DIVIDER, n.bytes());
 		}
-		return new ID(type, id.getBytes(StandardCharsets.US_ASCII));
+		return new ID(type, id);
 	}
 
 	public static ID productId(Name product) {

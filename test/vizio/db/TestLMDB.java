@@ -2,6 +2,7 @@ package vizio.db;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static vizio.model.Name.as;
 
 import java.io.File;
@@ -17,13 +18,13 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
-import sun.security.krb5.Asn1Exception;
 import vizio.db.DB.TxR;
 import vizio.db.DB.TxW;
 import vizio.engine.BinaryConversion;
 import vizio.engine.Change;
 import vizio.engine.LimitControl;
 import vizio.engine.Transaction;
+import vizio.model.Entity;
 import vizio.model.ID;
 import vizio.model.ID.Type;
 import vizio.model.Name;
@@ -123,7 +124,12 @@ public class TestLMDB {
 					Change.register(user, "test@example.com", "foo", "salt").and(
 					Change.launch(name, "ghi", user));
 					
-			Transaction.run(change, new LimitControl(() -> System.currentTimeMillis(), 5) ,db);
+			Entity<?>[] changed = Transaction.run(change, new LimitControl(() -> System.currentTimeMillis(), 5) ,db);
+			
+			assertEquals(2, changed.length);
+			assertSame(User.class, changed[0].getClass());
+			assertSame(Site.class, changed[1].getClass());
+			
 			Site s;
 			User u;
 			try (TxR tx = db.read()) {

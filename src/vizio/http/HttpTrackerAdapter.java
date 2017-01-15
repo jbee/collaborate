@@ -30,8 +30,6 @@ import vizio.view.Widget;
  * task is also to make the implementation independent from a specific HTTP
  * server implementation and to allow for testing as if making HTTP request
  * without actually running a HTTP server.
- *
- * @author jan
  */
 public class HttpTrackerAdapter implements HttpAdapter {
 
@@ -42,9 +40,6 @@ public class HttpTrackerAdapter implements HttpAdapter {
 		this.ctrl = ctrl;
 	}
 
-	/* (non-Javadoc)
-	 * @see vizio.http.HttpAdapter#respond(java.lang.String, java.util.Map, java.io.PrintWriter)
-	 */
 	@Override
 	public int respond(String path, Map<String, String> params, PrintWriter out) {
 		Context ctx = map(path, params);

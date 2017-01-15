@@ -1,12 +1,20 @@
 package vizio.engine;
 
+import vizio.model.Area;
+import vizio.model.Entity;
 import vizio.model.IDN;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
+import vizio.model.Poll;
 import vizio.model.Poll.Matter;
+import vizio.model.Product;
 import vizio.model.Purpose;
+import vizio.model.Site;
+import vizio.model.Task;
 import vizio.model.URL;
+import vizio.model.User;
+import vizio.model.Version;
 
 /**
  * All the possible changes wrapped as lazy 'action'.
@@ -16,9 +24,24 @@ public interface Change {
 
 	void apply(Tracker t, Tx tx);
 	
-	
 	default Change and(Change next) {
 		return (t, tx) -> { this.apply(t, tx); next.apply(t, tx); };
+	}
+	
+	/**
+	 * An application level transaction made available to a change. 
+	 */
+	interface Tx {
+
+		User user(Name user);
+		Site site(Name user, Name site);
+		Poll poll(Name product, Name area, IDN serial);
+		Product product(Name product);
+		Area area(Name product, Name area);
+		Version version(Name product, Name version);
+		Task task(Name product, IDN id);
+
+		void put(Entity<?> e);
 	}
 	
 	static Change register(Name user, String email, String unsaltedMd5, String salt) {
