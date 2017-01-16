@@ -18,8 +18,8 @@ import vizio.ui.view.Coloring;
 import vizio.ui.view.Menu;
 import vizio.ui.view.Page;
 import vizio.ui.view.View;
-import vizio.ui.view.Widget;
 import vizio.ui.view.View.Silo;
+import vizio.ui.view.Widget;
 
 public class HTMLRenderer {
 

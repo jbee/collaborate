@@ -1,7 +1,10 @@
 package vizio.db;
 
 import java.nio.ByteBuffer;
+import java.util.function.Predicate;
 
+import org.lmdbjava.CursorIterator;
+import org.lmdbjava.CursorIterator.IteratorType;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
@@ -53,6 +56,22 @@ public class LMDB implements DB {
 			key.clear();
 			key.put(id.bytes()).flip();
 			return table(id).get(txn, key);
+		}
+		
+		@Override
+		public void range(ID id, Predicate<ByteBuffer> consumer) {
+			if (id.isUnique()) {
+				consumer.test(get(id));
+				return;
+			}
+			key.clear();
+			key.put(id.bytes()).flip();
+			try (CursorIterator<ByteBuffer> it = table(id).iterate(txn, key, IteratorType.FORWARD)) {
+				boolean consume = it.hasNext();
+				while (consume) {
+					consume = consumer.test(it.next().val()) && it.hasNext(); 
+				}
+			}
 		}
 		
 		@Override

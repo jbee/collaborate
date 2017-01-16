@@ -56,8 +56,8 @@ public interface Change {
 		return (t, tx) -> { tx.put(t.constitute(product, tx.user(originator))); };
 	}
 	
-	static Change open(Name product, Name entrance, Name originator, Motive motive, Purpose purpose) {
-		return (t, tx) -> { tx.put(t.open(tx.product(product), entrance, tx.user(originator), motive, purpose)); };
+	static Change open(Name product, Name board, Name originator, Motive motive, Purpose purpose) {
+		return (t, tx) -> { tx.put(t.open(tx.product(product), board, tx.user(originator), motive, purpose)); };
 	}
 	
 	static Change compart(Name product, Name area, Name originator) {
@@ -92,8 +92,8 @@ public interface Change {
 		return (t, tx) -> { tx.put(t.reportDefect(tx.product(product), gist, tx.user(reporter), tx.area(product, area), tx.version(product, version), exploitable)); };
 	}
 	
-	static Change request(Name product, String gist, Name reporter, Name entrance) {
-		return (t, tx) -> { tx.put(t.reportRequest(tx.product(product), gist, tx.user(reporter), tx.area(product, entrance))); };
+	static Change request(Name product, String gist, Name reporter, Name board) {
+		return (t, tx) -> { tx.put(t.reportRequest(tx.product(product), gist, tx.user(reporter), tx.area(product, board))); };
 	}
 	
 	static Change fork(Name product, IDN basis, Purpose purpose, String gist, Name reporter, Names changeset) {

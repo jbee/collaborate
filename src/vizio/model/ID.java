@@ -63,4 +63,8 @@ public final class ID extends Identifier<ID> {
 	public static ID taskId(Name product, IDN id) {
 		return ID.id(ID.Type.Task, product, id.asName());
 	}
+
+	public boolean isUnique() {
+		return charAt(length()-1) != '*';
+	}
 }

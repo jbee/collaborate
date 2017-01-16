@@ -8,7 +8,7 @@ public class Task extends Entity<Task> {
 	// creating a task
 	public Product product;
 	public IDN id;
-	public IDN serial; // within an entrance area
+	public IDN serial; // within an board
 	// opening record
 	public Name reporter;
 	public Date start;
@@ -20,7 +20,7 @@ public class Task extends Entity<Task> {
 	public Names changeset;
 	public boolean exploitable;
 	// working with a task (data that might change)
-	public IDN cause; // direct predecessor
+	public IDN basis; // direct predecessor
 	public IDN origin; // initial "impulse" that lead to this task
 	public int heat;
 	public Area area;

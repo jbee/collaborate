@@ -1,6 +1,8 @@
 package vizio.db;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import vizio.model.ID;
 
@@ -13,6 +15,12 @@ public interface DB {
 	interface TxR extends AutoCloseable {
 		
 		ByteBuffer get(ID key);
+		
+		void range(ID key, Predicate<ByteBuffer> consumer);
+		
+		default void all(ID key, Consumer<ByteBuffer> consumer) {
+			range(key, (b) -> { consumer.accept(b); return true; } );
+		}
 		
 		@Override
 		public void close();

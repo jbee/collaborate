@@ -23,8 +23,8 @@ import java.nio.ByteBuffer;
 
 import org.junit.Test;
 
-import vizio.engine.Convert;
 import vizio.engine.Change;
+import vizio.engine.Convert;
 import vizio.engine.Tracker;
 import vizio.model.Area;
 import vizio.model.Entity;

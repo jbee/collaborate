@@ -38,12 +38,12 @@ public final class Criteria {
 			case start: return t.start;
 			case end: return t.end;
 			case exploitable : return t.exploitable;
-			case entrance: return t.area.entrance;
+			case entrance: return t.area.board;
 			case age: t.age(today);
 			default:
 			case id: return t.id;
 			case origin: return t.origin;
-			case cause: return t.cause;
+			case cause: return t.basis;
 			case serial: return t.serial;
 			case reporter: return t.reporter;
 			case solver: return t.solver;

@@ -122,9 +122,9 @@ public final class Tracker {
 
 	/* Areas */
 
-	public Area open(Product product, Name entrance, User originator, Motive motive, Purpose purpose) {
-		Area area = compart(product, entrance, originator);
-		area.entrance=true;
+	public Area open(Product product, Name boardArea, User originator, Motive motive, Purpose purpose) {
+		Area area = compart(product, boardArea, originator);
+		area.board=true;
 		area.motive=motive;
 		area.purpose=purpose;
 		return area;
@@ -174,7 +174,7 @@ public final class Tracker {
 	}
 
 	public Task relocate(Task task, Area to, User originator) {
-		expectNoEntrance(task.area);
+		expectNoBoard(task.area);
 		expectActivated(originator);
 		if (task.area.name.isUnknown()) {
 			expectMaintainer(to, originator); // pull from ~
@@ -211,29 +211,29 @@ public final class Tracker {
 	/* Tasks */
 
 	public Task reportProposal(Product product, String gist, User reporter, Area area) {
-		expectNoEntrance(area);
+		expectNoBoard(area);
 		return report(product, proposal, clarification, gist, reporter, area, product.somewhen, false);
 	}
 
 	public Task reportIntention(Product product, String gist, User reporter, Area area) {
-		expectNoEntrance(area);
+		expectNoBoard(area);
 		return report(product, intention, clarification, gist, reporter, area, product.somewhen, false);
 	}
 
 	public Task reportDefect(Product product, String gist, User reporter, Area area, Version version, boolean exploitable) {
-		expectNoEntrance(area);
+		expectNoBoard(area);
 		return report(product, defect, clarification, gist, reporter, area, version, exploitable);
 	}
 
-	public Task reportRequest(Product product, String gist, User reporter, Area entrance) {
-		expectEntrance(entrance);
-		return report(product, entrance.motive, entrance.purpose, gist, reporter, entrance, product.somewhen, false);
+	public Task reportRequest(Product product, String gist, User reporter, Area board) {
+		expectBoard(board);
+		return report(product, board.motive, board.purpose, gist, reporter, board, product.somewhen, false);
 	}
 
 	public Task reportFork(Task cause, Purpose purpose, String gist, User reporter, Names changeset) {
-		Area area = cause.area.entrance ? cause.product.somewhere : cause.area;
+		Area area = cause.area.board ? cause.product.somewhere : cause.area;
 		Task task = report(cause.product, cause.motive, purpose, gist, reporter, area, cause.base, cause.exploitable);
-		task.cause = cause.id;
+		task.basis = cause.id;
 		task.origin = cause.origin != null ? cause.origin : cause.id;
 		if (changeset != null && !changeset.isEmpty()) {
 			expectNotYetPublished(task.base);
@@ -253,7 +253,7 @@ public final class Tracker {
 		task.product = product.clone();
 		task.product.tasks++;
 		task.id = new IDN(task.product.tasks);
-		if (area.entrance) {
+		if (area.board) {
 			task.area = area.clone();
 			task.area.tasks++;
 			task.serial=new IDN(task.area.tasks);
@@ -666,15 +666,15 @@ public final class Tracker {
 
 	/* consistency rules */
 
-	private static void expectNoEntrance(Area area) {
-		if (area.entrance) {
-			denyTransition("Use request to submit to entrance areas!");
+	private static void expectNoBoard(Area area) {
+		if (area.board) {
+			denyTransition("Use request to submit to boards!");
 		}
 	}
 
-	private static void expectEntrance(Area area) {
-		if (!area.entrance) {
-			denyTransition("Request must be submitted within an entrance area!");
+	private static void expectBoard(Area area) {
+		if (!area.board) {
+			denyTransition("Request must be submitted within an board area!");
 		}
 	}
 

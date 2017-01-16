@@ -30,11 +30,11 @@ public final class Area extends Entity<Area> {
 	 * However, no task created with this area can be moved to other areas.
 	 * Instead a sequel would be created if necessary.
 	 */
-	public boolean entrance;
+	public boolean board;
 	public Motive motive;
 	public Purpose purpose;
 	/**
-	 * A per area counter that is used in case of {@link #entrance} areas.
+	 * A per area counter that is used in case of {@link #board} areas.
 	 */
 	public int tasks;
 
@@ -55,7 +55,7 @@ public final class Area extends Entity<Area> {
 	 * @return true in case anyone can report {@link Task}s in this {@link Area}, else false.
 	 */
 	public boolean isOpen() {
-		return name.isUnknown() || entrance;
+		return name.isUnknown() || board;
 	}
 
 	@Override

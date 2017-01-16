@@ -106,7 +106,7 @@ public interface Convert<I,O> {
 		t.status = bin2enum(Status.class, from);
 		t.changeset = bin2names(from);
 		t.exploitable = from.get() > 0;
-		t.cause = bin2IDN(from);
+		t.basis = bin2IDN(from);
 		t.origin = bin2IDN(from);
 		t.heat = from.getInt();
 		t.base = tx.version(t.product.name, bin2name(from));
@@ -134,7 +134,7 @@ public interface Convert<I,O> {
 		enum2bin(t.status, to);
 		names2bin(t.changeset, to);
 		to.put((byte) (t.exploitable ? 1 : 0));
-		IDN2bin(t.cause, to);
+		IDN2bin(t.basis, to);
 		IDN2bin(t.origin, to);
 		to.putInt(t.heat);
 		name2bin(t.base.name, to);
@@ -224,7 +224,7 @@ public interface Convert<I,O> {
 		a.polls = from.getInt();
 		a.tasks = from.getInt();
 		a.exclusive = from.get() > 0;
-		a.entrance = from.get() > 0;
+		a.board = from.get() > 0;
 		a.motive = bin2enum(Motive.class, from);
 		a.purpose = bin2enum(Purpose.class, from);
 		return a;
@@ -239,7 +239,7 @@ public interface Convert<I,O> {
 		to.putInt(a.polls);
 		to.putInt(a.tasks);
 		to.put((byte) (a.exclusive ? 1 : 0));
-		to.put((byte) (a.entrance ? 1 : 0));
+		to.put((byte) (a.board ? 1 : 0));
 		enum2bin(a.motive, to);
 		enum2bin(a.purpose, to);
 		return to;
