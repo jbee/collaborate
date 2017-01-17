@@ -1,10 +1,9 @@
 package vizio.model;
 
-/**
- * A util to work with bytes. 
- */
-public final class Bytes {
+public abstract class Bytes {
 
+	public abstract byte[] bytes();
+	
 	public static byte[] asciiBytes(String ascii) {
 		byte[] res = new byte[ascii.length()];
 		for (int i = 0; i < res.length; i++) {
@@ -31,5 +30,16 @@ public final class Bytes {
 			s += al;
 		}
 		return res;
+	}
+	
+	public static int compare(byte[] a, byte[] b) {
+		if (b.length != a.length)
+			return Integer.compare(a.length, b.length);
+		for (int i = 0; i < b.length; i++) {
+			int res = Byte.compare(a[i], b[i]);
+			if (res != 0)
+				return res;
+		}
+		return 0;		
 	}
 }

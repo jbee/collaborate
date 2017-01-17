@@ -10,7 +10,7 @@ import java.util.Arrays;
  *  
  * @param <T> actual type of the identifier
  */
-public abstract class Identifier<T extends Identifier<T>> implements CharSequence, Comparable<T>  {
+public abstract class Identifier<T extends Identifier<T>> extends Bytes implements CharSequence, Comparable<T>  {
 
 	private final byte[] symbols;
 	
@@ -59,17 +59,7 @@ public abstract class Identifier<T extends Identifier<T>> implements CharSequenc
 	
 	@Override
 	public final int compareTo(T other) {
-		if (this == other)
-			return 0;
-		byte[] s = other.bytes();
-		if (s.length != symbols.length)
-			return Integer.compare(symbols.length, s.length);
-		for (int i = 0; i < s.length; i++) {
-			int res = Byte.compare(symbols[i], s[i]);
-			if (res != 0)
-				return res;
-		}
-		return 0;
+		return this == other ? 0 : Bytes.compare(symbols, other.bytes());
 	}
 	
 	@Override
@@ -77,6 +67,7 @@ public abstract class Identifier<T extends Identifier<T>> implements CharSequenc
 		return new String(symbols, StandardCharsets.US_ASCII);
 	}
 	
+	@Override
 	public final byte[] bytes() {
 		return symbols;
 	}

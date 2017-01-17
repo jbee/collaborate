@@ -17,7 +17,10 @@ import static vizio.engine.Convert.task2bin;
 import static vizio.engine.Convert.user2bin;
 import static vizio.engine.Convert.version2bin;
 import static vizio.engine.Tracker.activationKey;
+import static vizio.model.Email.email;
+import static vizio.model.Gist.gist;
 import static vizio.model.Name.as;
+import static vizio.model.Template.template;
 
 import java.nio.ByteBuffer;
 
@@ -27,10 +30,13 @@ import vizio.engine.Change;
 import vizio.engine.Convert;
 import vizio.engine.Tracker;
 import vizio.model.Area;
+import vizio.model.Email;
 import vizio.model.Entity;
+import vizio.model.Gist;
 import vizio.model.IDN;
 import vizio.model.Name;
 import vizio.model.Poll;
+import vizio.model.Template;
 import vizio.model.Poll.Matter;
 import vizio.model.Product;
 import vizio.model.Site;
@@ -57,7 +63,7 @@ public class TestConvert {
 	@Test
 	public void siteStreamer() {
 		User user1 = testUser();
-		Site site1 = tracker.launch(as("my-tasks"), "foobar", user1);
+		Site site1 = tracker.launch(as("my-tasks"), template("foobar"), user1);
 		assertConsistentConversion(bin2site, site2bin, site1);
 	}
 
@@ -88,7 +94,7 @@ public class TestConvert {
 	public void pollStreamer() {
 		User user1 = testUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
-		User user2 = tracker.register(as("user2"), "user2@example.com", "user2pwd", "salt");
+		User user2 = tracker.register(as("user2"), email("user2@example.com"), "user2pwd", "salt");
 		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
 		assertConsistentConversion(bin2poll, poll2bin, poll1);
 	}
@@ -97,12 +103,12 @@ public class TestConvert {
 	public void taskStreamer() {
 		User user1 = testUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
-		Task task1 = tracker.reportDefect(prod1, "broken", user1, prod1.somewhere, prod1.somewhen, true);
+		Task task1 = tracker.reportDefect(prod1, gist("broken"), user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentConversion(bin2task, task2bin, task1);
 	}
 	
 	private User testUser() {
-		User u1 = tracker.register(as("user1"), "user1@example.com", "user1pwd", "salt");
+		User u1 = tracker.register(as("user1"), email("user1@example.com"), "user1pwd", "salt");
 		u1 = tracker.activate(u1, activationKey("user1pwd", "salt"));
 		return u1;
 	}
@@ -134,7 +140,7 @@ public class TestConvert {
 		
 		@Override
 		public Site site(Name user, Name site) {
-			return new Site(1, user, site, "");
+			return new Site(1, user, site, Template.BLANK_PAGE);
 		}
 
 		@Override

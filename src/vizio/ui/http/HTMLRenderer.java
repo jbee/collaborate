@@ -134,7 +134,7 @@ public class HTMLRenderer {
 		out.append("</td>");
 		out.append("<td><h5>");
 		if (task.isVisibleTo(viewer.name)) {
-			out.append(task.gist);
+			out.append(task.gist.toString());
 		} else {
 			out.append("<i>(protected)</i>");
 		}

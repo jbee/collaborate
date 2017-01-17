@@ -9,7 +9,7 @@ public final class User extends Entity<User> {
 
 	public Name name;
 	// account
-	public String email;
+	public Email email;
 	public byte[] md5;
 	public boolean activated;
 	

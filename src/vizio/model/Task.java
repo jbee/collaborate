@@ -12,7 +12,7 @@ public class Task extends Entity<Task> {
 	// opening record
 	public Name reporter;
 	public Date start;
-	public String gist;
+	public Gist gist;
 
 	public Motive motive;
 	public Purpose purpose;
@@ -40,7 +40,7 @@ public class Task extends Entity<Task> {
 	// resolving a task (closing record)
 	public Name solver;
 	public Date end;
-	public String conclusion;
+	public Gist conclusion;
 
 	public Task(int version) {
 		super(version);

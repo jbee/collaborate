@@ -21,7 +21,7 @@ public final class Criteria {
 		temp, heat, status, purpose, motive,
 		version, start, end,
 		exploitable,
-		entrance, // serial is set
+		board, // serial is set
 		age, id, origin, cause, serial,
 		reporter, solver, users, maintainers, enlisted_by, approched_by, watched_by,
 		area, product,
@@ -38,7 +38,7 @@ public final class Criteria {
 			case start: return t.start;
 			case end: return t.end;
 			case exploitable : return t.exploitable;
-			case entrance: return t.area.board;
+			case board: return t.area.board;
 			case age: t.age(today);
 			default:
 			case id: return t.id;

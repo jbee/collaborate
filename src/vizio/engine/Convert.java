@@ -1,11 +1,16 @@
 package vizio.engine;
 
+import static vizio.model.Gist.gist;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
 import vizio.engine.Change.Tx;
 import vizio.model.Area;
+import vizio.model.Bytes;
 import vizio.model.Date;
+import vizio.model.Email;
+import vizio.model.Gist;
 import vizio.model.IDN;
 import vizio.model.Motive;
 import vizio.model.Name;
@@ -18,6 +23,7 @@ import vizio.model.Purpose;
 import vizio.model.Site;
 import vizio.model.Status;
 import vizio.model.Task;
+import vizio.model.Template;
 import vizio.model.URL;
 import vizio.model.User;
 import vizio.model.Version;
@@ -40,7 +46,7 @@ public interface Convert<I,O> {
 	Convert<Tx, User> bin2user = (tx,from) -> { 
 		User u = new User(from.getInt());
 		u.name = bin2name(from);
-		u.email = bin2text(from);
+		u.email = Email.fromBytes(getShortBytes(from));
 		byte[] md5 = new byte[from.get()];
 		from.get(md5);
 		u.md5 = md5;
@@ -60,7 +66,7 @@ public interface Convert<I,O> {
 	Convert<User,ByteBuffer> user2bin = (u,to) -> { 
 		to.putInt(u.version);
 		name2bin(u.name, to);
-		text2bin(u.email, to);
+		putShortBytes(u.email, to);
 		to.put((byte) u.md5.length);
 		to.put(u.md5);
 		to.put((byte) (u.activated ? 1 : 0));
@@ -100,7 +106,7 @@ public interface Convert<I,O> {
 		t.serial = bin2IDN(from);
 		t.reporter = bin2name(from);
 		t.start = bin2date(from);
-		t.gist = bin2text(from);
+		t.gist = bin2gist(from);
 		t.motive = bin2enum(Motive.class, from);
 		t.purpose = bin2enum(Purpose.class, from);
 		t.status = bin2enum(Status.class, from);
@@ -115,7 +121,7 @@ public interface Convert<I,O> {
 		t.watchedBy = bin2names(from);
 		t.solver = bin2name(from);
 		t.end = bin2date(from);
-		t.conclusion = bin2text(from);
+		t.conclusion = bin2gist(from);
 		t.attachments =  bin2urls(from);
 		return t;
 	};
@@ -128,7 +134,7 @@ public interface Convert<I,O> {
 		IDN2bin(t.serial, to);
 		name2bin(t.reporter, to);
 		date2bin(t.start, to);
-		text2bin(t.gist, to);
+		gist2bin(t.gist, to);
 		enum2bin(t.motive, to);
 		enum2bin(t.purpose, to);
 		enum2bin(t.status, to);
@@ -143,7 +149,7 @@ public interface Convert<I,O> {
 		names2bin(t.watchedBy, to);
 		name2bin(t.solver, to);
 		date2bin(t.end, to);
-		text2bin(t.conclusion, to);
+		gist2bin(t.conclusion, to);
 		urls2bin(t.attachments, to);
 		return to;
 	};
@@ -152,7 +158,7 @@ public interface Convert<I,O> {
 		int version = from.getInt();
 		Name owner = bin2name(from);
 		Name name = bin2name(from);
-		String template = bin2text(from);
+		Template template = Template.fromBytes(getIntBytes(from));
 		return new Site(version, owner, name, template);
 	};
 
@@ -160,7 +166,7 @@ public interface Convert<I,O> {
 		to.putInt(site.version);
 		name2bin(site.owner, to);
 		name2bin(site.name, to);
-		text2bin(site.template, to);
+		putIntBytes(site.template, to);
 		return to;
 	};
 	
@@ -250,12 +256,7 @@ public interface Convert<I,O> {
 	 */
 
 	static Name bin2name(ByteBuffer from) {
-		int len = from.get();
-		if (len < 0)
-			return null;
-		byte[] name = new byte[len];
-		from.get(name);
-		return Name.fromBytes(name);
+		return Name.fromBytes(getByteBytes(from));
 	}
 
 	static Names bin2names(ByteBuffer from) {
@@ -267,14 +268,8 @@ public interface Convert<I,O> {
 		return new Names(names);
 	}
 
-	static void name2bin(Name name, ByteBuffer to) {
-		if (name == null) {
-			to.put((byte) -1);
-		} else {
-			byte[] bytes = name.bytes();
-			to.put((byte) bytes.length);
-			to.put(bytes);
-		}
+	static void name2bin(Name n, ByteBuffer to) {
+		putByteBytes(n, to);
 	}
 
 	static void names2bin(Names names, ByteBuffer to) {
@@ -311,39 +306,70 @@ public interface Convert<I,O> {
 		return num < 0 ? null : new IDN(num);
 	}
 
-	static void text2bin(String s, ByteBuffer to) {
-		if (s == null) {
+	static void gist2bin(Gist g, ByteBuffer to) {
+		putShortBytes(g, to);
+	}
+	
+	static Gist bin2gist(ByteBuffer from) {
+		return gist(getShortBytes(from));
+	}
+	
+	static byte[] getByteBytes(ByteBuffer from) {
+		return getBytes(from.get(), from);
+	}
+	
+	static byte[] getShortBytes(ByteBuffer from) {
+		return getBytes(from.getShort(), from);
+	}
+	
+	static byte[] getIntBytes(ByteBuffer from) {
+		return getBytes(from.getInt(), from);
+	}
+	
+	static byte[] getBytes(int len, ByteBuffer from) {
+		if (len < 0)
+			return null;
+		byte[] bytes = new byte[len];
+		from.get(bytes);
+		return bytes;
+	}
+	
+	static void putIntBytes(Bytes seq, ByteBuffer to) {
+		if (seq == null) {
 			to.putInt(-1);
 		} else {
-			byte[] bytes = s.getBytes(StandardCharsets.UTF_16);
+			byte[] bytes = seq.bytes();
 			to.putInt(bytes.length);
 			to.put(bytes);
 		}
-	}	
+	}
 	
-	static String bin2text(ByteBuffer from) {
-		int len = from.getInt();
-		if (len < 0)
-			return null;
-		byte[] bytes = new byte[len];
-		from.get(bytes);
-		return new String(bytes, StandardCharsets.UTF_16);
+	static void putShortBytes(Bytes seq, ByteBuffer to) {
+		if (seq == null) {
+			to.putShort((short) -1);
+		} else {
+			byte[] bytes = seq.bytes();
+			to.putShort((short) bytes.length);
+			to.put(bytes);
+		}
+	}
+	
+	static void putByteBytes(Bytes seq, ByteBuffer to) {
+		if (seq == null) {
+			to.put((byte) -1);
+		} else {
+			byte[] bytes = seq.bytes();
+			to.put((byte) bytes.length);
+			to.put(bytes);
+		}		
 	}
 	
 	static URL bin2url(ByteBuffer from) {
-		int len = from.getShort();
-		if (len < 0)
-			return null;
-		byte[] bytes = new byte[len];
-		from.get(bytes);
-		return URL.fromBytes(bytes);
+		return URL.fromBytes(getShortBytes(from));
 	}
 	
 	static void url2bin(URL url, ByteBuffer to) {
-		to.putShort((short) url.length());
-		byte[] bytes = url.bytes();
-		to.put((byte) bytes.length);
-		to.put(bytes);
+		putShortBytes(url, to);
 	}
 	
 	static URL[] bin2urls(ByteBuffer from) {

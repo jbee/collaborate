@@ -9,7 +9,9 @@ import static vizio.engine.Change.activate;
 import static vizio.engine.Change.launch;
 import static vizio.engine.Change.register;
 import static vizio.engine.Tracker.activationKey;
+import static vizio.model.Email.email;
 import static vizio.model.Name.as;
+import static vizio.model.Template.template;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,9 +35,11 @@ import vizio.engine.Transaction;
 import vizio.model.Entity;
 import vizio.model.ID;
 import vizio.model.ID.Type;
+import vizio.model.Email;
 import vizio.model.Name;
 import vizio.model.Names;
 import vizio.model.Site;
+import vizio.model.Template;
 import vizio.model.User;
 
 public class TestLMDB {
@@ -76,11 +80,11 @@ public class TestLMDB {
 				.setMaxDbs(10)
 				.open(path)) {
 			DB db = new LMDB(env);
-			Site s1 = new Site(1, as("abc"), as("def"), "ghi");
-			Site s2 = new Site(1, as("jkl"), as("mno"), "pqr");
+			Site s1 = new Site(1, as("abc"), as("def"), template("ghi"));
+			Site s2 = new Site(1, as("jkl"), as("mno"), template("pqr"));
 			User u1 = new User(1);
 			u1.name = as("user1");
-			u1.email = "pass1";
+			u1.email = email("pass1");
 			u1.sites = Names.empty();
 			u1.md5 = "foo".getBytes();
 			try (TxW tx = db.write()) {
@@ -127,9 +131,9 @@ public class TestLMDB {
 			Name user = as("abc");
 			Name site = as("def");
 			Change change = 
-					register(user, "test@example.com", "foo", "salt")
+					register(user, email("test@example.com"), "foo", "salt")
 					.and(activate(user, activationKey("foo","salt")))
-					.and(launch(user, site, "ghi"));
+					.and(launch(user, site, template("ghi")));
 					
 			Entity<?>[][] changed = Transaction.run(change, new LimitControl(() -> System.currentTimeMillis(), 5) ,db);
 			

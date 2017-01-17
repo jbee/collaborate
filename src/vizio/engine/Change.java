@@ -1,7 +1,9 @@
 package vizio.engine;
 
 import vizio.model.Area;
+import vizio.model.Email;
 import vizio.model.Entity;
+import vizio.model.Gist;
 import vizio.model.IDN;
 import vizio.model.Motive;
 import vizio.model.Name;
@@ -12,6 +14,7 @@ import vizio.model.Product;
 import vizio.model.Purpose;
 import vizio.model.Site;
 import vizio.model.Task;
+import vizio.model.Template;
 import vizio.model.URL;
 import vizio.model.User;
 import vizio.model.Version;
@@ -44,7 +47,7 @@ public interface Change {
 		void put(Entity<?> e);
 	}
 	
-	static Change register(Name user, String email, String unsaltedMd5, String salt) {
+	static Change register(Name user, Email email, String unsaltedMd5, String salt) {
 		return (t, tx) -> { tx.put(t.register(user, email, unsaltedMd5, salt)); };
 	}
 	
@@ -80,35 +83,35 @@ public interface Change {
 		return (t, tx) -> { tx.put(t.tag(tx.product(product), version, tx.user(originator))); };
 	}
 	
-	static Change propose(Name product, String gist, Name reporter, Name area) {
+	static Change propose(Name product, Gist gist, Name reporter, Name area) {
 		return (t, tx) -> { tx.put(t.reportProposal(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
 	}
 	
-	static Change indicate(Name product, String gist, Name reporter, Name area) {
+	static Change indicate(Name product, Gist gist, Name reporter, Name area) {
 		return (t, tx) -> { tx.put(t.reportIntention(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
 	}
 	
-	static Change warn(Name product, String gist, Name reporter, Name area, Name version, boolean exploitable) {
+	static Change warn(Name product, Gist gist, Name reporter, Name area, Name version, boolean exploitable) {
 		return (t, tx) -> { tx.put(t.reportDefect(tx.product(product), gist, tx.user(reporter), tx.area(product, area), tx.version(product, version), exploitable)); };
 	}
 	
-	static Change request(Name product, String gist, Name reporter, Name board) {
+	static Change request(Name product, Gist gist, Name reporter, Name board) {
 		return (t, tx) -> { tx.put(t.reportRequest(tx.product(product), gist, tx.user(reporter), tx.area(product, board))); };
 	}
 	
-	static Change fork(Name product, IDN basis, Purpose purpose, String gist, Name reporter, Names changeset) {
+	static Change fork(Name product, IDN basis, Purpose purpose, Gist gist, Name reporter, Names changeset) {
 		return (t, tx) -> { tx.put(t.reportFork(tx.task(product, basis), purpose, gist, tx.user(reporter), changeset)); };
 	}
 	
-	static Change absolve(Name product, IDN task, Name byUser, String conclusion) {
+	static Change absolve(Name product, IDN task, Name byUser, Gist conclusion) {
 		return (t, tx) -> { tx.put(t.absolve(tx.task(product, task), tx.user(byUser), conclusion)); };
 	}
 	
-	static Change resolve(Name product, IDN task, Name byUser, String conclusion) {
+	static Change resolve(Name product, IDN task, Name byUser, Gist conclusion) {
 		return (t, tx) -> { tx.put(t.resolve(tx.task(product, task), tx.user(byUser), conclusion)); };
 	}
 	
-	static Change dissolve(Name product, IDN task, Name byUser, String conclusion) {
+	static Change dissolve(Name product, IDN task, Name byUser, Gist conclusion) {
 		return (t, tx) -> { tx.put(t.dissolve(tx.task(product, task), tx.user(byUser), conclusion)); };
 	}
 	
@@ -152,11 +155,11 @@ public interface Change {
 		return (t, tx) -> { tx.put(t.unwatch(tx.task(product, task), tx.user(user))); };
 	}
 	
-	static Change launch(Name owner, Name site, String template) {
+	static Change launch(Name owner, Name site, Template template) {
 		return (t, tx) -> { tx.put(t.launch(site, template, tx.user(owner))); };
 	}
 	
-	static Change restructure(Name owner, Name site, String template) {
+	static Change restructure(Name owner, Name site, Template template) {
 		return (t, tx) -> { tx.put(t.restructure(tx.site(owner, site), template, tx.user(owner))); };
 	}
 	

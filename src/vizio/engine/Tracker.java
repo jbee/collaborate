@@ -22,12 +22,15 @@ import java.util.Arrays;
 
 import vizio.model.Area;
 import vizio.model.Date;
+import vizio.model.Email;
+import vizio.model.Gist;
 import vizio.model.IDN;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
 import vizio.model.Outcome;
 import vizio.model.Poll;
+import vizio.model.Template;
 import vizio.model.Poll.Matter;
 import vizio.model.Product;
 import vizio.model.Purpose;
@@ -54,7 +57,7 @@ public final class Tracker {
 
 	/* Users + Accounts */
 
-	public User register(Name name, String email, String pass, String salt) {
+	public User register(Name name, Email email, String pass, String salt) {
 		expectRegular(name);
 		stressNewUser();
 		User user = new User(1);
@@ -210,27 +213,27 @@ public final class Tracker {
 
 	/* Tasks */
 
-	public Task reportProposal(Product product, String gist, User reporter, Area area) {
+	public Task reportProposal(Product product, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
 		return report(product, proposal, clarification, gist, reporter, area, product.somewhen, false);
 	}
 
-	public Task reportIntention(Product product, String gist, User reporter, Area area) {
+	public Task reportIntention(Product product, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
 		return report(product, intention, clarification, gist, reporter, area, product.somewhen, false);
 	}
 
-	public Task reportDefect(Product product, String gist, User reporter, Area area, Version version, boolean exploitable) {
+	public Task reportDefect(Product product, Gist gist, User reporter, Area area, Version version, boolean exploitable) {
 		expectNoBoard(area);
 		return report(product, defect, clarification, gist, reporter, area, version, exploitable);
 	}
 
-	public Task reportRequest(Product product, String gist, User reporter, Area board) {
+	public Task reportRequest(Product product, Gist gist, User reporter, Area board) {
 		expectBoard(board);
 		return report(product, board.motive, board.purpose, gist, reporter, board, product.somewhen, false);
 	}
 
-	public Task reportFork(Task cause, Purpose purpose, String gist, User reporter, Names changeset) {
+	public Task reportFork(Task cause, Purpose purpose, Gist gist, User reporter, Names changeset) {
 		Area area = cause.area.board ? cause.product.somewhere : cause.area;
 		Task task = report(cause.product, cause.motive, purpose, gist, reporter, area, cause.base, cause.exploitable);
 		task.basis = cause.id;
@@ -242,7 +245,7 @@ public final class Tracker {
 		return task;
 	}
 
-	private Task report(Product product, Motive motive, Purpose purpose, String gist, User reporter, Area area, Version version, boolean exploitable) {
+	private Task report(Product product, Motive motive, Purpose purpose, Gist gist, User reporter, Area area, Version version, boolean exploitable) {
 		if (!area.isOpen()) {
 			expectActivated(reporter);
 			expectMaintainer(area, reporter);
@@ -310,7 +313,7 @@ public final class Tracker {
 		return xp;
 	}
 	
-	public Task absolve(Task task, User by, String conclusion) {
+	public Task absolve(Task task, User by, Gist conclusion) {
 		if (!task.area.name.isUnknown()) { // no change is a resolution even if no area has been specified before
 			expectMaintainer(task.area, by);
 		}
@@ -321,7 +324,7 @@ public final class Tracker {
 		return task;
 	}
 
-	public Task resolve(Task task, User by, String conclusion) {
+	public Task resolve(Task task, User by, Gist conclusion) {
 		expectMaintainer(task.area, by);
 		task = solve(task, by, conclusion);
 		task.status = resolved;
@@ -335,7 +338,7 @@ public final class Tracker {
 		return task;
 	}
 
-	public Task dissolve(Task task, User by, String conclusion) {
+	public Task dissolve(Task task, User by, Gist conclusion) {
 		expectMaintainer(task.area, by);
 		expectUnsolved(task);
 		task = solve(task, by, conclusion);
@@ -346,7 +349,7 @@ public final class Tracker {
 		return task;
 	}
 
-	private Task solve(Task task, User by, String conclusion) {
+	private Task solve(Task task, User by, Gist conclusion) {
 		expectRegistered(by);
 		expectActivated(by);
 		expectUnsolved(task);
@@ -518,7 +521,7 @@ public final class Tracker {
 
 	/* A user's sites */
 
-	public Site launch(Name site, String template, User owner) {
+	public Site launch(Name site, Template template, User owner) {
 		expectActivated(owner);
 		expectNoUserSiteYet(site, owner);
 		expectCanHaveMoreSites(owner);
@@ -529,7 +532,7 @@ public final class Tracker {
 		return s;
 	}
 
-	public Site restructure(Site site, String template, User owner) {
+	public Site restructure(Site site, Template template, User owner) {
 		expectRegistered(owner);
 		expectActivated(owner);
 		expectOwner(site, owner);
