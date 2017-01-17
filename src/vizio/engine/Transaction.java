@@ -52,9 +52,15 @@ import vizio.model.Version;
  * returned. It will also keep track of updated user entities without the need
  * to {@link #put(Entity)} them explicitly.
  */
-public class Transaction implements Tx, Limits, AutoCloseable {
+public final class Transaction implements Tx, Limits, AutoCloseable {
 
-	public static Entity<?>[] run(Change set, LimitControl lc, DB db) throws ConcurrentModification {
+	/**
+	 * Applies the changes to the DB.
+	 * 
+	 * @return a list of changed entities each given as a pair: before and after the change 
+	 * @throws ConcurrentModification when trying to change an entity already changed by an ongoing transaction (in another thread)
+	 */
+	public static Entity<?>[][] run(Change set, LimitControl lc, DB db) throws ConcurrentModification {
 		try (Transaction tx = new Transaction(lc, db)) {
 			try {
 				set.apply(new Tracker(lc.clock, tx), tx);
@@ -74,7 +80,7 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 	private final DB db;
 	private final DB.TxR txr;
 	
-	public Transaction(LimitControl lc, DB db) {
+	private Transaction(LimitControl lc, DB db) {
 		super();
 		this.lc = lc;
 		this.db = db;
@@ -162,17 +168,19 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 		return load(ID.taskId(product, id), bin2task);
 	}
 	
-	private static final Entity<?>[] EMPTY = new Entity[0];
-	
-	private Entity<?>[] commit() {
+	private Entity<?>[][] commit() {
 		txr.close(); // no more writing
 		if (changed.isEmpty())
-			return EMPTY;
+			return new Entity[0][];
 		ByteBuffer buf = ByteBuffer.allocateDirect(1024);
+		Entity<?>[][] res = new Entity[changed.size()][2];
 		try (TxW tx = db.write()) {
+			int i = 0;
 			for (Entry<ID,Entity<?>> e : changed.entrySet()) {
 				ID id = e.getKey();
 				Entity<?> val = e.getValue();
+				res[i][0] = loaded.get(id);
+				res[i++][1] = val;
 				switch (id.type) {
 				case Area: store(tx, id, (Area)val, area2bin, buf); break;
 				case Poll: store(tx, id, (Poll)val, poll2bin, buf); break;
@@ -186,7 +194,7 @@ public class Transaction implements Tx, Limits, AutoCloseable {
 				buf.clear();
 			}
 			tx.commit();
-			return changed.values().toArray(EMPTY);
+			return res;
 		}
 	}
 	

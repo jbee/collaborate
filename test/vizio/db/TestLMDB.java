@@ -2,6 +2,8 @@ package vizio.db;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static vizio.engine.Change.activate;
 import static vizio.engine.Change.launch;
@@ -123,27 +125,32 @@ public class TestLMDB {
 				.open(path)) {
 			DB db = new LMDB(env);
 			Name user = as("abc");
-			Name name = as("def");
+			Name site = as("def");
 			Change change = 
 					register(user, "test@example.com", "foo", "salt")
 					.and(activate(user, activationKey("foo","salt")))
-					.and(launch(name, "ghi", user));
+					.and(launch(user, site, "ghi"));
 					
-			Entity<?>[] changed = Transaction.run(change, new LimitControl(() -> System.currentTimeMillis(), 5) ,db);
+			Entity<?>[][] changed = Transaction.run(change, new LimitControl(() -> System.currentTimeMillis(), 5) ,db);
 			
 			assertEquals(2, changed.length);
-			assertSame(User.class, changed[0].getClass());
-			assertSame(Site.class, changed[1].getClass());
+			
+			assertNull(changed[0][0]);
+			assertNull(changed[1][0]);
+			assertNotNull(changed[0][1]);
+			assertNotNull(changed[1][1]);
+			assertSame(User.class, changed[0][1].getClass());
+			assertSame(Site.class, changed[1][1].getClass());
 			
 			Site s;
 			User u;
 			try (TxR tx = db.read()) {
-				ByteBuffer buf = tx.get(ID.siteId(user, name));
+				ByteBuffer buf = tx.get(ID.siteId(user, site));
 				s = Convert.bin2site.convert(null, buf);
 				buf = tx.get(ID.userId(user));
 				u = Convert.bin2user.convert(null, buf);
 			}
-			assertEquals(name, s.name);
+			assertEquals(site, s.name);
 			assertEquals(user, u.name);
 		}		
 	}

@@ -152,11 +152,11 @@ public interface Change {
 		return (t, tx) -> { tx.put(t.unwatch(tx.task(product, task), tx.user(user))); };
 	}
 	
-	static Change launch(Name site, String template, Name owner) {
+	static Change launch(Name owner, Name site, String template) {
 		return (t, tx) -> { tx.put(t.launch(site, template, tx.user(owner))); };
 	}
 	
-	static Change restructure(Name site, String template, Name owner) {
+	static Change restructure(Name owner, Name site, String template) {
 		return (t, tx) -> { tx.put(t.restructure(tx.site(owner, site), template, tx.user(owner))); };
 	}
 	

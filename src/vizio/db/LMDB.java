@@ -12,7 +12,7 @@ import org.lmdbjava.Txn;
 
 import vizio.model.ID;
 
-public class LMDB implements DB {
+public final class LMDB implements DB {
 
 	private final Env<ByteBuffer> env;
 	@SuppressWarnings("unchecked")
@@ -65,7 +65,9 @@ public class LMDB implements DB {
 				return;
 			}
 			key.clear();
-			key.put(id.bytes()).flip();
+			key.put(id.bytes());
+			key.position(key.position()-2);
+			key.flip();
 			try (CursorIterator<ByteBuffer> it = table(id).iterate(txn, key, IteratorType.FORWARD)) {
 				boolean consume = it.hasNext();
 				while (consume) {
