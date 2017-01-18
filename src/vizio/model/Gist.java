@@ -14,6 +14,8 @@ public final class Gist extends Bytes implements Comparable<Gist> {
 	}
 	
 	public static Gist gist(byte[] gist) {
+		if (gist == null)
+			return null;
 		if (gist.length >= 512) {
 			throw new IllegalArgumentException("Gist is too long, maximal 256 characters: "+gist);
 		}

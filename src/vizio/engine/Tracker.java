@@ -30,13 +30,13 @@ import vizio.model.Name;
 import vizio.model.Names;
 import vizio.model.Outcome;
 import vizio.model.Poll;
-import vizio.model.Template;
 import vizio.model.Poll.Matter;
 import vizio.model.Product;
 import vizio.model.Purpose;
 import vizio.model.Site;
 import vizio.model.Status;
 import vizio.model.Task;
+import vizio.model.Template;
 import vizio.model.URL;
 import vizio.model.User;
 import vizio.model.Version;
@@ -78,7 +78,7 @@ public final class Tracker {
 		stressDoActivate();
 		user = user.clone();
 		user.activated = true;
-		touch(user);
+		user.millisLastActive=clock.time(); // cannot use touch as version should stay same
 		return user;
 	}
 

@@ -1,6 +1,5 @@
 package vizio.model;
 
-import static vizio.model.Bytes.join;
 
 /**
  * A (database wide) unique identifier.

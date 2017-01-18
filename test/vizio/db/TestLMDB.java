@@ -29,17 +29,15 @@ import org.lmdbjava.Txn;
 import vizio.db.DB.TxR;
 import vizio.db.DB.TxW;
 import vizio.engine.Change;
+import vizio.engine.Changelog;
 import vizio.engine.Convert;
 import vizio.engine.LimitControl;
 import vizio.engine.Transaction;
-import vizio.model.Entity;
 import vizio.model.ID;
 import vizio.model.ID.Type;
-import vizio.model.Email;
 import vizio.model.Name;
 import vizio.model.Names;
 import vizio.model.Site;
-import vizio.model.Template;
 import vizio.model.User;
 
 public class TestLMDB {
@@ -135,16 +133,16 @@ public class TestLMDB {
 					.and(activate(user, activationKey("foo","salt")))
 					.and(launch(user, site, template("ghi")));
 					
-			Entity<?>[][] changed = Transaction.run(change, new LimitControl(() -> System.currentTimeMillis(), 5) ,db);
+			Changelog changed = Transaction.run(change, new LimitControl(() -> System.currentTimeMillis(), 5) ,db);
 			
-			assertEquals(2, changed.length);
+			assertEquals(2, changed.length());
 			
-			assertNull(changed[0][0]);
-			assertNull(changed[1][0]);
-			assertNotNull(changed[0][1]);
-			assertNotNull(changed[1][1]);
-			assertSame(User.class, changed[0][1].getClass());
-			assertSame(Site.class, changed[1][1].getClass());
+			assertNull(changed.get(0).before);
+			assertNotNull(changed.get(0).after);
+			assertNull(changed.get(1).before);
+			assertNotNull(changed.get(1).after);
+			assertSame(User.class, changed.get(0).after.getClass());
+			assertSame(Site.class, changed.get(1).after.getClass());
 			
 			Site s;
 			User u;

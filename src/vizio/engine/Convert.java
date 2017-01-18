@@ -3,7 +3,6 @@ package vizio.engine;
 import static vizio.model.Gist.gist;
 
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 
 import vizio.engine.Change.Tx;
 import vizio.model.Area;
@@ -314,56 +313,6 @@ public interface Convert<I,O> {
 		return gist(getShortBytes(from));
 	}
 	
-	static byte[] getByteBytes(ByteBuffer from) {
-		return getBytes(from.get(), from);
-	}
-	
-	static byte[] getShortBytes(ByteBuffer from) {
-		return getBytes(from.getShort(), from);
-	}
-	
-	static byte[] getIntBytes(ByteBuffer from) {
-		return getBytes(from.getInt(), from);
-	}
-	
-	static byte[] getBytes(int len, ByteBuffer from) {
-		if (len < 0)
-			return null;
-		byte[] bytes = new byte[len];
-		from.get(bytes);
-		return bytes;
-	}
-	
-	static void putIntBytes(Bytes seq, ByteBuffer to) {
-		if (seq == null) {
-			to.putInt(-1);
-		} else {
-			byte[] bytes = seq.bytes();
-			to.putInt(bytes.length);
-			to.put(bytes);
-		}
-	}
-	
-	static void putShortBytes(Bytes seq, ByteBuffer to) {
-		if (seq == null) {
-			to.putShort((short) -1);
-		} else {
-			byte[] bytes = seq.bytes();
-			to.putShort((short) bytes.length);
-			to.put(bytes);
-		}
-	}
-	
-	static void putByteBytes(Bytes seq, ByteBuffer to) {
-		if (seq == null) {
-			to.put((byte) -1);
-		} else {
-			byte[] bytes = seq.bytes();
-			to.put((byte) bytes.length);
-			to.put(bytes);
-		}		
-	}
-	
 	static URL bin2url(ByteBuffer from) {
 		return URL.fromBytes(getShortBytes(from));
 	}
@@ -386,5 +335,60 @@ public interface Convert<I,O> {
 		for (int i = 0; i < urls.length; i++) {
 			url2bin(urls[i], to);
 		}
+	}	
+	
+	static byte[] getByteBytes(ByteBuffer from) {
+		return getBytes(from.get(), from);
 	}
+	
+	static byte[] getShortBytes(ByteBuffer from) {
+		return getBytes(from.getShort(), from);
+	}
+	
+	static byte[] getIntBytes(ByteBuffer from) {
+		return getBytes(from.getInt(), from);
+	}
+	
+	static byte[] getBytes(int len, ByteBuffer from) {
+		if (len < 0)
+			return null;
+		byte[] bytes = new byte[len];
+		if (len > 0) {
+			from.get(bytes);
+		}
+		return bytes;
+	}
+	
+	static void putIntBytes(Bytes seq, ByteBuffer to) {
+		if (seq == null) {
+			to.putInt(-1);
+		} else {
+			byte[] bytes = seq.bytes();
+			to.putInt(bytes.length);
+			to.put(bytes);
+		}
+	}
+	
+	static void putShortBytes(Bytes seq, ByteBuffer to) {
+		if (seq == null) {
+			to.putShort((short) -1);
+		} else {
+			byte[] bytes = seq.bytes();
+			to.putShort((short) bytes.length);
+			if (bytes.length > 0) {
+				to.put(bytes);
+			}
+		}
+	}
+	
+	static void putByteBytes(Bytes seq, ByteBuffer to) {
+		if (seq == null) {
+			to.put((byte) -1);
+		} else {
+			byte[] bytes = seq.bytes();
+			to.put((byte) bytes.length);
+			to.put(bytes);
+		}		
+	}
+	
 }

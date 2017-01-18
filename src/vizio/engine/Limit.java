@@ -1,7 +1,5 @@
 package vizio.engine;
 
-import static vizio.model.Bytes.asciiBytes;
-import static vizio.model.Bytes.join;
 import vizio.model.Identifier;
 import vizio.model.Name;
 

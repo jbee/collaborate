@@ -11,8 +11,6 @@ import java.util.Random;
 import vizio.engine.Tracker;
 import vizio.io.Criteria;
 import vizio.model.Area;
-import vizio.model.Email;
-import vizio.model.Gist;
 import vizio.model.Name;
 import vizio.model.Product;
 import vizio.model.Site;

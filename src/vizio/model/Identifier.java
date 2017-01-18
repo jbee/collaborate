@@ -16,6 +16,8 @@ public abstract class Identifier<T extends Identifier<T>> extends Bytes implemen
 	
 	protected Identifier(byte[] symbols) {
 		super();
+		if (symbols == null || symbols.length == 0)
+			throw new IllegalArgumentException("must not be empty");
 		this.symbols = symbols;
 	}
 

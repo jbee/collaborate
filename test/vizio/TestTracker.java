@@ -13,8 +13,6 @@ import org.junit.Test;
 
 import vizio.engine.Tracker;
 import vizio.model.Date;
-import vizio.model.Email;
-import vizio.model.Gist;
 import vizio.model.Product;
 import vizio.model.Task;
 import vizio.model.User;

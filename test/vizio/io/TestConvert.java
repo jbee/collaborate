@@ -27,20 +27,19 @@ import java.nio.ByteBuffer;
 import org.junit.Test;
 
 import vizio.engine.Change;
+import vizio.engine.Change.Type;
 import vizio.engine.Convert;
 import vizio.engine.Tracker;
 import vizio.model.Area;
-import vizio.model.Email;
 import vizio.model.Entity;
-import vizio.model.Gist;
 import vizio.model.IDN;
 import vizio.model.Name;
 import vizio.model.Poll;
-import vizio.model.Template;
 import vizio.model.Poll.Matter;
 import vizio.model.Product;
 import vizio.model.Site;
 import vizio.model.Task;
+import vizio.model.Template;
 import vizio.model.User;
 import vizio.model.Version;
 
@@ -183,10 +182,9 @@ public class TestConvert {
 		}
 
 		@Override
-		public void put(Entity<?> e) {
+		public void put(Type type, Entity<?> e) {
 			// TODO Auto-generated method stub
-			
 		}
-
+		
 	}
 }

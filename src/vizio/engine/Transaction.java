@@ -22,6 +22,7 @@ import static vizio.model.ID.userId;
 import static vizio.model.ID.versionId;
 
 import java.nio.ByteBuffer;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -60,7 +61,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	 * @return a list of changed entities each given as a pair: before and after the change 
 	 * @throws ConcurrentModification when trying to change an entity already changed by an ongoing transaction (in another thread)
 	 */
-	public static Entity<?>[][] run(Change set, LimitControl lc, DB db) throws ConcurrentModification {
+	public static Changelog run(Change set, LimitControl lc, DB db) throws ConcurrentModification {
 		try (Transaction tx = new Transaction(lc, db)) {
 			try {
 				set.apply(new Tracker(lc.clock, tx), tx);
@@ -108,17 +109,17 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	}
 	
 	@Override
-	public void put(Entity<?> e) {
+	public void put(Change.Type type, Entity<?> e) {
 		ID id = e.uniqueID();
 		if (e != possiblyChanged(id)) { // only do real updates
 			// but "auto"-update fields with updates
 			if (e instanceof Poll) {
-				put(((Poll) e).area);
+				put(type, ((Poll) e).area);
 			} else if (e instanceof Task) {
 				Task t = (Task) e;
-				put(t.product);
-				put(t.area);
-				put(t.base);
+				put(type, t.product);
+				put(type, t.area);
+				put(type, t.base);
 			}
 			changed.put(id, e);
 			for (User user : loadedUsers.values()) {
@@ -168,19 +169,19 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 		return load(ID.taskId(product, id), bin2task);
 	}
 	
-	private Entity<?>[][] commit() {
+	
+	private Changelog commit() {
 		txr.close(); // no more writing
 		if (changed.isEmpty())
-			return new Entity[0][];
+			return Changelog.EMPTY;
 		ByteBuffer buf = ByteBuffer.allocateDirect(1024);
-		Entity<?>[][] res = new Entity[changed.size()][2];
+		Changelog.Entry<?>[] res = new Changelog.Entry[changed.size()];
 		try (TxW tx = db.write()) {
 			int i = 0;
 			for (Entry<ID,Entity<?>> e : changed.entrySet()) {
 				ID id = e.getKey();
 				Entity<?> val = e.getValue();
-				res[i][0] = loaded.get(id);
-				res[i++][1] = val;
+				res[i++] = new Changelog.Entry(EnumSet.noneOf(Change.Type.class), loaded.get(id), val); //FIXME
 				switch (id.type) {
 				case Area: store(tx, id, (Area)val, area2bin, buf); break;
 				case Poll: store(tx, id, (Poll)val, poll2bin, buf); break;
@@ -194,7 +195,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 				buf.clear();
 			}
 			tx.commit();
-			return res;
+			return new Changelog(res);
 		}
 	}
 	

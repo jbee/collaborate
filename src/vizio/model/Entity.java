@@ -31,7 +31,9 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	@SuppressWarnings("unchecked")
 	public final T clone() {
 		try {
-			return (T) super.clone();
+			T res = (T) super.clone();
+			res.version++;
+			return res;
 		} catch (CloneNotSupportedException e) {
 			// should never happen
 			throw new RuntimeException(e);

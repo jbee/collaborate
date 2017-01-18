@@ -1,7 +1,5 @@
 package vizio.model;
 
-import static vizio.model.Bytes.asciiBytes;
-
 import java.util.regex.Pattern;
 
 /**
@@ -32,7 +30,7 @@ import java.util.regex.Pattern;
 public final class Name extends Identifier<Name> {
 
 	public static Name fromBytes(byte[] name) {
-		return new Name(name);
+		return name == null ? null : new Name(name);
 	}
 
 	private static final Pattern VALID_NON_EDITABLE = Pattern.compile("(?:[@.][-a-zA-Z0-9_]+)+(?:[.][*~])?");

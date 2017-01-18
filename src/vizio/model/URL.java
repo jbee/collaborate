@@ -10,7 +10,7 @@ public final class URL extends Identifier<URL> {
 	}
 
 	public static URL fromBytes(byte[] symbols) {
-		return new URL(symbols);
+		return symbols == null || symbols.length == 0 ? null : new URL(symbols);
 	}
 
 }
