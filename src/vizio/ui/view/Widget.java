@@ -8,10 +8,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import vizio.io.Criteria;
-import vizio.io.Criteria.Filter;
+import vizio.io.Criteria.Clause;
 import vizio.io.Criteria.Operator;
 import vizio.io.Criteria.Property;
-import vizio.io.Criteria.Range;
 
 public class Widget {
 
@@ -67,28 +66,7 @@ public class Widget {
 
 	public static Criteria parseQuery(String range, String filters, String orders) {
 		Criteria query = new Criteria();
-		query.orders = parseProperties(orders);
-		query.filters = parseFilters(filters);
-		query.range = parseRange(range);
 		return query;
-	}
-
-	public static Range parseRange(String range) {
-		if (range.isEmpty())
-			return new Range(0,-1);
-		String[] startEnd = range.split("\\s+");
-		String start = startEnd[0];
-		String end = startEnd[1];
-		return new Range("*".equals(start) ? -1 : parseInt(start), "*".equals(end) ? -1 : parseInt(end));
-	}
-
-	public static Filter[] parseFilters(String filters) {
-		List<Filter> res = new ArrayList<>();
-		Matcher m = FILTER_SPLIT.matcher(filters);
-		while (m.find()) {
-			res.add( new Filter(Property.valueOf(m.group(1)), Operator.forSymbol(m.group(2)), parseValue(m.group(3))));
-		}
-		return res.toArray(new Filter[0]);
 	}
 
 	private static String[] parseValue(String value) {

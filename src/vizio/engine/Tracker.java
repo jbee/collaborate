@@ -271,8 +271,8 @@ public final class Tracker {
 		task.purpose = purpose;
 		task.status = Status.unsolved;
 		task.exploitable = exploitable;
-		task.enlistedBy = Names.empty();
-		task.approachedBy = Names.empty();
+		task.pursuedBy = Names.empty();
+		task.engagedBy = Names.empty();
 		task.watchedBy = new Names(reporter.name);
 		task.changeset = Names.empty();
 		task.attachments = URL.NONE;
@@ -307,7 +307,7 @@ public final class Tracker {
 		if (task.purpose != modification) {
 			xp /= 2;
 		}
-		if (task.heatNumeric(today) < 75) {
+		if (task.temperature(today) < 75) {
 			xp /= 2;
 		}
 		return xp;
@@ -368,7 +368,7 @@ public final class Tracker {
 		if (voter.canEmphasise(now) && task.canBeEmphasisedBy(voter.name)) {
 			voter.emphasised(now);
 			task = task.clone();
-			task.heatUp(date(now));
+			task.emphasise(date(now));
 			touch(voter);
 		}
 		return task;
@@ -449,15 +449,15 @@ public final class Tracker {
 
 	/* A user's task queues */
 
-	public Task enlist(Task task, User user) {
+	public Task pursue(Task task, User user) {
 		expectRegistered(user);
 		expectActivated(user);
 		expectCanBeInvolved(user, task);
-		if (task.approachedBy.contains(user) || !task.enlistedBy.contains(user)) {
+		if (task.engagedBy.contains(user) || !task.pursuedBy.contains(user)) {
 			stressDoList(task, user);
 			task = task.clone();
-			task.approachedBy = task.approachedBy.remove(user);
-			task.enlistedBy = task.enlistedBy.add(user);
+			task.engagedBy = task.engagedBy.remove(user);
+			task.pursuedBy = task.pursuedBy.add(user);
 			touch(user);
 		}
 		return task;
@@ -467,26 +467,26 @@ public final class Tracker {
 		expectRegistered(user);
 		expectActivated(user);
 		expectCanBeInvolved(user, task);
-		if (task.enlistedBy.contains(user) || task.approachedBy.contains(user)) {
+		if (task.pursuedBy.contains(user) || task.engagedBy.contains(user)) {
 			stressDoList(task, user);
 			task = task.clone();
-			task.enlistedBy = task.enlistedBy.remove(user);
-			task.approachedBy = task.approachedBy.remove(user);
+			task.pursuedBy = task.pursuedBy.remove(user);
+			task.engagedBy = task.engagedBy.remove(user);
 			touch(user);
 		}
 		return task;
 	}
 
-	public Task approach(Task task, User user) {
+	public Task engage(Task task, User user) {
 		expectRegistered(user);
 		expectActivated(user);
 		expectCanBeInvolved(user, task);
 		expectMaintainer(task.area, user);
-		if (!task.approachedBy.contains(user) || task.enlistedBy.contains(user)) {
+		if (!task.engagedBy.contains(user) || task.pursuedBy.contains(user)) {
 			stressDoList(task, user);
 			task = task.clone();
-			task.approachedBy = task.approachedBy.add(user);
-			task.enlistedBy = task.enlistedBy.remove(user);
+			task.engagedBy = task.engagedBy.add(user);
+			task.pursuedBy = task.pursuedBy.remove(user);
 			touch(user);
 		}
 		return task;
@@ -724,7 +724,7 @@ public final class Tracker {
 	}
 
 	private static void expectCanBeInvolved(User user, Task task) {
-		if (task.involvedUsers() >= 5 && !task.enlistedBy.contains(user) && !task.approachedBy.contains(user)) {
+		if (task.involvedUsers() >= 5 && !task.pursuedBy.contains(user) && !task.engagedBy.contains(user)) {
 			denyTransition("There are already to much users involved with the task: "+task);
 		}
 	}

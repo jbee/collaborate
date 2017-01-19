@@ -1,36 +1,80 @@
 package vizio.io;
 
+import static vizio.io.Criteria.Operator.*;
+import static vizio.io.Criteria.ValueType.SET;
+import static vizio.io.Criteria.ValueType.SIMPLE;
+
+import java.util.EnumSet;
+
 import vizio.model.Date;
 import vizio.model.Task;
 
 public final class Criteria {
 
-	public Range range;
-	public Filter[] filters;
-	public Property[] orders;
+	public final Clause[] clauses;
+	
+	public Criteria(Clause... clauses) {
+		super();
+		this.clauses = clauses;
+	}
 
 	@Override
 	public String toString() {
-		return String.format("%s[%s]<%s>", range, join(filters), join(orders));
+		return join(clauses, "");
+	}
+	
+	public static final class Clause {
+
+		public Property prop;
+		public Operator op;
+		public String[] value;
+
+		public Clause(Property prop, Operator op, String[] value) {
+			super();
+			this.prop = prop;
+			this.op = op;
+			this.value = value;
+		}
+
+		@Override
+		public String toString() {
+			String val = value.length == 1 ? value[0] : "{"+join(value, " ")+"}";
+			return "["+prop.name()+" "+op+" "+val+"]";
+		}
 	}
 	
 	/**
 	 * Properties a task can be filtered by
 	 */
 	public static enum Property {
-		temp, heat, status, purpose, motive,
+		// general properties
+		first(eq, ge, le, gt, lt), 
+		last(eq, ge, le, gt, lt), 
+		length(eq),
+		
+		//TODO ops below
+		
+		// task properties
+		emphasis, heat, status, purpose, motive,
 		version, start, end,
 		exploitable,
 		board, // serial is set
-		age, id, origin, cause, serial,
-		reporter, solver, users, maintainers, enlisted_by, approched_by, watched_by,
+		age, id, origin, basis, serial,
+		reporter, solver, 
+		users, maintainers, watchers, pursued_by, engaged_by,
 		area, product,
 		gist, conclusion;
 		
+		public final EnumSet<Operator> supported;
+		
+		private Property(Operator... supported) {
+			this.supported = EnumSet.of(supported[0], supported);
+		}
+
 		public Comparable<?> access(Task t, Date today) {
 			switch (this) {
-			case temp: return t.heat(today);
-			case heat: return t.heat;
+			case emphasis: return t.emphasis;
+			case heat: return t.heatType(today);
 			case status: return t.status;
 			case purpose: return t.purpose;
 			case motive : return t.motive;
@@ -43,15 +87,15 @@ public final class Criteria {
 			default:
 			case id: return t.id;
 			case origin: return t.origin;
-			case cause: return t.basis;
+			case basis: return t.basis;
 			case serial: return t.serial;
 			case reporter: return t.reporter;
 			case solver: return t.solver;
-			case users: return t.approachedBy; // TODO not quite...
+			case users: return t.engagedBy; // TODO not quite...
 			case maintainers: return t.area.maintainers;
-			case enlisted_by: return t.enlistedBy;
-			case approched_by: return t.approachedBy;
-			case watched_by: return t.watchedBy;
+			case pursued_by: return t.pursuedBy;
+			case engaged_by: return t.engagedBy;
+			case watchers: return t.watchedBy;
 			case area: return t.area.name;
 			case product: return t.product.name;
 			case gist: return t.gist; 
@@ -59,14 +103,22 @@ public final class Criteria {
 			}
 		}
 	}
+	
+	public static enum ValueType { SIMPLE, SET }
 
 	public static enum Operator {
-		eq("="), neq("!="), gt(">"), lt("<"), ge(">="), le("<="), in("~"), nin("!~"), any("/"), nany("!/");
+		eq("=", SIMPLE, SET), neq("!=", SIMPLE, SET), 
+		gt(">", SIMPLE), lt("<", SIMPLE), ge(">=", SIMPLE), le("<=", SIMPLE), 
+		in("~", SET), nin("!~", SET), any("/", SET), nany("!/", SET),
+		ord("=>", SIMPLE)
+		;
 
-		public String symbol;
+		public final String symbol;
+		public final EnumSet<ValueType> supported;
 
-		private Operator(String symbol) {
+		private Operator(String symbol, ValueType...supported) {
 			this.symbol = symbol;
+			this.supported = EnumSet.of(supported[0], supported);
 		}
 
 		public static Operator forSymbol(String symbol) {
@@ -76,55 +128,17 @@ public final class Criteria {
 			}
 			throw new IllegalArgumentException(symbol);
 		}
-	}
-
-	public static class Filter {
-
-		public Property prop;
-		public Operator op;
-		public String[] value;
-
-		public Filter(Property prop, Operator op, String[] value) {
-			super();
-			this.prop = prop;
-			this.op = op;
-			this.value = value;
-		}
-
+		
 		@Override
 		public String toString() {
-			String vs = value.length == 1 ? value[0] : "{"+join(value)+"}";
-			return prop.name()+op.symbol+vs;
+			return symbol;
 		}
 	}
 
-	public static class Range {
-
-		public final int start;
-		public final int end;
-
-		public Range(int start, int end) {
-			super();
-			this.start = start;
-			this.end = end;
-		}
-
-		@Override
-		public String toString() {
-			String e = end < 0 ? "*" : String.valueOf(end);
-			String s  = start < 0 ? "*" : String.valueOf(start);
-			return String.format("{%s %s}", s, e);
-		}
-
-		public int length() {
-			return end-start+1;
-		}
-	}
-
-	static String join(Object[] values) {
+	static String join(Object[] values, String separator) {
 		StringBuilder b = new StringBuilder();
 		for (int i = 0; i < values.length; i++) {
-			if (i > 0) b.append(' ');
+			if (i > 0) b.append(separator);
 			b.append(values[i]);
 		}
 		return b.toString();

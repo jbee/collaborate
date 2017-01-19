@@ -2,7 +2,6 @@ package vizio.engine;
 
 import static java.util.Arrays.asList;
 
-import java.util.EnumSet;
 import java.util.Iterator;
 
 import vizio.model.Entity;
@@ -13,15 +12,23 @@ public final class Changelog implements Iterable<Changelog.Entry<?>>{
 	
 	public static final class Entry<T extends Entity<T>> {
 		
-		public final EnumSet<Change.Type> changes;
+		public final Change.Type[] changes;
 		public final T before;
 		public final T after;
 		
-		public Entry(EnumSet<Change.Type> changes, T before, T after) {
+		public Entry(Change.Type[] changes, T before, T after) {
 			super();
 			this.changes = changes;
 			this.before = before;
 			this.after = after;
+		}
+		
+		public boolean isCreation() {
+			return before == null;
+		}
+		
+		public boolean isUpdate() {
+			return before != null;
 		}
 	}
 	

@@ -26,8 +26,8 @@ public class SimpleCache implements Cache {
 	static final Key<Name> product       = (Task task) -> task.product.name;
 	static final Key<Name> area          = (Task task) -> task.area.name;
 	static final Key<Name> version       = (Task task) -> task.base.name;
-	static final Key<Names> enlistedBy   = (Task task) -> task.enlistedBy;
-	static final Key<Names> approachedBy = (Task task) -> task.approachedBy;
+	static final Key<Names> enlistedBy   = (Task task) -> task.pursuedBy;
+	static final Key<Names> approachedBy = (Task task) -> task.engagedBy;
 	static final Key<Names> watchedBy    = (Task task) -> task.watchedBy;
 	static final Key<Status> status      = (Task task) -> task.status;
 	static final Key<Motive> motive      = (Task task) -> task.motive;
@@ -54,9 +54,7 @@ public class SimpleCache implements Cache {
 		// 1. select index(es)
 		// 2. filter (collect results)
 		// 1+2 are intertwined as multiple indexes might be used by we use one at a time until we have "enough" results.
-		Task[] res = new Task[criteria.range.length()];
 		// 3. sort
-		sort(res, criteria.orders, today);
 		return null;
 	}
 

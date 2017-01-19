@@ -49,13 +49,13 @@ public class DummyController implements Controller {
 		tasks[2] = tracker.reportProposal(product, gist("We should count ..."), user, product.origin);
 		tasks[3] = tracker.reportIntention(product, gist("At some point the tracker should be released"), user, product.origin);
 		tasks[4] = tracker.reportProposal(product, gist("Use bold text for everything important"), user, ui);
-		tasks[1] = tracker.enlist(tasks[1], user);
-		tasks[2] = tracker.approach(tasks[2], user);
-		tasks[0].heat = 97;
-		tasks[1].heat = 78;
-		tasks[2].heat = 56;
-		tasks[3].heat = 28;
-		tasks[4].heat = 14;
+		tasks[1] = tracker.pursue(tasks[1], user);
+		tasks[2] = tracker.engage(tasks[2], user);
+		tasks[0].emphasis = 97;
+		tasks[1].emphasis = 78;
+		tasks[2].emphasis = 56;
+		tasks[3].emphasis = 28;
+		tasks[4].emphasis = 14;
 	}
 
 	@Override

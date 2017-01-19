@@ -39,7 +39,7 @@ public class TestTracker {
 		task = tracker.emphasise(task, user);
 
 		long before = currentTimeMillis();
-		assertEquals(50, task.heatNumeric(today));
+		assertEquals(50, task.temperature(today));
 		assertEquals(1, user.emphasisedToday);
 		assertTrue(user.millisEmphasised >= before);
 		assertFalse(user.canEmphasise(currentTimeMillis()));
@@ -47,36 +47,36 @@ public class TestTracker {
 		user = tracker.register(as("user2"), email("user2@example.com"), "xxx", "salt");
 		user = tracker.activate(user, user.md5);
 		task = tracker.emphasise(task, user);
-		assertEquals(75, task.heatNumeric(today));
+		assertEquals(75, task.temperature(today));
 
 		user = tracker.register(as("user3"), email("user3@example.com"), "xxx", "salt");
 		user = tracker.activate(user, user.md5);
 		task = tracker.emphasise(task, user);
-		assertEquals(87, task.heatNumeric(today));
+		assertEquals(87, task.temperature(today));
 
 		user = tracker.register(as("user4"), email("user4@example.com"), "xxx", "salt");
 		user = tracker.activate(user, user.md5);
 		task = tracker.emphasise(task, user);
-		assertEquals(93, task.heatNumeric(today));
+		assertEquals(93, task.temperature(today));
 
 		user = tracker.register(as("user5"), email("user5@example.com"), "xxx", "salt");
 		user = tracker.activate(user, user.md5);
 		task = tracker.emphasise(task, user);
-		assertEquals(96, task.heatNumeric(today));
+		assertEquals(96, task.temperature(today));
 
 		user = tracker.register(as("user6"), email("user6@example.com"), "xxx", "salt");
 		user = tracker.activate(user, user.md5);
 		task = tracker.emphasise(task, user);
-		assertEquals(98, task.heatNumeric(today));
+		assertEquals(98, task.temperature(today));
 
 		user = tracker.register(as("user7"), email("user8@example.com"), "xxx", "salt");
 		user = tracker.activate(user, user.md5);
 		task = tracker.emphasise(task, user);
-		assertEquals(99, task.heatNumeric(today));
+		assertEquals(99, task.temperature(today));
 
 		user = tracker.register(as("user9"), email("user10@example.com"), "xxx", "salt");
 		user = tracker.activate(user, user.md5);
 		task = tracker.emphasise(task, user);
-		assertEquals(100, task.heatNumeric(today));
+		assertEquals(100, task.temperature(today));
 	}
 }

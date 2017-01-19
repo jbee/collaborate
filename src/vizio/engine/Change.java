@@ -3,7 +3,6 @@ package vizio.engine;
 import static vizio.engine.Change.Type.abandon;
 import static vizio.engine.Change.Type.absolve;
 import static vizio.engine.Change.Type.activate;
-import static vizio.engine.Change.Type.approach;
 import static vizio.engine.Change.Type.attach;
 import static vizio.engine.Change.Type.compart;
 import static vizio.engine.Change.Type.consent;
@@ -11,7 +10,7 @@ import static vizio.engine.Change.Type.constitute;
 import static vizio.engine.Change.Type.dissent;
 import static vizio.engine.Change.Type.dissolve;
 import static vizio.engine.Change.Type.emphasise;
-import static vizio.engine.Change.Type.enlist;
+import static vizio.engine.Change.Type.engage;
 import static vizio.engine.Change.Type.fork;
 import static vizio.engine.Change.Type.indicate;
 import static vizio.engine.Change.Type.launch;
@@ -19,6 +18,7 @@ import static vizio.engine.Change.Type.leave;
 import static vizio.engine.Change.Type.open;
 import static vizio.engine.Change.Type.poll;
 import static vizio.engine.Change.Type.propose;
+import static vizio.engine.Change.Type.pursue;
 import static vizio.engine.Change.Type.register;
 import static vizio.engine.Change.Type.relocate;
 import static vizio.engine.Change.Type.request;
@@ -59,35 +59,49 @@ public interface Change {
 		return (t, tx) -> { this.apply(t, tx); next.apply(t, tx); };
 	}
 	
+	/**
+	 * What can be done to tracker data 
+	 */
 	enum Type {
+		// users
 		register,
 		activate,
+		// sites
+		launch,
+		restructure,
+		// areas
 		constitute,
 		open, 
 		compart,
 		leave,
-		relocate,
+		// versions
 		tag,
+		// polls
+		poll,
+		consent,
+		dissent,		
+		// tasks
+		relocate,
+		attach, 
+		
 		propose,
 		indicate,
 		warn,
 		request,
 		fork,
+		
 		absolve,
 		resolve,
 		dissolve,
+		
 		emphasise,
-		attach, 
-		poll,
-		consent,
-		dissent,
-		enlist,
+
+		pursue,
 		abandon,
-		approach,
+		engage,
+		
 		watch,
-		unwatch,
-		launch,
-		restructure
+		unwatch
 	}
 	
 	/**
@@ -103,7 +117,7 @@ public interface Change {
 		Version version(Name product, Name version);
 		Task task(Name product, IDN id);
 
-		void put(Type type, Entity<?> e);
+		void put(Type change, Entity<?> e);
 	}
 	
 	static Change register(Name user, Email email, String unsaltedMd5, String salt) {
@@ -194,16 +208,16 @@ public interface Change {
 		return (t, tx) -> { tx.put(dissent, t.dissent(tx.poll(product, area, serial), tx.user(voter))); };
 	}
 	
-	static Change enlist(Name product, IDN task, Name user) {
-		return (t, tx) -> { tx.put(enlist, t.enlist(tx.task(product, task), tx.user(user))); };
+	static Change pursue(Name product, IDN task, Name user) {
+		return (t, tx) -> { tx.put(pursue, t.pursue(tx.task(product, task), tx.user(user))); };
 	}
 
 	static Change abandon(Name product, IDN task, Name user) {
 		return (t, tx) -> { tx.put(abandon, t.abandon(tx.task(product, task), tx.user(user))); };
 	}
 
-	static Change approach(Name product, IDN task, Name user) {
-		return (t, tx) -> { tx.put(approach, t.approach(tx.task(product, task), tx.user(user))); };
+	static Change engage(Name product, IDN task, Name user) {
+		return (t, tx) -> { tx.put(engage, t.engage(tx.task(product, task), tx.user(user))); };
 	}
 
 	static Change watch(Name product, IDN task, Name user) {

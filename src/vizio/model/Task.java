@@ -22,7 +22,7 @@ public class Task extends Entity<Task> {
 	// working with a task (data that might change)
 	public IDN basis; // direct predecessor
 	public IDN origin; // initial "impulse" that lead to this task
-	public int heat;
+	public int emphasis;
 	public Area area;
 	public URL[] attachments;
 
@@ -34,8 +34,8 @@ public class Task extends Entity<Task> {
 	 * but the newly released version.
 	 */
 	public Version base;
-	public Names enlistedBy;
-	public Names approachedBy;
+	public Names pursuedBy;
+	public Names engagedBy;
 	public Names watchedBy; // OBS! this is the only real dynamic length field...
 	// resolving a task (closing record)
 	public Name solver;
@@ -56,18 +56,18 @@ public class Task extends Entity<Task> {
 	 * {@link Task}s the task receives some heat. The actual amount depends on
 	 * the current heat of the {@link Task} and its age.
 	 */
-	public void heatUp(Date today) {
+	public void emphasise(Date today) {
 		int age = age(today);
-		int left = 100 * age - heat;
-		heat += max(age, left/2);
+		int left = 100 * age - emphasis;
+		emphasis += max(age, left/2);
 	}
 
-	public int heatNumeric(Date today) {
-		return min(100, heat / age(today));
+	public int temperature(Date today) {
+		return min(100, emphasis / age(today));
 	}
 
-	public Heat heat(Date today) {
-		return Heat.fromNumeric(heatNumeric(today));
+	public Heat heatType(Date today) {
+		return Heat.fromTemp(temperature(today));
 	}
 
 	public int age(Date today) {
@@ -75,7 +75,7 @@ public class Task extends Entity<Task> {
 	}
 
 	public int involvedUsers() {
-		return enlistedBy.count() + approachedBy.count();
+		return pursuedBy.count() + engagedBy.count();
 	}
 
 	public boolean isVisibleTo(Name user) {

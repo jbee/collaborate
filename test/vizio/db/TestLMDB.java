@@ -133,12 +133,15 @@ public class TestLMDB {
 					.and(activate(user, activationKey("foo","salt")))
 					.and(launch(user, site, template("ghi")));
 					
-			Changelog changed = Transaction.run(change, new LimitControl(() -> System.currentTimeMillis(), 5) ,db);
+			Changelog changed = Transaction.run(change, db ,new LimitControl(() -> System.currentTimeMillis(), 5));
 			
 			assertEquals(2, changed.length());
 			
+			assertArrayEquals(new Change.Type[]{Change.Type.register, Change.Type.activate}, changed.get(0).changes);
 			assertNull(changed.get(0).before);
 			assertNotNull(changed.get(0).after);
+
+			assertArrayEquals(new Change.Type[]{Change.Type.launch}, changed.get(1).changes);
 			assertNull(changed.get(1).before);
 			assertNotNull(changed.get(1).after);
 			assertSame(User.class, changed.get(0).after.getClass());

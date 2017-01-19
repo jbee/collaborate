@@ -5,6 +5,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import vizio.engine.Limits.Assurances;
+
 /**
  * Keeps track of {@link Limit}s.
  * 
@@ -19,7 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *  
  * @author jan
  */
-public final class LimitControl implements Limits {
+public final class LimitControl implements Assurances {
 	
 	private static final int ONE_HOUR = 1000*60*60;
 	private static final int ONE_DAY = 1000*60*60*24;
@@ -37,10 +39,16 @@ public final class LimitControl implements Limits {
 	}
 
 	@Override
+	public Clock clock() {
+		return clock;
+	}
+	
+	@Override
 	public boolean stress(Limit l) {
 		return stats(l).stress(clock.time());
 	}
 
+	@Override
 	public boolean alloc(Limit l) throws ConcurrentModification {
 		LimitStats ls = stats(l);
 		if (!ls.allocated.compareAndSet(false, true)) {
@@ -49,6 +57,7 @@ public final class LimitControl implements Limits {
 		return ls.stress(clock.time());
 	}
 	
+	@Override
 	public void free(Limit l) {
 		if (!stats(l).allocated.compareAndSet(true, false)) {
 			System.err.println("Tried to free non allocated limit: "+l);

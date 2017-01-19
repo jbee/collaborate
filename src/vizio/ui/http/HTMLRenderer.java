@@ -141,7 +141,7 @@ public class HTMLRenderer {
 		out.append("</h5>");
 		renderUsersList(task);
 		if (viewer.activated) {
-			if (task.enlistedBy.contains(viewer) || task.approachedBy.contains(viewer)) {
+			if (task.pursuedBy.contains(viewer) || task.engagedBy.contains(viewer)) {
 				renderTaskActionLink(task, "btn", Action.abandon, "&minus;");
 			} else {
 				renderTaskActionLink(task, "btn", Action.enlist, "&plus;");
@@ -170,17 +170,17 @@ public class HTMLRenderer {
 	}
 
 	private void renderDataAttributes(Task task) {
-		out.append(" data-heat='").append(String.valueOf(task.heat)).append("'");
+		out.append(" data-heat='").append(String.valueOf(task.emphasis)).append("'");
 	}
 
 	private void renderUsersList(Task task) {
 		if (task.involvedUsers() > 0) {
-			if (task.enlistedBy.count() > 0) {
+			if (task.pursuedBy.count() > 0) {
 				out.append("<b>[...</b>");
-				renderUsersLinks(task.enlistedBy);
+				renderUsersLinks(task.pursuedBy);
 				out.append(" <b>]</b>");
 			}
-			renderUsersLinks(task.approachedBy);
+			renderUsersLinks(task.engagedBy);
 		}
 	}
 
@@ -215,7 +215,7 @@ public class HTMLRenderer {
 		out.append(" status-").append(task.status.name());
 		out.append(" goal-").append(task.purpose.name());
 		out.append(" motive-").append(task.motive.name());
-		out.append(" heat-").append(task.heat(date(now)).name());
+		out.append(" heat-").append(task.heatType(date(now)).name());
 		if (task.exploitable) {
 			out.append(" exploitable");
 		}

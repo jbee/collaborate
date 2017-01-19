@@ -22,7 +22,7 @@ import static vizio.model.ID.userId;
 import static vizio.model.ID.versionId;
 
 import java.nio.ByteBuffer;
-import java.util.EnumSet;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -61,10 +61,10 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	 * @return a list of changed entities each given as a pair: before and after the change 
 	 * @throws ConcurrentModification when trying to change an entity already changed by an ongoing transaction (in another thread)
 	 */
-	public static Changelog run(Change set, LimitControl lc, DB db) throws ConcurrentModification {
-		try (Transaction tx = new Transaction(lc, db)) {
+	public static Changelog run(Change set, DB db, Assurances as) throws ConcurrentModification {
+		try (Transaction tx = new Transaction(as, db)) {
 			try {
-				set.apply(new Tracker(lc.clock, tx), tx);
+				set.apply(new Tracker(as.clock(), tx), tx);
 				return tx.commit();
 			} finally {
 				tx.freeAllocatedLimits();
@@ -73,15 +73,16 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	}
 	
 	private final LinkedHashMap<ID, Entity<?>> changed = new LinkedHashMap<>();
+	private final HashMap<ID, ArrayList<Change.Type>> changeTypes = new HashMap<>();
 	private final HashMap<ID, Entity<?>> loaded = new HashMap<>();
 	private final HashMap<ID, User> loadedUsers = new HashMap<>();
 	private final Set<Limit> allocated = new HashSet<>();
 	
-	private final LimitControl lc;
+	private final Assurances lc;
 	private final DB db;
 	private final DB.TxR txr;
 	
-	private Transaction(LimitControl lc, DB db) {
+	private Transaction(Assurances lc, DB db) {
 		super();
 		this.lc = lc;
 		this.db = db;
@@ -122,6 +123,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 				put(type, t.base);
 			}
 			changed.put(id, e);
+			changeTypes.computeIfAbsent(id, (id_) -> new ArrayList<>()).add(type);
 			for (User user : loadedUsers.values()) {
 				if (user.version > user.initalVersion) {
 					changed.put(user.uniqueID(), user);
@@ -181,7 +183,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 			for (Entry<ID,Entity<?>> e : changed.entrySet()) {
 				ID id = e.getKey();
 				Entity<?> val = e.getValue();
-				res[i++] = new Changelog.Entry(EnumSet.noneOf(Change.Type.class), loaded.get(id), val); //FIXME
+				res[i++] = new Changelog.Entry(changeTypes.get(id).toArray(new Change.Type[0]), loaded.get(id), val);
 				switch (id.type) {
 				case Area: store(tx, id, (Area)val, area2bin, buf); break;
 				case Poll: store(tx, id, (Poll)val, poll2bin, buf); break;

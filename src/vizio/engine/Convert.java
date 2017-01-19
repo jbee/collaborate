@@ -113,10 +113,10 @@ public interface Convert<I,O> {
 		t.exploitable = from.get() > 0;
 		t.basis = bin2IDN(from);
 		t.origin = bin2IDN(from);
-		t.heat = from.getInt();
+		t.emphasis = from.getInt();
 		t.base = tx.version(t.product.name, bin2name(from));
-		t.enlistedBy = bin2names(from);
-		t.approachedBy = bin2names(from);
+		t.pursuedBy = bin2names(from);
+		t.engagedBy = bin2names(from);
 		t.watchedBy = bin2names(from);
 		t.solver = bin2name(from);
 		t.end = bin2date(from);
@@ -141,10 +141,10 @@ public interface Convert<I,O> {
 		to.put((byte) (t.exploitable ? 1 : 0));
 		IDN2bin(t.basis, to);
 		IDN2bin(t.origin, to);
-		to.putInt(t.heat);
+		to.putInt(t.emphasis);
 		name2bin(t.base.name, to);
-		names2bin(t.enlistedBy, to);
-		names2bin(t.approachedBy, to);
+		names2bin(t.pursuedBy, to);
+		names2bin(t.engagedBy, to);
 		names2bin(t.watchedBy, to);
 		name2bin(t.solver, to);
 		date2bin(t.end, to);

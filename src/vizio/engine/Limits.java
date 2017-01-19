@@ -5,10 +5,19 @@ public interface Limits {
 	/**
 	 * Getting one step closer to the named limit.
 	 *
-	 * @param limit the limit to use.
+	 * @param l the limit to use.
 	 * @return true in case the limit is not reached so the operation can be done.
 	 */
-	boolean stress(Limit limit) throws ConcurrentModification;
+	boolean stress(Limit l) throws ConcurrentModification;
+	
+	interface Assurances extends Limits {
+
+		boolean alloc(Limit l) throws ConcurrentModification;
+
+		void free(Limit l);
+		
+		Clock clock();
+	}
 	
 	final class ConcurrentModification extends RuntimeException {
 
