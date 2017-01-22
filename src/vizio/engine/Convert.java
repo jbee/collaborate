@@ -5,6 +5,8 @@ import static vizio.model.Gist.gist;
 
 import java.nio.ByteBuffer;
 
+import com.sun.xml.internal.fastinfoset.sax.SystemIdResolver;
+
 import vizio.engine.Change.Tx;
 import vizio.model.Area;
 import vizio.model.Attachments;
@@ -175,6 +177,12 @@ public interface Convert<I,O> {
 		Product p = new Product(from.getInt());
 		p.name = bin2name(from);
 		p.tasks = from.getInt();
+		int c = from.get();
+		p.integrations = new Product.Integration[c];
+		for (int i = 0; i < c; i++) {
+			p.integrations[i] = new Product.Integration(bin2name(from), bin2url(from));
+		}
+		
 		// not stored as part of product
 		p.origin = tx.area(p.name, Name.ORIGIN);
 		p.somewhere = tx.area(p.name, Name.UNKNOWN);
@@ -186,6 +194,11 @@ public interface Convert<I,O> {
 		to.putInt(p.version);
 		name2bin(p.name, to);
 		to.putInt(p.tasks);
+		to.put((byte) p.integrations.length);
+		for (int i = 0; i < p.integrations.length; i++) {
+			name2bin(p.integrations[i].name, to);
+			url2bin(p.integrations[i].base, to);
+		}
 		return to;
 	};
 	

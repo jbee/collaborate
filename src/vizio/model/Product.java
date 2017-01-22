@@ -9,7 +9,7 @@ package vizio.model;
 public final class Product extends Entity<Product> {
 
 	public Name name;
-	public System[] systems;
+	public Integration[] integrations;
 	
 	/**
 	 * The area used to manage a product's areas and versions.
@@ -47,11 +47,19 @@ public final class Product extends Entity<Product> {
 		return ID.productId(name);
 	}
 	
-	public static final class System {
+	public int indexOf(Name integration) {
+		for (int i = 0; i < integrations.length; i++) {
+			if (integrations[i].name.equalTo(integration))
+				return i;
+		}
+		return -1;
+	}
+	
+	public static final class Integration {
 		public final Name name;
 		public final URL base;
 		
-		public System(Name name, URL base) {
+		public Integration(Name name, URL base) {
 			super();
 			this.name = name;
 			this.base = base;

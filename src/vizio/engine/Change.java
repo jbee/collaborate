@@ -136,12 +136,12 @@ public interface Change {
 		return (t, tx) -> { tx.put(constitute, t.constitute(product, tx.user(originator))); };
 	}
 	
-	static Change connect(Name product, Name system, URL base) {
-		return (t, tx) -> { tx.put(connect, t.connect(product, system, base)); };
+	static Change connect(Name product, Name integration, URL base, Name originator) {
+		return (t, tx) -> { tx.put(connect, t.connect(tx.product(product), integration, base, tx.user(originator))); };
 	}
 
-	static Change disconnect(Name product, Name system) {
-		return (t, tx) -> { tx.put(disconnect, t.disconnect(product, system)); };
+	static Change disconnect(Name product, Name integration, Name originator) {
+		return (t, tx) -> { tx.put(disconnect, t.disconnect(tx.product(product), integration, tx.user(originator))); };
 	}
 
 	static Change open(Name product, Name board, Name originator, Motive motive, Purpose purpose) {

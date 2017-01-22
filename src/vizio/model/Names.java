@@ -36,6 +36,7 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 	}
 
 	public Names remove(Name user) {
+		//TODO make array util and use
 		int idx = indexOf(user);
 		if (idx >= 0) {
 			if (idx == 0) {
@@ -55,6 +56,7 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 	}
 
 	public Names add(Name user) {
+		//TODO make array util and use
 		if (indexOf(user) < 0) {
 			Name[] res = copyOf(names, names.length+1);
 			res[names.length] = user;

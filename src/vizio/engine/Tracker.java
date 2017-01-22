@@ -119,20 +119,31 @@ public final class Tracker {
 		Product p = new Product(1);
 		p.name = product;
 		p.tasks = 0;
+		p.integrations = new Product.Integration[0];
 		p.origin = compart(p.name, Name.ORIGIN, originator);
 		p.somewhere = compart(p.name, Name.UNKNOWN, originator);
 		p.somewhen = tag(p, Name.UNKNOWN, originator);
 		return p;
 	}
 	
-	public Product connect(Name product, Name system, URL base) {
-		// TODO Auto-generated method stub
-		return null;
+	public Product connect(Product product, Name integration, URL base, User originator) {
+		//TODO do the checks
+		int c = product.indexOf(integration);
+		if (c >= 0) //TODO update url?
+			return product;
+		product = product.clone();
+		//TODO add the integration
+		return product;
 	}
 	
-	public Product disconnect(Name product, Name system) {
-		// TODO Auto-generated method stub
-		return null;
+	public Product disconnect(Product product, Name integration, User originator) {
+		//TODO do the checks
+		int c = product.indexOf(integration);
+		if (c < 0)
+			return product;
+		product = product.clone();
+		//TODO remove the integration
+		return product;
 	}
 
 	/* Areas */
