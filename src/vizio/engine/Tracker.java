@@ -24,6 +24,7 @@ import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Date;
 import vizio.model.Email;
+import vizio.model.Entity;
 import vizio.model.Gist;
 import vizio.model.IDN;
 import vizio.model.Motive;
@@ -38,6 +39,7 @@ import vizio.model.Site;
 import vizio.model.Status;
 import vizio.model.Task;
 import vizio.model.Template;
+import vizio.model.URL;
 import vizio.model.User;
 import vizio.model.Version;
 
@@ -121,6 +123,16 @@ public final class Tracker {
 		p.somewhere = compart(p.name, Name.UNKNOWN, originator);
 		p.somewhen = tag(p, Name.UNKNOWN, originator);
 		return p;
+	}
+	
+	public Product connect(Name product, Name system, URL base) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	public Product disconnect(Name product, Name system) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	/* Areas */
@@ -771,4 +783,6 @@ public final class Tracker {
 	private static void denyTransition(String reason) {
 		throw new IllegalStateException(reason);
 	}
+
+
 }

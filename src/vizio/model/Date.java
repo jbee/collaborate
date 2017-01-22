@@ -14,6 +14,10 @@ public final class Date implements Comparable<Date> {
 		super();
 		this.daysSinceEra = daysSinceEra;
 	}
+	
+	public static Date parse(String yyyymmdd) {
+		return new Date((int) LocalDate.parse(yyyymmdd).toEpochDay());
+	}
 
 	public static Date date(long millisSinceEra) {
 		return new Date( (int) (millisSinceEra / MS_PER_DAY));

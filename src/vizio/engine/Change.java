@@ -6,7 +6,7 @@ import static vizio.engine.Change.Type.activate;
 import static vizio.engine.Change.Type.attach;
 import static vizio.engine.Change.Type.compart;
 import static vizio.engine.Change.Type.consent;
-import static vizio.engine.Change.Type.constitute;
+import static vizio.engine.Change.Type.*;
 import static vizio.engine.Change.Type.dissent;
 import static vizio.engine.Change.Type.dissolve;
 import static vizio.engine.Change.Type.emphasise;
@@ -70,8 +70,11 @@ public interface Change {
 		// sites
 		launch,
 		restructure,
-		// areas
+		// products
 		constitute,
+		connect,
+		disconnect,
+		// areas
 		open, 
 		compart,
 		leave,
@@ -134,11 +137,11 @@ public interface Change {
 	}
 	
 	static Change connect(Name product, Name system, URL base) {
-		return (t, tx) -> { /* TODO */ };
+		return (t, tx) -> { tx.put(connect, t.connect(product, system, base)); };
 	}
 
 	static Change disconnect(Name product, Name system) {
-		return (t, tx) -> { /* TODO */ };
+		return (t, tx) -> { tx.put(disconnect, t.disconnect(product, system)); };
 	}
 
 	static Change open(Name product, Name board, Name originator, Motive motive, Purpose purpose) {

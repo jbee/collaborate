@@ -20,7 +20,6 @@ import static vizio.engine.Constraints.ValueType.number;
 import static vizio.engine.Constraints.ValueType.property;
 import static vizio.engine.Constraints.ValueType.text;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -29,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import vizio.model.Date;
+import vizio.model.Gist;
 import vizio.model.Name;
 import vizio.model.Task;
 
@@ -48,6 +48,10 @@ public final class Constraints {
 		return constraints.length;
 	}
 	
+	public Constraint get(int index) {
+		return constraints[index];
+	}
+	
 	@Override
 	public String toString() {
 		return join(constraints, "");
@@ -55,7 +59,7 @@ public final class Constraints {
 	
 	private static final Pattern CONSTRAINT = Pattern.compile("\\s*\\[([a-z]+)\\s*([=<>?!~]{1,2})\\s*([^\\]]+)\\]");
 	
-	public static Constraints parse(String s) throws ContraintParseException {
+	public static Constraints parse(String s) throws MalformedConstraint {
 		Matcher m = CONSTRAINT.matcher(s);
 		List<Constraint> res = new ArrayList<>();
 		while (m.find()) {
@@ -63,12 +67,43 @@ public final class Constraints {
 			String o = m.group(2);
 			String v = m.group(3);
 			Property prop = Property.property(p.toLowerCase());
-			res.add(new Constraint(prop, Operator.forSymbol(o), parseValue(prop, v)));
+			Operator op = Operator.forSymbol(o);
+			if (!prop.ops.contains(op)) {
+				throw new MalformedConstraint("Property `"+prop+"` does not support operation `"+op+"`, supported are: "+prop.ops.toString());
+			}
+			String[] val = parseValue(v);
+			if (val.length == 1 && !op.isBinary) {
+				throw new MalformedConstraint("Operation `"+op+"` was used with simple value `"+val[0]+"` but requires a set, use `{???, ???}`");
+			}
+			if (val.length > 1 && !op.isSet) {
+				throw new MalformedConstraint("Operation `"+op+"` was used with set value `"+Arrays.toString(val)+"` but requires a simple value, use e.g. `"+val[0]+"`");
+			}
+			res.add(new Constraint(prop, op, typed(prop, val)));
 		}
 		return new Constraints(res.toArray(new Constraint[0]));
 	}
 	
-	private static String[] parseValue(Property prop, String value) {
+	private static Object[] typed(Property p, String[] val) {
+		Object[] res = new Object[val.length];
+		for (int i = 0; i < val.length; i++) {
+			res[i] = typed(p, val[i]);
+		}
+		return res;
+	}
+	
+	private static Object typed(Property p, String val) {
+		switch (p.type) {
+		case number   : return Integer.valueOf(val);
+		case date     : return Date.parse(val);
+		case name     : return Name.as(val);
+		case property : return val;
+		case text     : return Gist.gist(val);
+		case flag     : return "true|yes|on|1".matches(val) ? Boolean.TRUE : Boolean.FALSE;
+		default       : throw new MalformedConstraint("Unsupported type: "+p.type);
+		}
+	}
+
+	private static String[] parseValue(String value) {
 		if ("{}".equals(value))
 			return new String[0];
 		if (value.charAt(0) == '{') {
@@ -82,9 +117,9 @@ public final class Constraints {
 
 		public Property prop;
 		public Operator op;
-		public String[] value;
+		public Object[] value;
 
-		public Constraint(Property prop, Operator op, String[] value) {
+		public Constraint(Property prop, Operator op, Object[] value) {
 			super();
 			this.prop = prop;
 			this.op = op;
@@ -93,7 +128,7 @@ public final class Constraints {
 
 		@Override
 		public String toString() {
-			String val = value.length == 1 ? value[0] : "{"+join(value, ", ")+"}";
+			String val = value.length == 1 ? value[0].toString() : "{"+join(value, ", ")+"}";
 			return "["+prop.name()+" "+op+" "+val+"]";
 		}
 	}
@@ -159,7 +194,7 @@ public final class Constraints {
 			try {
 				return valueOf(name);
 			} catch (IllegalArgumentException e) {
-				throw new ContraintParseException("No such property: `"+name+"`, valid properties are: "+ Arrays.toString(values()));
+				throw new MalformedConstraint("No such property: `"+name+"`, valid properties are: "+ Arrays.toString(values()));
 			}
 		}
 
@@ -217,10 +252,11 @@ public final class Constraints {
 		 */
 		flag("true|false|yes|no|1|0|on|off"),
 		/**
-		 * letters, digits, space and punctuation characters are allowed, typical URLs should be accepted.
+		 * A {@link Gist} of letters, digits, space and punctuation characters are allowed, 
+		 * typical URLs should be accepted.
 		 * {@link Operator#gt} is used as "starts with" and {@link Operator#lt} as "ends with".
 		 */
-		text("[-+*/_:.?!#=%&a-zA-Z0-9\\s\\pL\\pN]+");
+		text(Gist.REGEX);
 		
 		public final Pattern value;
 
@@ -240,10 +276,10 @@ public final class Constraints {
 		lt("<", true, false), 
 		ge(">=", true, false), 
 		le("<=", true, false), 
-		in("~", false, true), 
-		nin("!~", false, true), 
-		any("?", false, true), 
-		nany("!?", false, true),
+		in("~", true, true), 
+		nin("!~", true, true), 
+		any("?", true, true), 
+		nany("!?", true, true),
 		asc(">>", true, true),
 		desc("<<", true, true),
 		subst("~~", false, true)
@@ -264,7 +300,7 @@ public final class Constraints {
 				if (op.symbol.equals(symbol))
 					return op;
 			}
-			throw new ContraintParseException("No such operator `"+symbol+"`, valid operators are "+Arrays.toString(Operator.values()));
+			throw new MalformedConstraint("No such operator `"+symbol+"`, valid operators are "+Arrays.toString(Operator.values()));
 		}
 		
 		@Override
@@ -282,10 +318,11 @@ public final class Constraints {
 		return b.toString();
 	}
 
-	public static class ContraintParseException extends IllegalArgumentException {
+	public static class MalformedConstraint extends IllegalArgumentException {
 
-		public ContraintParseException(String message) {
+		public MalformedConstraint(String message) {
 			super(message);
 		}
 	}
+
 }

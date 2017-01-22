@@ -9,6 +9,8 @@ package vizio.model;
 public final class Product extends Entity<Product> {
 
 	public Name name;
+	public System[] systems;
+	
 	/**
 	 * The area used to manage a product's areas and versions.
 	 *
@@ -43,5 +45,16 @@ public final class Product extends Entity<Product> {
 	@Override
 	public ID computeID() {
 		return ID.productId(name);
+	}
+	
+	public static final class System {
+		public final Name name;
+		public final URL base;
+		
+		public System(Name name, URL base) {
+			super();
+			this.name = name;
+			this.base = base;
+		}
 	}
 }

@@ -5,10 +5,11 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 import vizio.db.TestLMDB;
+import vizio.engine.TestContraints;
 import vizio.io.TestConvert;
 
 @RunWith(Suite.class)
-@SuiteClasses({TestTracker.class, TestConvert.class, TestLMDB.class })
+@SuiteClasses({TestTracker.class, TestConvert.class, TestLMDB.class, TestContraints.class })
 public class TrackerSuit {
 	// run all tests...
 }

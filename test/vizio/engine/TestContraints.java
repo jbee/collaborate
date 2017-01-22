@@ -1,13 +1,13 @@
 package vizio.engine;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static vizio.engine.Constraints.ValueType.text;
 
-import org.junit.Assert;
 import org.junit.Test;
 
-import vizio.engine.Constraints.ValueType;
+import vizio.model.Name;
 
 public class TestContraints {
 
@@ -24,6 +24,9 @@ public class TestContraints {
 		Constraints constraints = Constraints.parse("[color=heat][length=20][users~{foo,bar}]");
 		assertEquals(3, constraints.count());
 		assertEquals("[color = heat][length = 20][users ~ {foo, bar}]", constraints.toString());
+		assertSame(Name.class, constraints.get(0).value[0].getClass());
+		assertSame(Integer.class, constraints.get(1).value[0].getClass());
+		assertSame(Name.class, constraints.get(2).value[0].getClass());
 	}
 	
 	@Test
