@@ -21,6 +21,7 @@ import java.security.MessageDigest;
 import java.util.Arrays;
 
 import vizio.model.Area;
+import vizio.model.Attachments;
 import vizio.model.Date;
 import vizio.model.Email;
 import vizio.model.Gist;
@@ -37,7 +38,6 @@ import vizio.model.Site;
 import vizio.model.Status;
 import vizio.model.Task;
 import vizio.model.Template;
-import vizio.model.URL;
 import vizio.model.User;
 import vizio.model.Version;
 
@@ -275,12 +275,12 @@ public final class Tracker {
 		task.engagedBy = Names.empty();
 		task.watchedBy = new Names(reporter.name);
 		task.changeset = Names.empty();
-		task.attachments = URL.NONE;
+		task.attachments = Attachments.NONE;
 		touch(reporter);
 		return task;
 	}
 	
-	public Task attach(Task task, User initiator, URL... attachments) {
+	public Task attach(Task task, User initiator, Attachments attachments) {
 		if (!task.area.isOpen()) {
 			expectActivated(initiator);
 			expectMaintainer(task.area, initiator);

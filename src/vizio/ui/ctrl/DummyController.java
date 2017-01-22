@@ -8,8 +8,8 @@ import static vizio.model.Name.as;
 import java.util.Arrays;
 import java.util.Random;
 
+import vizio.engine.Constraints;
 import vizio.engine.Tracker;
-import vizio.io.Criteria;
 import vizio.model.Area;
 import vizio.model.Name;
 import vizio.model.Product;
@@ -59,7 +59,7 @@ public class DummyController implements Controller {
 	}
 
 	@Override
-	public Task[] tasks(Criteria selection, Context ctx) {
+	public Task[] tasks(Constraints selection, Context ctx) {
 		return Arrays.copyOf(tasks, new Random().nextInt(tasks.length)+1) ;
 	}
 
@@ -81,9 +81,9 @@ public class DummyController implements Controller {
 
 	@Override
 	public View view(Context ctx) {
-        Widget left = new Widget("Assorted tasks", Coloring.heat, new Criteria());
-        Widget right = new Widget("Some others...", Coloring.goal, new Criteria());
-        Widget right2 = new Widget("And more", Coloring.motive, new Criteria());
+        Widget left = new Widget("Assorted tasks", Coloring.heat, new Constraints());
+        Widget right = new Widget("Some others...", Coloring.goal, new Constraints());
+        Widget right2 = new Widget("And more", Coloring.motive, new Constraints());
 		return new View(new Silo("My Tasks", left), new Silo("Inbox", right), new Silo("Urgent", right2));
 	}
 

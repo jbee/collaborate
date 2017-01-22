@@ -1,16 +1,9 @@
 package vizio.ui.view;
 
-import static java.lang.Integer.parseInt;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import vizio.io.Criteria;
-import vizio.io.Criteria.Clause;
-import vizio.io.Criteria.Operator;
-import vizio.io.Criteria.Property;
+import vizio.engine.Constraints;
+import vizio.engine.Constraints.Property;
 
 public class Widget {
 
@@ -19,9 +12,9 @@ public class Widget {
 	public final String caption;
 	public final Coloring scheme;
 	// data
-	public final Criteria query;
+	public final Constraints query;
 
-	public Widget(String caption, Coloring scheme, Criteria query) {
+	public Widget(String caption, Coloring scheme, Constraints query) {
 		super();
 		this.caption = caption;
 		this.scheme = scheme;
@@ -64,8 +57,8 @@ public class Widget {
 		return str.substring(si+start.length(), ei);
 	}
 
-	public static Criteria parseQuery(String range, String filters, String orders) {
-		Criteria query = new Criteria();
+	public static Constraints parseQuery(String range, String filters, String orders) {
+		Constraints query = new Constraints();
 		return query;
 	}
 

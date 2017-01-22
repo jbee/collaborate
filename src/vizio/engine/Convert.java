@@ -1,11 +1,13 @@
 package vizio.engine;
 
+import static vizio.model.Attachments.attachments;
 import static vizio.model.Gist.gist;
 
 import java.nio.ByteBuffer;
 
 import vizio.engine.Change.Tx;
 import vizio.model.Area;
+import vizio.model.Attachments;
 import vizio.model.Bytes;
 import vizio.model.Date;
 import vizio.model.Email;
@@ -321,19 +323,19 @@ public interface Convert<I,O> {
 		putShortBytes(url, to);
 	}
 	
-	static URL[] bin2urls(ByteBuffer from) {
+	static Attachments bin2urls(ByteBuffer from) {
 		int c = from.get();
 		URL[] attachments = new URL[c];
 		for (int i = 0; i < c; i++) {
 			attachments[i] = bin2url(from);
 		}
-		return attachments;
+		return attachments(attachments);
 	}
 	
-	static void urls2bin(URL[] urls, ByteBuffer to) {
-		to.put((byte) urls.length);
-		for (int i = 0; i < urls.length; i++) {
-			url2bin(urls[i], to);
+	static void urls2bin(Attachments urls, ByteBuffer to) {
+		to.put((byte) urls.length());
+		for (URL url : urls) {
+			url2bin(url, to);
 		}
 	}	
 	

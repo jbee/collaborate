@@ -1,6 +1,6 @@
 package vizio.ui.ctrl;
 
-import vizio.io.Criteria;
+import vizio.engine.Constraints;
 import vizio.model.Name;
 import vizio.model.Task;
 import vizio.model.User;
@@ -11,7 +11,7 @@ public interface Controller {
 
 	// DATA
 
-	Task[] tasks(Criteria selection, Context ctx);
+	Task[] tasks(Constraints selection, Context ctx);
 
 	User user(Name user);
 

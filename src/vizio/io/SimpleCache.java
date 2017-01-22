@@ -3,7 +3,8 @@ package vizio.io;
 import java.util.Arrays;
 import java.util.Comparator;
 
-import vizio.io.Criteria.Property;
+import vizio.engine.Constraints;
+import vizio.engine.Constraints.Property;
 import vizio.model.Date;
 import vizio.model.Motive;
 import vizio.model.Name;
@@ -49,7 +50,7 @@ public class SimpleCache implements Cache {
 	}
 
 	@Override
-	public Task[] tasks(Criteria criteria) {
+	public Task[] tasks(Constraints criteria) {
 		Date today = Date.today();
 		// 1. select index(es)
 		// 2. filter (collect results)

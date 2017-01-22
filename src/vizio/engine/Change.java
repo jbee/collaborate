@@ -29,6 +29,7 @@ import static vizio.engine.Change.Type.unwatch;
 import static vizio.engine.Change.Type.warn;
 import static vizio.engine.Change.Type.watch;
 import vizio.model.Area;
+import vizio.model.Attachments;
 import vizio.model.Email;
 import vizio.model.Entity;
 import vizio.model.Gist;
@@ -132,6 +133,14 @@ public interface Change {
 		return (t, tx) -> { tx.put(constitute, t.constitute(product, tx.user(originator))); };
 	}
 	
+	static Change connect(Name product, Name system, URL base) {
+		return (t, tx) -> { /* TODO */ };
+	}
+
+	static Change disconnect(Name product, Name system) {
+		return (t, tx) -> { /* TODO */ };
+	}
+
 	static Change open(Name product, Name board, Name originator, Motive motive, Purpose purpose) {
 		return (t, tx) -> { tx.put(open, t.open(tx.product(product), board, tx.user(originator), motive, purpose)); };
 	}
@@ -192,7 +201,7 @@ public interface Change {
 		return (t, tx) -> { tx.put(emphasise, t.emphasise(tx.task(product, task), tx.user(voter))); };
 	}
 	
-	static Change attach(Name product, IDN task, Name byUser, URL... attachments) {
+	static Change attach(Name product, IDN task, Name byUser, Attachments attachments) {
 		return (t, tx) -> { tx.put(attach, t.attach(tx.task(product, task), tx.user(byUser), attachments)); };
 	}
 	
