@@ -20,11 +20,11 @@ import static vizio.model.Status.unsolved;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
+import vizio.Array;
 import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Date;
 import vizio.model.Email;
-import vizio.model.Entity;
 import vizio.model.Gist;
 import vizio.model.IDN;
 import vizio.model.Motive;
@@ -34,6 +34,7 @@ import vizio.model.Outcome;
 import vizio.model.Poll;
 import vizio.model.Poll.Matter;
 import vizio.model.Product;
+import vizio.model.Product.Integration;
 import vizio.model.Purpose;
 import vizio.model.Site;
 import vizio.model.Status;
@@ -126,23 +127,37 @@ public final class Tracker {
 		return p;
 	}
 	
-	public Product connect(Product product, Name integration, URL base, User originator) {
-		//TODO do the checks
-		int c = product.indexOf(integration);
-		if (c >= 0) //TODO update url?
-			return product;
+	public Product connect(Product product, Integration endpoint, User originator) {
+		expectRegistered(originator);
+		expectActivated(originator);
+		expectOriginMaintainer(product, originator);
+		expectCanConnect(product);
+		stressDoConnect(product, originator);
+		int c = Array.indexOf(product.integrations, endpoint, Integration::equalTo);
+		Integration[] source = product.integrations;
+		if (c >= 0) {
+			if (source[c].same(endpoint))
+				return product;
+			source = Array.remove(source, endpoint, Integration::equalTo);
+		}
 		product = product.clone();
-		//TODO add the integration
+		product.integrations = Array.add(source, endpoint, Integration::equalTo);
+		touch(originator);
 		return product;
 	}
 	
 	public Product disconnect(Product product, Name integration, User originator) {
-		//TODO do the checks
-		int c = product.indexOf(integration);
+		expectRegistered(originator);
+		expectActivated(originator);
+		expectOriginMaintainer(product, originator);
+		stressDoConnect(product, originator);
+		Integration endpoint = new Integration(integration, null);
+		int c = Array.indexOf(product.integrations, endpoint, Integration::equalTo);
 		if (c < 0)
 			return product;
 		product = product.clone();
-		//TODO remove the integration
+		product.integrations = Array.remove(product.integrations, endpoint, Integration::equalTo);
+		touch(originator);
 		return product;
 	}
 
@@ -630,6 +645,13 @@ public final class Tracker {
 		stressNewContent();
 	}
 	
+	private void stressDoConnect(Product product, User originator) {
+		stressLimit(limit("connect@user", originator.name), "Too many recent connections by user: "+originator.name);
+		stressUser(originator);
+		stressLimit(limit("connect", ORIGIN), "Too many recent connections.");
+		stressNewContent();
+	}
+	
 	private void stressDoUpdate(Site site, User owner) {
 		stressLimit(limit("update@user", owner.name), "Too many recent site updates by user: "+owner.name);
 		stressUser(owner);
@@ -779,6 +801,12 @@ public final class Tracker {
 	private static void expectActivated(User user) {
 		if (!user.activated) {
 			denyTransition("User account must be activated first!");
+		}
+	}
+	
+	private static void expectCanConnect(Product product) {
+		if (product.integrations.length >= 8) {
+			denyTransition("Integrations are limited to 8 per product!");
 		}
 	}
 

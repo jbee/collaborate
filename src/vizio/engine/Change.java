@@ -5,8 +5,10 @@ import static vizio.engine.Change.Type.absolve;
 import static vizio.engine.Change.Type.activate;
 import static vizio.engine.Change.Type.attach;
 import static vizio.engine.Change.Type.compart;
+import static vizio.engine.Change.Type.connect;
 import static vizio.engine.Change.Type.consent;
-import static vizio.engine.Change.Type.*;
+import static vizio.engine.Change.Type.constitute;
+import static vizio.engine.Change.Type.disconnect;
 import static vizio.engine.Change.Type.dissent;
 import static vizio.engine.Change.Type.dissolve;
 import static vizio.engine.Change.Type.emphasise;
@@ -40,6 +42,7 @@ import vizio.model.Names;
 import vizio.model.Poll;
 import vizio.model.Poll.Matter;
 import vizio.model.Product;
+import vizio.model.Product.Integration;
 import vizio.model.Purpose;
 import vizio.model.Site;
 import vizio.model.Task;
@@ -136,8 +139,8 @@ public interface Change {
 		return (t, tx) -> { tx.put(constitute, t.constitute(product, tx.user(originator))); };
 	}
 	
-	static Change connect(Name product, Name integration, URL base, Name originator) {
-		return (t, tx) -> { tx.put(connect, t.connect(tx.product(product), integration, base, tx.user(originator))); };
+	static Change connect(Name product, Integration endpoint, Name originator) {
+		return (t, tx) -> { tx.put(connect, t.connect(tx.product(product), endpoint, tx.user(originator))); };
 	}
 
 	static Change disconnect(Name product, Name integration, Name originator) {

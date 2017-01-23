@@ -1,12 +1,11 @@
 package vizio.model;
 
-import static java.lang.System.arraycopy;
 import static java.util.Arrays.asList;
-import static java.util.Arrays.copyOf;
-import static java.util.Arrays.copyOfRange;
 
 import java.util.Arrays;
 import java.util.Iterator;
+
+import vizio.Array;
 
 public class Names implements Iterable<Name>, Comparable<Names> {
 
@@ -28,27 +27,11 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 	}
 
 	private int indexOf(Name name) {
-		for (int i = 0; i < names.length; i++) {
-			if (names[i].equals(name))
-				return i;
-		}
-		return -1;
+		return Array.indexOf(names, name, Name::equalTo);
 	}
 
 	public Names remove(Name user) {
-		//TODO make array util and use
-		int idx = indexOf(user);
-		if (idx >= 0) {
-			if (idx == 0) {
-				return new Names(copyOfRange(names, 1, names.length));
-			}
-			Name[] tmp = copyOf(names, names.length-1);
-			if (idx < names.length-1) {
-				arraycopy(names, idx+1, tmp, idx, names.length-idx-1);
-			}
-			return new Names(tmp);
-		}
-		return this;
+		return wrap(Array.remove(names, user, Name::equalTo));
 	}
 
 	public Names remove(User user) {
@@ -56,13 +39,11 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 	}
 
 	public Names add(Name user) {
-		//TODO make array util and use
-		if (indexOf(user) < 0) {
-			Name[] res = copyOf(names, names.length+1);
-			res[names.length] = user;
-			return new Names(res);
-		}
-		return this;
+		return wrap(Array.add(names, user, Name::equalTo));
+	}
+
+	private Names wrap(Name[] res) {
+		return res == names ? this : new Names(res);
 	}
 
 	public Names add(User user) {
@@ -97,15 +78,7 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 
 	@Override
 	public int compareTo(Names other) {
-		int cmp = Integer.compare(names.length, other.names.length);
-		if (cmp != 0)
-			return cmp;
-		for (int i = 0; i < names.length; i++) {
-			cmp = names[i].compareTo(other.names[i]);
-			if (cmp != 0)
-				return cmp;
-		}
-		return 0;
+		return Array.compare(names, other.names);
 	}
 
 }

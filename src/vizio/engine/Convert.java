@@ -5,8 +5,6 @@ import static vizio.model.Gist.gist;
 
 import java.nio.ByteBuffer;
 
-import com.sun.xml.internal.fastinfoset.sax.SystemIdResolver;
-
 import vizio.engine.Change.Tx;
 import vizio.model.Area;
 import vizio.model.Attachments;

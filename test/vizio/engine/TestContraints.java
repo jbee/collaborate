@@ -7,6 +7,7 @@ import static vizio.engine.Constraints.ValueType.text;
 
 import org.junit.Test;
 
+import vizio.engine.Constraints.Property;
 import vizio.model.Name;
 
 public class TestContraints {
@@ -33,5 +34,12 @@ public class TestContraints {
 	public void test2() {
 		Constraints constraints = Constraints.parse("[url={jira, GRP-001}][url=https://mail.google.com/mail/u/0/#inbox]");
 		assertEquals(2, constraints.count());
+	}
+	
+	@Test
+	public void test3() {
+		Constraints constraints = Constraints.parse("[order>>heat]");
+		assertEquals(1, constraints.count());
+		assertSame(Property.heat, constraints.get(0).value[0]);
 	}
 }

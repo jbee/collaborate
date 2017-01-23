@@ -1,5 +1,7 @@
 package vizio.model;
 
+import vizio.Array;
+
 /**
  * A {@link Product}'s "counter" change when new {@link Task}s for that product
  * are created.
@@ -47,14 +49,6 @@ public final class Product extends Entity<Product> {
 		return ID.productId(name);
 	}
 	
-	public int indexOf(Name integration) {
-		for (int i = 0; i < integrations.length; i++) {
-			if (integrations[i].name.equalTo(integration))
-				return i;
-		}
-		return -1;
-	}
-	
 	public static final class Integration {
 		public final Name name;
 		public final URL base;
@@ -63,6 +57,14 @@ public final class Product extends Entity<Product> {
 			super();
 			this.name = name;
 			this.base = base;
+		}
+		
+		public boolean equalTo(Integration other) {
+			return name.equalTo(other.name);
+		}
+		
+		public boolean same(Integration other) {
+			return equalTo(other) && base.equalTo(other.base);
 		}
 	}
 }

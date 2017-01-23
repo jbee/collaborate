@@ -3,7 +3,8 @@ package vizio.model;
 import static java.util.Arrays.asList;
 
 import java.util.Iterator;
-import java.util.Set;
+
+import vizio.Array;
 
 public final class Attachments implements Iterable<URL>, Comparable<Attachments> {
 
@@ -19,7 +20,7 @@ public final class Attachments implements Iterable<URL>, Comparable<Attachments>
 		super();
 		this.urls = urls;
 	}
-
+	
 	@Override
 	public Iterator<URL> iterator() {
 		return asList(urls).iterator();
@@ -27,27 +28,26 @@ public final class Attachments implements Iterable<URL>, Comparable<Attachments>
 
 	@Override
 	public int compareTo(Attachments other) {
-		int res = urls.length - other.urls.length;
-		if (res == 0) { // compare as sets
-			for (URL u : other.urls) {
-				if (!contains(u))
-					return 1;
-			}
-			return 0;
-		}
-		return res;
+		return Array.compare(urls, other.urls, URL::equalTo);
 	}
 	
 	public boolean contains(URL url) {
-		for (URL u : urls) {
-			if (u.equalTo(url))
-				return true;
-		}
-		return false;
+		return Array.indexOf(urls, url, URL::equalTo) >= 0;
 	}
 
 	public int length() {
 		return urls.length;
 	}
 	
+	public Attachments add(URL url) {
+		return wrap(Array.add(urls, url, URL::equalTo));
+	}
+	
+	public Attachments remove(URL url) {
+		return wrap(Array.remove(urls, url, URL::equalTo));
+	}
+	
+	private Attachments wrap(URL[] res) {
+		return urls == res ? this : new Attachments(res);
+	}
 }

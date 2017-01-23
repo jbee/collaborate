@@ -29,7 +29,10 @@ import java.util.regex.Pattern;
 
 import vizio.model.Date;
 import vizio.model.Gist;
+import vizio.model.Motive;
 import vizio.model.Name;
+import vizio.model.Purpose;
+import vizio.model.Status;
 import vizio.model.Task;
 
 /**
@@ -96,7 +99,7 @@ public final class Constraints {
 		case number   : return Integer.valueOf(val);
 		case date     : return Date.parse(val);
 		case name     : return Name.as(val);
-		case property : return val;
+		case property : return p.value(val);
 		case text     : return Gist.gist(val);
 		case flag     : return "true|yes|on|1".matches(val) ? Boolean.TRUE : Boolean.FALSE;
 		default       : throw new MalformedConstraint("Unsupported type: "+p.type);
@@ -141,15 +144,15 @@ public final class Constraints {
 		first(number, eq, ge, le, gt, lt),
 		last(number, eq, ge, le, gt, lt),
 		length(number, eq, le, lt),
-		order(property, asc, desc),
+		order(property, Property.class, asc, desc),
 		color(name, eq),
 		
 		// task properties
 		emphasis(number, eq, ge, le, gt, lt),
 		heat(number, eq, ge, le, gt, lt),
-		status(property, eq, neq, in, nin),
-		purpose(property, eq, neq, in, nin),
-		motive(property, eq, neq, in, nin),
+		status(property, Status.class, eq, neq, in, nin),
+		purpose(property, Purpose.class, eq, neq, in, nin),
+		motive(property, Motive.class, eq, neq, in, nin),
 		version(name, eq, neq, in, nin),
 		start(date, eq, ge, le, gt, lt, in, nin),
 		end(date, eq, ge, le, gt, lt, in, nin),
@@ -184,10 +187,27 @@ public final class Constraints {
 		 */
 		public final ValueType type;
 		
+		private final Class<? extends Enum<?>> propertyType;
+		private Enum<?>[] values;
+		
 		private Property(ValueType type, Operator... ops) {
+			this(type, null, ops);
+		}	
+		private Property(ValueType type, Class<? extends Enum<?>> propertyType, Operator... ops) {
+			this.propertyType = propertyType;
 			this.ops = EnumSet.of(ops[0], ops);
 			this.type = type;
-			
+		}
+		
+		public Enum<?> value(String name) {
+			if (values == null) {
+				values = propertyType.getEnumConstants(); // need to do this outside of constructor as Property itself can be the enum
+			}
+			for (Enum<?> v : values) {
+				if (v.name().equals(name))
+					return v;
+			}
+			throw new MalformedConstraint("No such value: `"+name+"` valid values are: "+Arrays.toString(values));
 		}
 
 		public static Property property(String name) {
