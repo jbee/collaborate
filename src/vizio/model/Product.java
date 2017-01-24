@@ -1,6 +1,5 @@
 package vizio.model;
 
-import vizio.Array;
 
 /**
  * A {@link Product}'s "counter" change when new {@link Task}s for that product

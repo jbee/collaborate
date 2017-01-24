@@ -11,7 +11,7 @@ public class Task extends Entity<Task> {
 	public IDN serial; // within an board
 	// opening record
 	public Name reporter;
-	public Date start;
+	public Date reported;
 	public Gist gist;
 
 	public Motive motive;
@@ -39,7 +39,7 @@ public class Task extends Entity<Task> {
 	public Names watchedBy; // OBS! this is the only real dynamic length field...
 	// resolving a task (closing record)
 	public Name solver;
-	public Date end;
+	public Date resolved;
 	public Gist conclusion;
 
 	public Task(int version) {
@@ -71,7 +71,7 @@ public class Task extends Entity<Task> {
 	}
 
 	public int age(Date today) {
-		return today.daysSince(start) + 1;
+		return today.daysSince(reported) + 1;
 	}
 
 	public int involvedUsers() {

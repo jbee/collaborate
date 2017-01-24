@@ -47,7 +47,6 @@ import vizio.model.Purpose;
 import vizio.model.Site;
 import vizio.model.Task;
 import vizio.model.Template;
-import vizio.model.URL;
 import vizio.model.User;
 import vizio.model.Version;
 

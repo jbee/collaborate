@@ -7,6 +7,9 @@ public final class Template extends Bytes implements Comparable<Template> {
 	public static final Template BLANK_PAGE = new Template(new byte[0]);
 	
 	public static Template template(String template) {
+		if (!FULL_TEXT_ONLY.matcher(template).matches()) {
+			throw new IllegalArgumentException("Template contains illegal characters.");
+		}
 		return new Template(template.getBytes(StandardCharsets.UTF_16));
 	}
 	

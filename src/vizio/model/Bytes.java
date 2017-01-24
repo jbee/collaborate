@@ -1,7 +1,15 @@
 package vizio.model;
 
+import java.util.regex.Pattern;
+
 public abstract class Bytes {
 
+	public static final String FULL_TEXT_REGEX = "[-+*/a-zA-Z0-9\\s\\\\_\\$\\^:,;.?!#<>=%&`\"'~\\pL\\pN\\(\\)\\[\\]\\{\\}]+";
+	public static final Pattern FULL_TEXT_ONLY = Pattern.compile("^"+FULL_TEXT_REGEX+"$");
+	
+	public static final String BASIC_TEXT_REGEX = "[-+*/a-zA-Z0-9\\s_:,;.?!#<>=%&`\"'~\\pL\\pN\\(\\)]+";
+	public static final Pattern BASIC_TEXT_ONLY = Pattern.compile("^"+BASIC_TEXT_REGEX+"$");
+	
 	public abstract byte[] bytes();
 	
 	public static byte[] asciiBytes(String ascii) {

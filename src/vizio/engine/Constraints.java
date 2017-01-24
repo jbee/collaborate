@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import vizio.model.Bytes;
 import vizio.model.Date;
 import vizio.model.Gist;
 import vizio.model.Motive;
@@ -226,8 +227,8 @@ public final class Constraints {
 			case purpose: return t.purpose;
 			case motive : return t.motive;
 			case version: return t.base.name;
-			case start: return t.start;
-			case end: return t.end;
+			case start: return t.reported;
+			case end: return t.resolved;
 			case exploitable : return t.exploitable;
 			case age: t.age(today);
 			default:
@@ -276,7 +277,7 @@ public final class Constraints {
 		 * typical URLs should be accepted.
 		 * {@link Operator#gt} is used as "starts with" and {@link Operator#lt} as "ends with".
 		 */
-		text(Gist.REGEX);
+		text(Bytes.BASIC_TEXT_REGEX);
 		
 		public final Pattern value;
 

@@ -106,7 +106,7 @@ public interface Convert<I,O> {
 		t.id = bin2IDN(from);
 		t.serial = bin2IDN(from);
 		t.reporter = bin2name(from);
-		t.start = bin2date(from);
+		t.reported = bin2date(from);
 		t.gist = bin2gist(from);
 		t.motive = bin2enum(Motive.class, from);
 		t.purpose = bin2enum(Purpose.class, from);
@@ -121,7 +121,7 @@ public interface Convert<I,O> {
 		t.engagedBy = bin2names(from);
 		t.watchedBy = bin2names(from);
 		t.solver = bin2name(from);
-		t.end = bin2date(from);
+		t.resolved = bin2date(from);
 		t.conclusion = bin2gist(from);
 		t.attachments =  bin2urls(from);
 		return t;
@@ -134,7 +134,7 @@ public interface Convert<I,O> {
 		IDN2bin(t.id, to);
 		IDN2bin(t.serial, to);
 		name2bin(t.reporter, to);
-		date2bin(t.start, to);
+		date2bin(t.reported, to);
 		gist2bin(t.gist, to);
 		enum2bin(t.motive, to);
 		enum2bin(t.purpose, to);
@@ -149,7 +149,7 @@ public interface Convert<I,O> {
 		names2bin(t.engagedBy, to);
 		names2bin(t.watchedBy, to);
 		name2bin(t.solver, to);
-		date2bin(t.end, to);
+		date2bin(t.resolved, to);
 		gist2bin(t.conclusion, to);
 		urls2bin(t.attachments, to);
 		return to;
@@ -181,7 +181,7 @@ public interface Convert<I,O> {
 			p.integrations[i] = new Product.Integration(bin2name(from), bin2url(from));
 		}
 		
-		// not stored as part of product
+		// non stored computable fields
 		p.origin = tx.area(p.name, Name.ORIGIN);
 		p.somewhere = tx.area(p.name, Name.UNKNOWN);
 		p.somewhen = tx.version(p.name, Name.UNKNOWN);

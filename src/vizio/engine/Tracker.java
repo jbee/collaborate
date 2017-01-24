@@ -40,7 +40,6 @@ import vizio.model.Site;
 import vizio.model.Status;
 import vizio.model.Task;
 import vizio.model.Template;
-import vizio.model.URL;
 import vizio.model.User;
 import vizio.model.Version;
 
@@ -124,6 +123,7 @@ public final class Tracker {
 		p.origin = compart(p.name, Name.ORIGIN, originator);
 		p.somewhere = compart(p.name, Name.UNKNOWN, originator);
 		p.somewhen = tag(p, Name.UNKNOWN, originator);
+		touch(originator);
 		return p;
 	}
 	
@@ -303,7 +303,7 @@ public final class Tracker {
 		}
 		task.base = version;
 		task.reporter = reporter.name;
-		task.start = date(clock.time());
+		task.reported = date(clock.time());
 		task.gist = gist;
 		task.motive = motive;
 		task.purpose = purpose;
@@ -335,7 +335,7 @@ public final class Tracker {
 		if (task.reporter.equalTo(task.solver))
 			return 0; // prevent XP mining by adding and resolving tasks using same user
 		Date today = date(clock.time());
-		int age = today.daysSince(task.start);
+		int age = today.daysSince(task.reported);
 		if (age <= 0)
 			return 0; // prevent XP mining by adding and resolving tasks using different users
 		int xp = (int) Math.max(base, base * (1f+((age-4f)/age))); // 1-2x base value, more with higher age
@@ -394,7 +394,7 @@ public final class Tracker {
 		stressDoSolve(task, by);
 		task = task.clone();
 		task.solver = by.name;
-		task.end = date(clock.time());
+		task.resolved = date(clock.time());
 		task.conclusion = conclusion;
 		return task;
 	}

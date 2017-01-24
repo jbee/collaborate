@@ -113,15 +113,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	public void put(Change.Type type, Entity<?> e) {
 		ID id = e.uniqueID();
 		if (e != possiblyChanged(id)) { // only do real updates
-			// but "auto"-update fields with updates
-			if (e instanceof Poll) {
-				put(type, ((Poll) e).area);
-			} else if (e instanceof Task) {
-				Task t = (Task) e;
-				put(type, t.product);
-				put(type, t.area);
-				put(type, t.base);
-			}
+			putFields(type, e); // "auto"-update fields with updates
 			changed.put(id, e);
 			changeTypes.computeIfAbsent(id, (id_) -> new ArrayList<>()).add(type);
 			for (User user : loadedUsers.values()) {
@@ -130,6 +122,22 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 					loadedUsers.remove(user);			
 				}
 			}
+		}
+	}
+
+	private void putFields(Change.Type type, Entity<?> e) {
+		if (e instanceof Poll) {
+			put(type, ((Poll) e).area);
+		} else if (e instanceof Task) {
+			Task t = (Task) e;
+			put(type, t.product);
+			put(type, t.area);
+			put(type, t.base);
+		} else if (e instanceof Product && e.version == 1) {
+			Product p = (Product)e;
+			put(type, p.origin);
+			put(type, p.somewhere);
+			put(type, p.somewhen);
 		}
 	}
 	
