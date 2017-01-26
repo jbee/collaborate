@@ -12,6 +12,7 @@ import vizio.model.Bytes;
 import vizio.model.Date;
 import vizio.model.Email;
 import vizio.model.Gist;
+import vizio.model.ID;
 import vizio.model.IDN;
 import vizio.model.Motive;
 import vizio.model.Name;
@@ -261,11 +262,50 @@ public interface Convert<I,O> {
 		enum2bin(a.motive, to);
 		enum2bin(a.purpose, to);
 		return to;
-	};	
+	};
+	
+	Convert<Tx, LogEntry> bin2log = (tx, from) -> {
+		long timestamp = from.getLong();
+		Name user = bin2name(from);
+		int n = from.getShort();
+		LogEntry.Changes[] entityChanges = new LogEntry.Changes[n];
+		for (int i = 0; i < n; i++) {
+			ID entity = bin2id(from);
+			int sn = from.get();
+			Change.Type[] changes = new Change.Type[sn];
+			for (int j = 0; j < sn; j++) {
+				changes[j] = Change.Type.fromCode(from.get());
+			}
+			entityChanges[i] = new LogEntry.Changes(entity, changes);
+		}
+		return new LogEntry(timestamp, user, entityChanges);
+	};
+	
+	Convert<LogEntry, ByteBuffer> log2bin = (e,to) -> {
+		to.putLong(e.timestamp);
+		name2bin(e.user, to);
+		to.putShort((short) e.entityChanges.length);
+		for (LogEntry.Changes c : e.entityChanges) {
+			id2bin(c.entity, to);
+			to.put((byte) c.changes.length);
+			for (Change.Type t : c.changes) {
+				to.put(t.code);
+			}
+		}
+		return to;
+	};
 	
 	/*
 	 * Utility helpers
 	 */
+
+	static ID bin2id(ByteBuffer from) {
+		return ID.fromBytes(getByteBytes(from));
+	}
+	
+	static void id2bin(ID id, ByteBuffer to) {
+		putByteBytes(id, to);
+	}
 
 	static Name bin2name(ByteBuffer from) {
 		return Name.fromBytes(getByteBytes(from));

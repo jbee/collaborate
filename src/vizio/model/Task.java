@@ -86,9 +86,4 @@ public class Task extends Entity<Task> {
 		return (!area.exclusive || area.maintainers.contains(user));
 	}
 
-	@Override
-	public String toString() {
-		return id.toString();
-	}
-
 }

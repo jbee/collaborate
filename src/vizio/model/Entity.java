@@ -63,7 +63,7 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	}
 	
 	@Override
-	public String toString() {
+	public final String toString() {
 		return uniqueID().toString()+":"+version+":"+initalVersion;
 	}
 }

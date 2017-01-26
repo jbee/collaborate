@@ -2,20 +2,7 @@ package vizio.io;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
-import static vizio.engine.Convert.area2bin;
-import static vizio.engine.Convert.bin2area;
-import static vizio.engine.Convert.bin2poll;
-import static vizio.engine.Convert.bin2product;
-import static vizio.engine.Convert.bin2site;
-import static vizio.engine.Convert.bin2task;
-import static vizio.engine.Convert.bin2user;
-import static vizio.engine.Convert.bin2version;
-import static vizio.engine.Convert.poll2bin;
-import static vizio.engine.Convert.product2bin;
-import static vizio.engine.Convert.site2bin;
-import static vizio.engine.Convert.task2bin;
-import static vizio.engine.Convert.user2bin;
-import static vizio.engine.Convert.version2bin;
+import static vizio.engine.Convert.*;
 import static vizio.engine.Tracker.activationKey;
 import static vizio.model.Email.email;
 import static vizio.model.Gist.gist;
@@ -29,9 +16,12 @@ import org.junit.Test;
 import vizio.engine.Change;
 import vizio.engine.Change.Type;
 import vizio.engine.Convert;
+import vizio.engine.LogEntry;
+import vizio.engine.LogEntry.Changes;
 import vizio.engine.Tracker;
 import vizio.model.Area;
 import vizio.model.Entity;
+import vizio.model.ID;
 import vizio.model.IDN;
 import vizio.model.Name;
 import vizio.model.Poll;
@@ -54,44 +44,44 @@ public class TestConvert {
 	}
 
 	@Test
-	public void userStreamer() {
-		User user1 = testUser();
+	public void userConversion() {
+		User user1 = newTestUser();
 		assertConsistentConversion(bin2user, user2bin, user1);
 	}
 	
 	@Test
-	public void siteStreamer() {
-		User user1 = testUser();
+	public void siteConversion() {
+		User user1 = newTestUser();
 		Site site1 = tracker.launch(as("my-tasks"), template("foobar"), user1);
 		assertConsistentConversion(bin2site, site2bin, site1);
 	}
 
 	@Test
-	public void productStreamer() {
-		User user1 = testUser();
+	public void productConversion() {
+		User user1 = newTestUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		assertConsistentConversion(bin2product, product2bin, prod1);
 	}
 
 	@Test
-	public void areaStreamer() {
-		User user1 = testUser();
+	public void areaConversion() {
+		User user1 = newTestUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		Area area1 = tracker.compart(prod1, as("area1"), user1);
 		assertConsistentConversion(bin2area, area2bin, area1);
 	}
 
 	@Test
-	public void versionStreamer() {
-		User user1 = testUser();
+	public void versionConversion() {
+		User user1 = newTestUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		Version v1 = tracker.tag(prod1, as("v1"), user1);
 		assertConsistentConversion(bin2version, version2bin, v1);
 	}
 
 	@Test
-	public void pollStreamer() {
-		User user1 = testUser();
+	public void pollConversion() {
+		User user1 = newTestUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		User user2 = tracker.register(as("user2"), email("user2@example.com"), "user2pwd", "salt");
 		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
@@ -99,14 +89,23 @@ public class TestConvert {
 	}
 
 	@Test
-	public void taskStreamer() {
-		User user1 = testUser();
+	public void taskConversion() {
+		User user1 = newTestUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		Task task1 = tracker.reportDefect(prod1, gist("broken"), user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentConversion(bin2task, task2bin, task1);
 	}
 	
-	private User testUser() {
+	@Test
+	public void logEntryConversion() {
+		long timestamp = System.currentTimeMillis();
+		Name user = as("testuser");
+		Changes c1 = new Changes(ID.userId(user), Change.Type.abandon, Change.Type.attach);
+		Changes[] entityChanges = new Changes[] { c1, c1 };
+		assertConsistentConversion(bin2log, log2bin, new LogEntry(timestamp, user, entityChanges));
+	}
+	
+	private User newTestUser() {
 		User u1 = tracker.register(as("user1"), email("user1@example.com"), "user1pwd", "salt");
 		u1 = tracker.activate(u1, activationKey("user1pwd", "salt"));
 		return u1;

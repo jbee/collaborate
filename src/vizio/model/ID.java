@@ -1,5 +1,7 @@
 package vizio.model;
 
+import com.sun.java_cup.internal.runtime.Symbol;
+
 
 /**
  * A (database wide) unique identifier.
@@ -17,6 +19,14 @@ public final class ID extends Identifier<ID> {
 		private Type() {
 			this.symbol = new byte[] { (byte) name().toLowerCase().charAt(0) };
 		}
+
+		public static Type fromSymbol(byte s) {
+			for (Type t : values()) {
+				if (t.symbol[0] == s)
+					return t;
+			}
+			throw new IllegalArgumentException("No type for symbol: "+(char)s);
+		}
 		
 	}
 
@@ -28,7 +38,7 @@ public final class ID extends Identifier<ID> {
 	}
 
 	private static ID id(Type type, Name name, Name... names) {
-		byte[] id = join(DIVIDER, type.symbol, DIVIDER, name.bytes());
+		byte[] id = join(type.symbol, DIVIDER, name.bytes());
 		for (Name n : names) {
 			id = join(id, DIVIDER, n.bytes());
 		}
@@ -61,6 +71,10 @@ public final class ID extends Identifier<ID> {
 
 	public static ID taskId(Name product, IDN id) {
 		return ID.id(ID.Type.Task, product, id.asName());
+	}
+	
+	public static ID fromBytes(byte[] bytes) {
+		return new ID(Type.fromSymbol(bytes[0]), bytes);
 	}
 
 	public boolean isUnique() {

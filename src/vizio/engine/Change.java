@@ -30,6 +30,7 @@ import static vizio.engine.Change.Type.tag;
 import static vizio.engine.Change.Type.unwatch;
 import static vizio.engine.Change.Type.warn;
 import static vizio.engine.Change.Type.watch;
+import vizio.engine.Change.Type;
 import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Email;
@@ -67,47 +68,67 @@ public interface Change {
 	 */
 	enum Type {
 		// users
-		register,
-		activate,
+		register('a'),
+		activate('b'),
 		// sites
-		launch,
-		restructure,
+		launch('c'),
+		restructure('d'),
 		// products
-		constitute,
-		connect,
-		disconnect,
+		constitute('e'),
+		connect('f'),
+		disconnect('g'),
 		// areas
-		open, 
-		compart,
-		leave,
+		open('h'), 
+		compart('i'),
+		leave('j'),
 		// versions
-		tag,
+		tag('k'),
 		// polls
-		poll,
-		consent,
-		dissent,		
+		poll('l'),
+		consent('m'),
+		dissent('n'),		
 		// tasks
-		relocate,
-		attach, 
+		relocate('o'),
+		attach('p'), 
 		
-		propose,
-		indicate,
-		warn,
-		request,
-		fork,
+		propose('q'),
+		indicate('r'),
+		warn('s'),
+		request('t'),
+		fork('u'),
 		
-		absolve,
-		resolve,
-		dissolve,
+		absolve('v'),
+		resolve('w'),
+		dissolve('x'),
 		
-		emphasise,
+		emphasise('y'),
 
-		pursue,
-		abandon,
-		engage,
+		pursue('z'),
+		abandon('A'),
+		engage('B'),
 		
-		watch,
-		unwatch
+		watch('C'),
+		unwatch('D');
+
+		/**
+		 * A code used to store the type compact.
+		 * We use letters for readability only. 
+		 */
+		final byte code;
+		
+		private Type(char code) {
+			this.code = (byte) code;
+		}
+
+		private static final Type[] vals = values();
+		
+		public static Type fromCode(byte code) {
+			for (Type t : vals) {
+				if (t.code == code)
+					return t;
+			}
+			throw new IllegalArgumentException("No type for code: "+code);
+		}
 	}
 	
 	/**

@@ -155,8 +155,8 @@ public final class Constraints {
 		purpose(property, Purpose.class, eq, neq, in, nin),
 		motive(property, Motive.class, eq, neq, in, nin),
 		version(name, eq, neq, in, nin),
-		start(date, eq, ge, le, gt, lt, in, nin),
-		end(date, eq, ge, le, gt, lt, in, nin),
+		reported(date, eq, ge, le, gt, lt, in, nin),
+		resolved(date, eq, ge, le, gt, lt, in, nin),
 		exploitable(flag, eq, neq),
 		age(number, eq, ge, le, gt, lt),
 		id(number, eq, ge, le, gt, lt, in, nin),
@@ -227,8 +227,8 @@ public final class Constraints {
 			case purpose: return t.purpose;
 			case motive : return t.motive;
 			case version: return t.base.name;
-			case start: return t.reported;
-			case end: return t.resolved;
+			case reported: return t.reported;
+			case resolved: return t.resolved;
 			case exploitable : return t.exploitable;
 			case age: t.age(today);
 			default:

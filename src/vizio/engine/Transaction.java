@@ -1,5 +1,6 @@
 package vizio.engine;
 
+import static java.lang.Math.max;
 import static vizio.engine.Convert.area2bin;
 import static vizio.engine.Convert.bin2area;
 import static vizio.engine.Convert.bin2poll;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.Set;
 
 import vizio.db.DB;
@@ -63,8 +65,9 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	 */
 	public static Changelog run(Change set, DB db, Assurances as) throws ConcurrentModification {
 		try (Transaction tx = new Transaction(as, db)) {
+			final long now = max(lastTick.incrementAndGet(), as.clock().time());
 			try {
-				set.apply(new Tracker(as.clock(), tx), tx);
+				set.apply(new Tracker(() -> now, tx), tx);
 				return tx.commit();
 			} finally {
 				tx.freeAllocatedLimits();
@@ -72,19 +75,26 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 		}
 	}
 	
+	/**
+	 * With this we do our little tick so that we can guarantee each transaction has a unique {@link Clock#time()}.
+	 * Each time transaction {@link #run(Change, DB, vizio.engine.Limits.Assurances)} is called the constant time
+	 * used during the whole transaction is at least one (ms) larger than the last timestamp used.  
+	 */
+	private static final AtomicLong lastTick = new AtomicLong(Long.MIN_VALUE);
+	
 	private final LinkedHashMap<ID, Entity<?>> changed = new LinkedHashMap<>();
 	private final HashMap<ID, ArrayList<Change.Type>> changeTypes = new HashMap<>();
 	private final HashMap<ID, Entity<?>> loaded = new HashMap<>();
 	private final HashMap<ID, User> loadedUsers = new HashMap<>();
 	private final Set<Limit> allocated = new HashSet<>();
 	
-	private final Assurances lc;
+	private final Assurances as;
 	private final DB db;
 	private final DB.TxR txr;
 	
 	private Transaction(Assurances lc, DB db) {
 		super();
-		this.lc = lc;
+		this.as = lc;
 		this.db = db;
 		this.txr = db.read();
 	}
@@ -181,7 +191,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	
 	
 	private Changelog commit() {
-		txr.close(); // no more writing
+		txr.close(); // no more reading
 		if (changed.isEmpty())
 			return Changelog.EMPTY;
 		ByteBuffer buf = ByteBuffer.allocateDirect(1024);
@@ -217,7 +227,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	
 	private void freeAllocatedLimits() {
 		for (Limit l : allocated) {
-			lc.free(l);
+			as.free(l);
 		}
 		allocated.clear();
 	}
@@ -225,11 +235,11 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	@Override
 	public boolean stress(Limit limit) throws ConcurrentModification {
 		if (!limit.isSpecific()) {
-			return lc.stress(limit);
+			return as.stress(limit);
 		}
 		if (allocated.contains(limit))
 			return true;
-		if (lc.alloc(limit)) {
+		if (as.alloc(limit)) {
 			allocated.add(limit);
 			return true;
 		}
