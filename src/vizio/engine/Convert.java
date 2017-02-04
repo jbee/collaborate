@@ -207,7 +207,7 @@ public interface Convert<I,O> {
 		p.serial = new IDN(from.getInt());
 		p.area = tx.area(bin2name(from), bin2name(from));
 		p.matter = bin2enum(Matter.class, from);
-		p.affected = tx.user(bin2name(from));
+		p.affected = bin2name(from);
 		p.initiator = bin2name(from);
 		p.start = bin2date(from);
 		p.consenting = bin2names(from);
@@ -224,7 +224,7 @@ public interface Convert<I,O> {
 		name2bin(p.area.product, to);
 		name2bin(p.area.name, to);
 		enum2bin(p.matter, to);
-		name2bin(p.affected.name, to);
+		name2bin(p.affected, to);
 		name2bin(p.initiator, to);
 		date2bin(p.start, to);
 		names2bin(p.consenting, to);
@@ -294,6 +294,14 @@ public interface Convert<I,O> {
 			}
 		}
 		return to;
+	};
+	
+	Convert<ID, History> bin2history = (id, from) -> {
+		long[] events = new long[from.remaining()/Long.BYTES];
+		for (int i = 0; i < events.length; i++) {
+			events[i] = from.getLong();
+		}
+		return new History(id, events);
 	};
 	
 	/*

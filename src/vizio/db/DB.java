@@ -28,6 +28,8 @@ public interface DB {
 	
 	interface TxW extends AutoCloseable {
 		
+		ByteBuffer get(ID key);
+		
 		void put(ID key, ByteBuffer value);
 		
 		void commit();

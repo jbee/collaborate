@@ -246,6 +246,7 @@ public final class Tracker {
 		v.product = product.name;
 		v.name = version;
 		v.changeset = Names.empty();
+		touch(originator);
 		return v;
 	}
 
@@ -326,6 +327,7 @@ public final class Tracker {
 		stressDoAttach(task, initiator);
 		task = task.clone();
 		task.attachments = attachments;
+		touch(initiator);
 		return task;
 	}
 
@@ -425,7 +427,7 @@ public final class Tracker {
 		poll.serial = new IDN(poll.area.polls);
 		poll.matter = matter;
 		poll.initiator = initiator.name;
-		poll.affected = affected;
+		poll.affected = affected.name;
 		poll.start = date(clock.time());
 		poll.outcome = Outcome.unsettled;
 		poll.consenting = Names.empty();

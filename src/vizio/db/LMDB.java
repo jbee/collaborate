@@ -92,11 +92,16 @@ public final class LMDB implements DB {
 			this.txn = env.txnWrite();
 			this.key = ByteBuffer.allocateDirect(env.getMaxKeySize());
 		}
+		
+		@Override
+		public ByteBuffer get(ID id) {
+			putKey(id);
+			return table(id).get(txn, key);
+		}
 
 		@Override
 		public void put(ID id, ByteBuffer value) {
-			key.clear();
-			key.put(id.bytes()).flip();
+			putKey(id);
 			table(id).put(txn, key, value);
 		}
 
@@ -108,6 +113,11 @@ public final class LMDB implements DB {
 		@Override
 		public void close() {
 			txn.close();
+		}
+
+		private void putKey(ID id) {
+			key.clear();
+			key.put(id.bytes()).flip();
 		}
 	}
 

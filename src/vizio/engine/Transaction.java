@@ -233,22 +233,35 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 			case Version: write(tx, id, (Version)val, version2bin, buf); break;
 			default: throw new UnsupportedOperationException("Cannot store entities of type: "+id);
 			}
-			buf.clear();
 		}
-		return new Changelog(res);
+		return new Changelog(clock.time(), res);
 	}
 
 	private void writeEventLog(TxW tx, Changelog log, ByteBuffer buf) {
-		Transition[] transitions = new Transition[log.length()];
+		final Transition[] transitions = new Transition[log.length()];
+		final long timestamp = log.timestamp;
 		int i = 0;
 		for (Changelog.Entry<?> e : log) {
-			transitions[i++] = new Transition(e.after.uniqueID(), e.transitions);
+			ID id = e.after.uniqueID();
+			transitions[i++] = new Transition(id, e.transitions);
+			ID hid = ID.historyId(id);
+			ByteBuffer history = tx.get(hid);
+			if (history == null) {
+				buf.putLong(timestamp).putLong(timestamp).flip();
+			} else {
+				if (history.remaining() >= 32) {
+					buf.putLong(history.getLong());
+					history.getLong(); // throw away oldest
+					buf.put(history).putLong(timestamp).flip();
+				} else {
+					buf.put(history).putLong(timestamp).flip();
+				}
+			}
+			tx.put(hid, buf);
+			buf.clear();
 		}
-		Event e = new Event(clock.time(), originator, transitions);
+		Event e = new Event(timestamp, originator, transitions);
 		write(tx, e.uniqueID() , e, Convert.event2bin, buf);
-		buf.clear();
-		//TODO write user aggregate log
-		//TODO write entity aggregate logs
 	}
 	
 	private static <T> void write(TxW tx, ID id, T e, Convert<T, ByteBuffer> writer, ByteBuffer buf) {

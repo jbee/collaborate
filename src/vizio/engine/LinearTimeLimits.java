@@ -9,8 +9,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Keeps track of {@link Limit}s.
  * 
  * A limit can be {@link #stress(Limit)}ed or exclusively {@link #alloc(Limit)}ated.
- * When allocated any futher attempt to stress or allocate will cause a {@link IllegalStateException}
- * until the allocated {@link Limit} is {@link #free(Limit)}ed again. 
+ * When allocated any further attempt to stress or allocate will cause a {@link ConcurrentModification}
+ * till the allocated {@link Limit} is {@link #free(Limit)}ed again. 
  * 
  * This way {@link Limits} can act as concurrent modification detection.
  * The caller has to keep track of allocated limits. 
@@ -23,7 +23,7 @@ public final class LinearTimeLimits implements Limits {
 	private static final int ONE_DAY = 1000*60*60*24;
 	
 	private final int base;
-	private final ConcurrentHashMap<Limit, LimitStats> stats = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Limit, LimitsPerPeriod> stats = new ConcurrentHashMap<>();
 	private long nextCleanup;
 	
 	public LinearTimeLimits(int base) {
@@ -34,26 +34,26 @@ public final class LinearTimeLimits implements Limits {
 	
 	@Override
 	public boolean stress(Limit l, Clock clock) {
-		return stats(l, clock).stress(clock.time());
+		return periodLimits(l, clock).stress(clock.time());
 	}
 
 	@Override
 	public boolean alloc(Limit l, Clock clock) throws ConcurrentModification {
-		LimitStats ls = stats(l, clock);
-		if (!ls.allocated.compareAndSet(false, true)) {
+		LimitsPerPeriod limits = periodLimits(l, clock);
+		if (!limits.allocated.compareAndSet(false, true)) {
 			throw new ConcurrentModification(l);
 		}
-		return ls.stress(clock.time());
+		return limits.stress(clock.time());
 	}
 	
 	@Override
 	public void free(Limit l) {
-		if (!stats(l, null).allocated.compareAndSet(true, false)) {
+		if (!periodLimits(l, null).allocated.compareAndSet(true, false)) {
 			System.err.println("Tried to free non allocated limit: "+l);
 		}
 	}
 
-	private LimitStats stats(Limit l, Clock clock) {
+	private LimitsPerPeriod periodLimits(Limit l, Clock clock) {
 		if (clock != null) {
 			long now = clock.time();
 			if (now > nextCleanup) {
@@ -61,11 +61,11 @@ public final class LinearTimeLimits implements Limits {
 				nextCleanup = now+ONE_HOUR;
 			}
 		}
-		return stats.computeIfAbsent(l, (li) -> { return new LimitStats(li, base); } );
+		return stats.computeIfAbsent(l, (li) -> { return new LimitsPerPeriod(li, base); } );
 	}
 
 	private void cleanup(long now) {
-		Iterator<LimitStats> limits = stats.values().iterator();
+		Iterator<LimitsPerPeriod> limits = stats.values().iterator();
 		while (limits.hasNext()) {
 			if (now - limits.next().lastStressed > ONE_DAY) {
 				limits.remove();
@@ -73,7 +73,7 @@ public final class LinearTimeLimits implements Limits {
 		}
 	}
 
-	private static final class LimitStats {
+	private static final class LimitsPerPeriod {
 
 		private final Limit limit;
 		private final LimitPerPeriod second;
@@ -84,7 +84,7 @@ public final class LinearTimeLimits implements Limits {
 		final AtomicBoolean allocated = new AtomicBoolean(false);
 		long lastStressed;
 		
-		LimitStats(Limit l, int base) { 
+		LimitsPerPeriod(Limit l, int base) { 
 			this.limit = l;
 			int f = l.factor() * base;
 			this.second = new LimitPerPeriod( 1*f, 1000);

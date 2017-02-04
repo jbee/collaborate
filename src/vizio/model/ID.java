@@ -8,7 +8,7 @@ import vizio.util.PersistedData;
  */
 public final class ID extends Identifier<ID> {
 
-	private static final byte[] DIVIDER = {'#'};
+	private static final byte[] DIVIDER = {':'};
 
 	public enum Type {
 		// core domain

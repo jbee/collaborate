@@ -8,7 +8,7 @@ import vizio.model.Entity;
 
 public final class Changelog implements Iterable<Changelog.Entry<?>>{
 
-	public static final Changelog EMPTY = new Changelog(new Entry[0]);
+	public static final Changelog EMPTY = new Changelog(0, new Entry[0]);
 	
 	public static final class Entry<T extends Entity<T>> {
 		
@@ -32,10 +32,12 @@ public final class Changelog implements Iterable<Changelog.Entry<?>>{
 		}
 	}
 	
+	public final long timestamp;
 	private final Entry<?>[] log;
 	
-	public Changelog(Entry<?>[] log) {
+	public Changelog(long timestamp, Entry<?>[] log) {
 		super();
+		this.timestamp = timestamp;
 		this.log = log;
 	}
 	

@@ -5,7 +5,7 @@ import vizio.model.Name;
 
 public final class Limit extends Identifier<Limit> {
 
-	private static final byte[] DIVIDER = {':'};
+	private static final byte[] DIVIDER = {'#'};
 	
 	private Limit(byte[] symbols) {
 		super(symbols);

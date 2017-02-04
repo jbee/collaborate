@@ -68,6 +68,10 @@ public final class Event implements Comparable<Event>, Iterable<Event.Transition
 	public int cardinality() {
 		return transitions.length;
 	}
+	
+	public Transition transition(int n) {
+		return transitions[n];
+	}
 
 	@Override
 	public String toString() {

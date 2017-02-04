@@ -16,6 +16,9 @@ import static vizio.model.Template.template;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Rule;
@@ -32,6 +35,8 @@ import vizio.engine.Change;
 import vizio.engine.Changelog;
 import vizio.engine.Clock;
 import vizio.engine.Convert;
+import vizio.engine.Event;
+import vizio.engine.History;
 import vizio.engine.LinearTimeLimits;
 import vizio.engine.Transaction;
 import vizio.model.ID;
@@ -151,14 +156,30 @@ public class TestLMDB {
 			
 			Site s;
 			User u;
+			History sh;
+			Event e;
 			try (TxR tx = db.read()) {
 				ByteBuffer buf = tx.get(ID.siteId(user, site));
 				s = Convert.bin2site.convert(null, buf);
 				buf = tx.get(ID.userId(user));
 				u = Convert.bin2user.convert(null, buf);
+				ID hid = ID.historyId(s.uniqueID());
+				buf = tx.get(hid);
+				sh = Convert.bin2history.convert(hid, buf);
+				buf = tx.get(ID.eventId(changed.timestamp));
+				e = Convert.bin2event.convert(null, buf);
 			}
 			assertEquals(site, s.name);
 			assertEquals(user, u.name);
+			assertNotNull(sh);
+			assertEquals(1, sh.length());
+			assertNotNull(e);
+			assertEquals(changed.timestamp, e.timestamp);
+			assertEquals(ID.userId(user), e.originator);
+			assertEquals(2, e.cardinality());
+			assertEquals(Change.Operation.register, e.transition(0).ops[0]);
+			assertEquals(Change.Operation.activate, e.transition(0).ops[1]);
+			assertEquals(Change.Operation.launch, e.transition(1).ops[0]);
 		}		
 	}
 }

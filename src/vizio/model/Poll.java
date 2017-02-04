@@ -12,7 +12,7 @@ public final class Poll extends Entity<Poll> {
 	public IDN serial;
 	public Area area;
 	public Matter matter;
-	public User affected;
+	public Name affected;
 	public Name initiator;
 	public Date start;
 	public Names consenting;
@@ -31,7 +31,7 @@ public final class Poll extends Entity<Poll> {
 	}
 	
 	public boolean canVote(Name voter) {
-		return area.maintainers.contains(voter) && !affected.name.equalTo(voter) && !isSettled();
+		return area.maintainers.contains(voter) && !affected.equalTo(voter) && !isSettled();
 	}
 
 	public boolean isSettled() {
