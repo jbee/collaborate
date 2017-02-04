@@ -1,36 +1,35 @@
 package vizio.engine;
 
-import static vizio.engine.Change.Type.abandon;
-import static vizio.engine.Change.Type.absolve;
-import static vizio.engine.Change.Type.activate;
-import static vizio.engine.Change.Type.attach;
-import static vizio.engine.Change.Type.compart;
-import static vizio.engine.Change.Type.connect;
-import static vizio.engine.Change.Type.consent;
-import static vizio.engine.Change.Type.constitute;
-import static vizio.engine.Change.Type.disconnect;
-import static vizio.engine.Change.Type.dissent;
-import static vizio.engine.Change.Type.dissolve;
-import static vizio.engine.Change.Type.emphasise;
-import static vizio.engine.Change.Type.engage;
-import static vizio.engine.Change.Type.fork;
-import static vizio.engine.Change.Type.indicate;
-import static vizio.engine.Change.Type.launch;
-import static vizio.engine.Change.Type.leave;
-import static vizio.engine.Change.Type.open;
-import static vizio.engine.Change.Type.poll;
-import static vizio.engine.Change.Type.propose;
-import static vizio.engine.Change.Type.pursue;
-import static vizio.engine.Change.Type.register;
-import static vizio.engine.Change.Type.relocate;
-import static vizio.engine.Change.Type.request;
-import static vizio.engine.Change.Type.resolve;
-import static vizio.engine.Change.Type.restructure;
-import static vizio.engine.Change.Type.tag;
-import static vizio.engine.Change.Type.unwatch;
-import static vizio.engine.Change.Type.warn;
-import static vizio.engine.Change.Type.watch;
-import vizio.engine.Change.Type;
+import static vizio.engine.Change.Operation.abandon;
+import static vizio.engine.Change.Operation.absolve;
+import static vizio.engine.Change.Operation.activate;
+import static vizio.engine.Change.Operation.attach;
+import static vizio.engine.Change.Operation.compart;
+import static vizio.engine.Change.Operation.connect;
+import static vizio.engine.Change.Operation.consent;
+import static vizio.engine.Change.Operation.constitute;
+import static vizio.engine.Change.Operation.disconnect;
+import static vizio.engine.Change.Operation.dissent;
+import static vizio.engine.Change.Operation.dissolve;
+import static vizio.engine.Change.Operation.emphasise;
+import static vizio.engine.Change.Operation.engage;
+import static vizio.engine.Change.Operation.fork;
+import static vizio.engine.Change.Operation.indicate;
+import static vizio.engine.Change.Operation.launch;
+import static vizio.engine.Change.Operation.leave;
+import static vizio.engine.Change.Operation.open;
+import static vizio.engine.Change.Operation.poll;
+import static vizio.engine.Change.Operation.propose;
+import static vizio.engine.Change.Operation.pursue;
+import static vizio.engine.Change.Operation.register;
+import static vizio.engine.Change.Operation.relocate;
+import static vizio.engine.Change.Operation.request;
+import static vizio.engine.Change.Operation.resolve;
+import static vizio.engine.Change.Operation.restructure;
+import static vizio.engine.Change.Operation.tag;
+import static vizio.engine.Change.Operation.unwatch;
+import static vizio.engine.Change.Operation.warn;
+import static vizio.engine.Change.Operation.watch;
 import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Email;
@@ -50,6 +49,7 @@ import vizio.model.Task;
 import vizio.model.Template;
 import vizio.model.User;
 import vizio.model.Version;
+import vizio.util.PersistedData;
 
 /**
  * All the possible changes wrapped as lazy 'action'.
@@ -66,7 +66,7 @@ public interface Change {
 	/**
 	 * What can be done to tracker data 
 	 */
-	enum Type {
+	enum Operation {
 		// users
 		register('a'),
 		activate('b'),
@@ -114,21 +114,13 @@ public interface Change {
 		 * A code used to store the type compact.
 		 * We use letters for readability only. 
 		 */
-		final byte code;
+		@PersistedData
+		final char code;
 		
-		private Type(char code) {
-			this.code = (byte) code;
+		private Operation(char code) {
+			this.code = code;
 		}
 
-		private static final Type[] vals = values();
-		
-		public static Type fromCode(byte code) {
-			for (Type t : vals) {
-				if (t.code == code)
-					return t;
-			}
-			throw new IllegalArgumentException("No type for code: "+code);
-		}
 	}
 	
 	/**
@@ -144,7 +136,7 @@ public interface Change {
 		Version version(Name product, Name version);
 		Task task(Name product, IDN id);
 
-		void put(Type change, Entity<?> e);
+		void put(Operation op, Entity<?> e);
 	}
 	
 	static Change register(Name user, Email email, String unsaltedMd5, String salt) {

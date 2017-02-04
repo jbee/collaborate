@@ -6,38 +6,38 @@ import java.time.LocalDate;
 
 public final class Date implements Comparable<Date> {
 
-	private static final int MS_PER_DAY = 1000*60*60*24;
+	private static final int MILLIS_PER_DAY = 1000*60*60*24;
 
-	public final int daysSinceEra;
+	public final int epochDay;
 
-	public Date(int daysSinceEra) {
+	public Date(int epochDay) {
 		super();
-		this.daysSinceEra = daysSinceEra;
+		this.epochDay = epochDay;
 	}
 	
 	public static Date parse(String yyyymmdd) {
 		return new Date((int) LocalDate.parse(yyyymmdd).toEpochDay());
 	}
 
-	public static Date date(long millisSinceEra) {
-		return new Date( (int) (millisSinceEra / MS_PER_DAY));
+	public static Date date(long millisSinceEpoch) {
+		return new Date( (int) (millisSinceEpoch / MILLIS_PER_DAY));
 	}
 
 	public boolean after(Date other) {
-		return daysSinceEra > other.daysSinceEra;
+		return epochDay > other.epochDay;
 	}
 
 	public int daysSince(Date other) {
-		return daysSinceEra - other.daysSinceEra;
+		return epochDay - other.epochDay;
 	}
 
 	@Override
 	public int compareTo(Date other) {
-		return compare(daysSinceEra, other.daysSinceEra);
+		return compare(epochDay, other.epochDay);
 	}
 
 	public Date plusDays(int days) {
-		return new Date(daysSinceEra+days);
+		return new Date(epochDay+days);
 	}
 
 	public static Date today() {
@@ -46,7 +46,7 @@ public final class Date implements Comparable<Date> {
 	
 	@Override
 	public String toString() {
-		return LocalDate.ofEpochDay(daysSinceEra).toString();
+		return LocalDate.ofEpochDay(epochDay).toString();
 	}
 
 }

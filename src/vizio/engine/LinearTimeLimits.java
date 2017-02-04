@@ -5,8 +5,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import vizio.engine.Limits.Assurances;
-
 /**
  * Keeps track of {@link Limit}s.
  * 
@@ -18,39 +16,30 @@ import vizio.engine.Limits.Assurances;
  * The caller has to keep track of allocated limits. 
  * Reallocation (even in same thread) is  illegal. 
  * Free should be called at the end of a modification, successful or not.
- *  
- * @author jan
  */
-public final class LimitControl implements Assurances {
+public final class LinearTimeLimits implements Limits {
 	
 	private static final int ONE_HOUR = 1000*60*60;
 	private static final int ONE_DAY = 1000*60*60*24;
 	
-	public final Clock clock;
 	private final int base;
 	private final ConcurrentHashMap<Limit, LimitStats> stats = new ConcurrentHashMap<>();
 	private long nextCleanup;
 	
-	public LimitControl(Clock clock, int base) {
+	public LinearTimeLimits(int base) {
 		super();
-		this.clock = clock;
 		this.base = base;
-		this.nextCleanup = clock.time()+ONE_HOUR;
-	}
-
-	@Override
-	public Clock clock() {
-		return clock;
+		this.nextCleanup = Long.MIN_VALUE;
 	}
 	
 	@Override
-	public boolean stress(Limit l) {
-		return stats(l).stress(clock.time());
+	public boolean stress(Limit l, Clock clock) {
+		return stats(l, clock).stress(clock.time());
 	}
 
 	@Override
-	public boolean alloc(Limit l) throws ConcurrentModification {
-		LimitStats ls = stats(l);
+	public boolean alloc(Limit l, Clock clock) throws ConcurrentModification {
+		LimitStats ls = stats(l, clock);
 		if (!ls.allocated.compareAndSet(false, true)) {
 			throw new ConcurrentModification(l);
 		}
@@ -59,16 +48,18 @@ public final class LimitControl implements Assurances {
 	
 	@Override
 	public void free(Limit l) {
-		if (!stats(l).allocated.compareAndSet(true, false)) {
+		if (!stats(l, null).allocated.compareAndSet(true, false)) {
 			System.err.println("Tried to free non allocated limit: "+l);
 		}
 	}
 
-	private LimitStats stats(Limit l) {
-		long now = clock.time();
-		if (now > nextCleanup) {
-			cleanup(now);
-			nextCleanup = now+ONE_HOUR;
+	private LimitStats stats(Limit l, Clock clock) {
+		if (clock != null) {
+			long now = clock.time();
+			if (now > nextCleanup) {
+				cleanup(now);
+				nextCleanup = now+ONE_HOUR;
+			}
 		}
 		return stats.computeIfAbsent(l, (li) -> { return new LimitStats(li, base); } );
 	}
@@ -85,22 +76,22 @@ public final class LimitControl implements Assurances {
 	private static final class LimitStats {
 
 		private final Limit limit;
-		private final PeriodicLimit second;
-		private final PeriodicLimit minute;
-		private final PeriodicLimit quater;
-		private final PeriodicLimit hour;
-		private final PeriodicLimit day;
+		private final LimitPerPeriod second;
+		private final LimitPerPeriod minute;
+		private final LimitPerPeriod quater;
+		private final LimitPerPeriod hour;
+		private final LimitPerPeriod day;
 		final AtomicBoolean allocated = new AtomicBoolean(false);
 		long lastStressed;
 		
 		LimitStats(Limit l, int base) { 
 			this.limit = l;
 			int f = l.factor() * base;
-			this.second = new PeriodicLimit( 1*f, 1000);
-			this.minute = new PeriodicLimit(10*f, 1000*60);
-			this.quater = new PeriodicLimit(20*f, 1000*60*15);
-			this.hour   = new PeriodicLimit(30*f, ONE_HOUR);
-			this.day    = new PeriodicLimit(50*f, ONE_DAY);
+			this.second = new LimitPerPeriod( 1*f, 1000);
+			this.minute = new LimitPerPeriod(10*f, 1000*60);
+			this.quater = new LimitPerPeriod(20*f, 1000*60*15);
+			this.hour   = new LimitPerPeriod(30*f, ONE_HOUR);
+			this.day    = new LimitPerPeriod(50*f, ONE_DAY);
 		}		
 		
 		boolean stress(long now) {
@@ -115,7 +106,7 @@ public final class LimitControl implements Assurances {
 		}
 	}
 	
-	private static final class PeriodicLimit {
+	private static final class LimitPerPeriod {
 		
 		/**
 		 * The absolute limit that cannot be exceeded.
@@ -126,7 +117,7 @@ public final class LimitControl implements Assurances {
 		long previousPeriod;
 		AtomicInteger count = new AtomicInteger();
 		
-		PeriodicLimit(int limit, int periodDivisor) {
+		LimitPerPeriod(int limit, int periodDivisor) {
 			super();
 			this.limit = limit;
 			this.periodDivisor = periodDivisor;

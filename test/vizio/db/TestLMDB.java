@@ -30,8 +30,9 @@ import vizio.db.DB.TxR;
 import vizio.db.DB.TxW;
 import vizio.engine.Change;
 import vizio.engine.Changelog;
+import vizio.engine.Clock;
 import vizio.engine.Convert;
-import vizio.engine.LimitControl;
+import vizio.engine.LinearTimeLimits;
 import vizio.engine.Transaction;
 import vizio.model.ID;
 import vizio.model.ID.Type;
@@ -132,16 +133,17 @@ public class TestLMDB {
 					register(user, email("test@example.com"), "foo", "salt")
 					.and(activate(user, activationKey("foo","salt")))
 					.and(launch(user, site, template("ghi")));
-					
-			Changelog changed = Transaction.run(change, db ,new LimitControl(() -> System.currentTimeMillis(), 5));
+			
+			Clock realTime = () -> System.currentTimeMillis();
+			Changelog changed = Transaction.run(change, db , realTime, new LinearTimeLimits(5));
 			
 			assertEquals(2, changed.length());
 			
-			assertArrayEquals(new Change.Type[]{Change.Type.register, Change.Type.activate}, changed.get(0).changes);
+			assertArrayEquals(new Change.Operation[]{Change.Operation.register, Change.Operation.activate}, changed.get(0).transitions);
 			assertNull(changed.get(0).before);
 			assertNotNull(changed.get(0).after);
 
-			assertArrayEquals(new Change.Type[]{Change.Type.launch}, changed.get(1).changes);
+			assertArrayEquals(new Change.Operation[]{Change.Operation.launch}, changed.get(1).transitions);
 			assertNull(changed.get(1).before);
 			assertNotNull(changed.get(1).after);
 			assertSame(User.class, changed.get(0).after.getClass());

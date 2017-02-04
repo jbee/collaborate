@@ -20,7 +20,6 @@ import static vizio.model.Status.unsolved;
 import java.security.MessageDigest;
 import java.util.Arrays;
 
-import vizio.Array;
 import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Date;
@@ -42,6 +41,7 @@ import vizio.model.Task;
 import vizio.model.Template;
 import vizio.model.User;
 import vizio.model.Version;
+import vizio.util.Array;
 
 /**
  * Implementation of the tracker-business logic.
@@ -707,7 +707,7 @@ public final class Tracker {
 	}
 
 	private void stressLimit(Limit limit, String error) {
-		if (!limits.stress(limit)) {
+		if (!limits.stress(limit, clock)) {
 			denyTransition("Limit exceeded! "+error+" Please try again later!");
 		}
 	}

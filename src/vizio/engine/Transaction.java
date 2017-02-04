@@ -28,12 +28,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import vizio.db.DB;
 import vizio.db.DB.TxW;
+import vizio.engine.Change.Operation;
 import vizio.engine.Change.Tx;
+import vizio.engine.Event.Transition;
 import vizio.model.Area;
 import vizio.model.Entity;
 import vizio.model.ID;
@@ -63,11 +65,12 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	 * @return a list of changed entities each given as a pair: before and after the change 
 	 * @throws ConcurrentModification when trying to change an entity already changed by an ongoing transaction (in another thread)
 	 */
-	public static Changelog run(Change set, DB db, Assurances as) throws ConcurrentModification {
-		try (Transaction tx = new Transaction(as, db)) {
-			final long now = max(lastTick.incrementAndGet(), as.clock().time());
+	public static Changelog run(Change set, DB db, Clock clock, Limits limits) throws ConcurrentModification {
+		final long now = max(lastTick.incrementAndGet(), clock.time());
+		final Clock fixedNow = () -> now;
+		try (Transaction tx = new Transaction(fixedNow, limits, db)) {
 			try {
-				set.apply(new Tracker(() -> now, tx), tx);
+				set.apply(new Tracker(fixedNow, tx), tx);
 				return tx.commit();
 			} finally {
 				tx.freeAllocatedLimits();
@@ -83,20 +86,24 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	private static final AtomicLong lastTick = new AtomicLong(Long.MIN_VALUE);
 	
 	private final LinkedHashMap<ID, Entity<?>> changed = new LinkedHashMap<>();
-	private final HashMap<ID, ArrayList<Change.Type>> changeTypes = new HashMap<>();
+	private final HashMap<ID, ArrayList<Change.Operation>> changeTypes = new HashMap<>();
 	private final HashMap<ID, Entity<?>> loaded = new HashMap<>();
 	private final HashMap<ID, User> loadedUsers = new HashMap<>();
 	private final Set<Limit> allocated = new HashSet<>();
 	
-	private final Assurances as;
+	private final Clock clock;
+	private final Limits limits;
 	private final DB db;
 	private final DB.TxR txr;
+
+	private ID originator;
 	
-	private Transaction(Assurances lc, DB db) {
+	private Transaction(Clock clock, Limits lc, DB limits) {
 		super();
-		this.as = lc;
-		this.db = db;
-		this.txr = db.read();
+		this.clock = clock;
+		this.limits = lc;
+		this.db = limits;
+		this.txr = limits.read();
 	}
 	
 	@Override
@@ -120,34 +127,40 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	}
 	
 	@Override
-	public void put(Change.Type type, Entity<?> e) {
-		ID id = e.uniqueID();
+	public void put(Operation op, Entity<?> e) {
+		final ID id = e.uniqueID();
 		if (e != possiblyChanged(id)) { // only do real updates
-			putFields(type, e); // "auto"-update fields with updates
+			putFields(op, e); // "auto"-update fields with updates
 			changed.put(id, e);
-			changeTypes.computeIfAbsent(id, (id_) -> new ArrayList<>()).add(type);
+			changeTypes.computeIfAbsent(id, (id_) -> new ArrayList<>()).add(op);
 			for (User user : loadedUsers.values()) {
 				if (user.version > user.initalVersion) {
-					changed.put(user.uniqueID(), user);
-					loadedUsers.remove(user);			
+					final ID userID = user.uniqueID();
+					if (originator == null) {
+						originator = userID;
+					} else if (!userID.equalTo(originator)){
+						throw new IllegalArgumentException("All changes within one transation must originate from same user.");
+					}
+					changed.put(userID, user);
+					loadedUsers.remove(user);	
 				}
 			}
 		}
 	}
 
-	private void putFields(Change.Type type, Entity<?> e) {
+	private void putFields(Operation op, Entity<?> e) {
 		if (e instanceof Poll) {
-			put(type, ((Poll) e).area);
+			put(op, ((Poll) e).area);
 		} else if (e instanceof Task) {
 			Task t = (Task) e;
-			put(type, t.product);
-			put(type, t.area);
-			put(type, t.base);
+			put(op, t.product);
+			put(op, t.area);
+			put(op, t.base);
 		} else if (e instanceof Product && e.version == 1) {
 			Product p = (Product)e;
-			put(type, p.origin);
-			put(type, p.somewhere);
-			put(type, p.somewhen);
+			put(op, p.origin);
+			put(op, p.somewhere);
+			put(op, p.somewhen);
 		}
 	}
 	
@@ -195,31 +208,50 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 		if (changed.isEmpty())
 			return Changelog.EMPTY;
 		ByteBuffer buf = ByteBuffer.allocateDirect(1024);
-		Changelog.Entry<?>[] res = new Changelog.Entry[changed.size()];
 		try (TxW tx = db.write()) {
-			int i = 0;
-			for (Entry<ID,Entity<?>> e : changed.entrySet()) {
-				ID id = e.getKey();
-				Entity<?> val = e.getValue();
-				res[i++] = new Changelog.Entry(changeTypes.get(id).toArray(new Change.Type[0]), loaded.get(id), val);
-				switch (id.type) {
-				case Area: store(tx, id, (Area)val, area2bin, buf); break;
-				case Poll: store(tx, id, (Poll)val, poll2bin, buf); break;
-				case Site: store(tx, id, (Site)val, site2bin, buf); break;
-				case Task: store(tx, id, (Task)val, task2bin, buf); break;
-				case User: store(tx, id, (User)val, user2bin, buf); break;
-				case Product: store(tx, id, (Product)val, product2bin, buf); break;
-				case Version: store(tx, id, (Version)val, version2bin, buf); break;
-				default: throw new UnsupportedOperationException("Cannot store entities of type: "+id);
-				}
-				buf.clear();
-			}
+			Changelog log = writeChanges(buf, tx);
+			writeEventLog(tx, log, buf);
 			tx.commit();
-			return new Changelog(res);
+			return log;
 		}
 	}
 	
-	private static <T> void store(TxW tx, ID id, T e, Convert<T, ByteBuffer> writer, ByteBuffer buf) {
+	private Changelog writeChanges(ByteBuffer buf, TxW tx) {
+		Changelog.Entry<?>[] res = new Changelog.Entry[changed.size()];
+		int i = 0;
+		for (Entry<ID,Entity<?>> e : changed.entrySet()) {
+			ID id = e.getKey();
+			Entity<?> val = e.getValue();
+			res[i++] = new Changelog.Entry(loaded.get(id), changeTypes.get(id).toArray(new Change.Operation[0]), val);
+			switch (id.type) {
+			case Area:    write(tx, id, (Area)val, area2bin, buf); break;
+			case Poll:    write(tx, id, (Poll)val, poll2bin, buf); break;
+			case Site:    write(tx, id, (Site)val, site2bin, buf); break;
+			case Task:    write(tx, id, (Task)val, task2bin, buf); break;
+			case User:    write(tx, id, (User)val, user2bin, buf); break;
+			case Product: write(tx, id, (Product)val, product2bin, buf); break;
+			case Version: write(tx, id, (Version)val, version2bin, buf); break;
+			default: throw new UnsupportedOperationException("Cannot store entities of type: "+id);
+			}
+			buf.clear();
+		}
+		return new Changelog(res);
+	}
+
+	private void writeEventLog(TxW tx, Changelog log, ByteBuffer buf) {
+		Transition[] transitions = new Transition[log.length()];
+		int i = 0;
+		for (Changelog.Entry<?> e : log) {
+			transitions[i++] = new Transition(e.after.uniqueID(), e.transitions);
+		}
+		Event e = new Event(clock.time(), originator, transitions);
+		write(tx, e.uniqueID() , e, Convert.event2bin, buf);
+		buf.clear();
+		//TODO write user aggregate log
+		//TODO write entity aggregate logs
+	}
+	
+	private static <T> void write(TxW tx, ID id, T e, Convert<T, ByteBuffer> writer, ByteBuffer buf) {
 		writer.convert(e, buf).flip();
 		tx.put(id, buf);
 		buf.clear();
@@ -227,23 +259,32 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	
 	private void freeAllocatedLimits() {
 		for (Limit l : allocated) {
-			as.free(l);
+			limits.free(l);
 		}
 		allocated.clear();
 	}
 	
 	@Override
-	public boolean stress(Limit limit) throws ConcurrentModification {
+	public boolean stress(Limit limit, Clock clock) throws ConcurrentModification {
 		if (!limit.isSpecific()) {
-			return as.stress(limit);
+			return limits.stress(limit, clock);
 		}
+		return alloc(limit, clock);
+	}
+
+	@Override
+	public boolean alloc(Limit limit, Clock clock) throws ConcurrentModification {
 		if (allocated.contains(limit))
 			return true;
-		if (as.alloc(limit)) {
+		if (limits.alloc(limit, clock)) {
 			allocated.add(limit);
 			return true;
 		}
 		return false;
 	}
-
+	
+	@Override
+	public void free(Limit l) {
+		throw new UnsupportedOperationException("`free` should not be called directly on the TX!");
+	}
 }

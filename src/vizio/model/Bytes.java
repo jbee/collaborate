@@ -50,4 +50,22 @@ public abstract class Bytes {
 		}
 		return 0;		
 	}
+	
+	public static byte[] longBytes(long val) {
+	    byte[] result = new byte[8];
+	    for (int i = 7; i >= 0; i--) {
+	        result[i] = (byte)(val & 0xFF);
+	        val >>= 8;
+	    }
+	    return result;
+	}
+
+	public static long toLong(byte[] bytes) {
+	    long result = 0;
+	    for (int i = 0; i < 8; i++) {
+	        result <<= 8;
+	        result |= (bytes[i] & 0xFF);
+	    }
+	    return result;
+	}	
 }

@@ -16,7 +16,7 @@ public final class Gist extends Bytes implements Comparable<Gist> {
 		return new Gist(gist.getBytes(StandardCharsets.UTF_16));
 	}
 	
-	public static Gist gist(byte[] gist) {
+	public static Gist fromBytes(byte[] gist) {
 		if (gist == null)
 			return null;
 		if (gist.length >= 512) {

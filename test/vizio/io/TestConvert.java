@@ -2,7 +2,22 @@ package vizio.io;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
-import static vizio.engine.Convert.*;
+import static vizio.engine.Convert.area2bin;
+import static vizio.engine.Convert.bin2area;
+import static vizio.engine.Convert.bin2event;
+import static vizio.engine.Convert.bin2poll;
+import static vizio.engine.Convert.bin2product;
+import static vizio.engine.Convert.bin2site;
+import static vizio.engine.Convert.bin2task;
+import static vizio.engine.Convert.bin2user;
+import static vizio.engine.Convert.bin2version;
+import static vizio.engine.Convert.event2bin;
+import static vizio.engine.Convert.poll2bin;
+import static vizio.engine.Convert.product2bin;
+import static vizio.engine.Convert.site2bin;
+import static vizio.engine.Convert.task2bin;
+import static vizio.engine.Convert.user2bin;
+import static vizio.engine.Convert.version2bin;
 import static vizio.engine.Tracker.activationKey;
 import static vizio.model.Email.email;
 import static vizio.model.Gist.gist;
@@ -14,10 +29,11 @@ import java.nio.ByteBuffer;
 import org.junit.Test;
 
 import vizio.engine.Change;
-import vizio.engine.Change.Type;
+import vizio.engine.Change.Operation;
 import vizio.engine.Convert;
-import vizio.engine.LogEntry;
-import vizio.engine.LogEntry.Changes;
+import vizio.engine.Event;
+import vizio.engine.Event.Transition;
+import vizio.engine.NoLimits;
 import vizio.engine.Tracker;
 import vizio.model.Area;
 import vizio.model.Entity;
@@ -36,7 +52,7 @@ import vizio.model.Version;
 public class TestConvert {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(TestConvert.this::tick, (l) -> true);
+	private Tracker tracker = new Tracker(TestConvert.this::tick, new NoLimits());
 
 	private long tick() {
 		now += 60000;
@@ -100,9 +116,9 @@ public class TestConvert {
 	public void logEntryConversion() {
 		long timestamp = System.currentTimeMillis();
 		Name user = as("testuser");
-		Changes c1 = new Changes(ID.userId(user), Change.Type.abandon, Change.Type.attach);
-		Changes[] entityChanges = new Changes[] { c1, c1 };
-		assertConsistentConversion(bin2log, log2bin, new LogEntry(timestamp, user, entityChanges));
+		Transition c1 = new Transition(ID.userId(user), Change.Operation.abandon, Change.Operation.attach);
+		Transition[] entityChanges = new Transition[] { c1, c1 };
+		assertConsistentConversion(bin2event, event2bin, new Event(timestamp, ID.userId(user), entityChanges));
 	}
 	
 	private User newTestUser() {
@@ -181,7 +197,7 @@ public class TestConvert {
 		}
 
 		@Override
-		public void put(Type type, Entity<?> e) {
+		public void put(Operation type, Entity<?> e) {
 			// TODO Auto-generated method stub
 		}
 		

@@ -5,7 +5,7 @@ import static java.util.Arrays.asList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import vizio.Array;
+import vizio.util.Array;
 
 public class Names implements Iterable<Name>, Comparable<Names> {
 

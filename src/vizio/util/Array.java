@@ -1,4 +1,4 @@
-package vizio;
+package vizio.util;
 
 import static java.lang.System.arraycopy;
 import static java.util.Arrays.copyOf;

@@ -4,7 +4,7 @@ import static java.util.Arrays.asList;
 
 import java.util.Iterator;
 
-import vizio.Array;
+import vizio.util.Array;
 
 public final class Attachments implements Iterable<URL>, Comparable<Attachments> {
 

@@ -12,13 +12,13 @@ public final class Changelog implements Iterable<Changelog.Entry<?>>{
 	
 	public static final class Entry<T extends Entity<T>> {
 		
-		public final Change.Type[] changes;
 		public final T before;
+		public final Change.Operation[] transitions;
 		public final T after;
 		
-		public Entry(Change.Type[] changes, T before, T after) {
+		public Entry(T before, Change.Operation[] transitions, T after) {
 			super();
-			this.changes = changes;
+			this.transitions = transitions;
 			this.before = before;
 			this.after = after;
 		}

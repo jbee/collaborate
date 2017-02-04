@@ -8,16 +8,11 @@ public interface Limits {
 	 * @param l the limit to use.
 	 * @return true in case the limit is not reached so the operation can be done.
 	 */
-	boolean stress(Limit l) throws ConcurrentModification;
+	boolean stress(Limit l, Clock clock) throws ConcurrentModification;
 	
-	interface Assurances extends Limits {
+	boolean alloc(Limit l, Clock clock) throws ConcurrentModification;
 
-		boolean alloc(Limit l) throws ConcurrentModification;
-
-		void free(Limit l);
-		
-		Clock clock();
-	}
+	void free(Limit l);
 	
 	final class ConcurrentModification extends RuntimeException {
 

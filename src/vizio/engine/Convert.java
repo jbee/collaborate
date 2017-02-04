@@ -1,10 +1,11 @@
 package vizio.engine;
 
 import static vizio.model.Attachments.attachments;
-import static vizio.model.Gist.gist;
+import static vizio.model.Gist.fromBytes;
 
 import java.nio.ByteBuffer;
 
+import vizio.engine.Change.Operation;
 import vizio.engine.Change.Tx;
 import vizio.model.Area;
 import vizio.model.Attachments;
@@ -264,32 +265,32 @@ public interface Convert<I,O> {
 		return to;
 	};
 	
-	Convert<Tx, LogEntry> bin2log = (tx, from) -> {
+	Convert<Tx, Event> bin2event = (tx, from) -> {
 		long timestamp = from.getLong();
-		Name user = bin2name(from);
+		ID user = bin2id(from);
 		int n = from.getShort();
-		LogEntry.Changes[] entityChanges = new LogEntry.Changes[n];
+		Event.Transition[] changes = new Event.Transition[n];
 		for (int i = 0; i < n; i++) {
 			ID entity = bin2id(from);
 			int sn = from.get();
-			Change.Type[] changes = new Change.Type[sn];
+			Change.Operation[] transitions = new Change.Operation[sn];
 			for (int j = 0; j < sn; j++) {
-				changes[j] = Change.Type.fromCode(from.get());
+				transitions[j] = Mapping.bin2trans(from.get());
 			}
-			entityChanges[i] = new LogEntry.Changes(entity, changes);
+			changes[i] = new Event.Transition(entity, transitions);
 		}
-		return new LogEntry(timestamp, user, entityChanges);
+		return new Event(timestamp, user, changes);
 	};
 	
-	Convert<LogEntry, ByteBuffer> log2bin = (e,to) -> {
+	Convert<Event, ByteBuffer> event2bin = (e,to) -> {
 		to.putLong(e.timestamp);
-		name2bin(e.user, to);
-		to.putShort((short) e.entityChanges.length);
-		for (LogEntry.Changes c : e.entityChanges) {
+		id2bin(e.originator, to);
+		to.putShort((short) e.cardinality());
+		for (Event.Transition c : e) {
 			id2bin(c.entity, to);
-			to.put((byte) c.changes.length);
-			for (Change.Type t : c.changes) {
-				to.put(t.code);
+			to.put((byte) c.ops.length);
+			for (Change.Operation t : c.ops) {
+				to.put((byte) t.code);
 			}
 		}
 		return to;
@@ -298,6 +299,23 @@ public interface Convert<I,O> {
 	/*
 	 * Utility helpers
 	 */
+	
+	final class Mapping {
+		private static final Operation[] transitions = new Operation[128];
+
+		static {
+			for (Operation t : Operation.values()) {
+				transitions[t.code] = t;
+			}
+		}
+		
+		public static Operation bin2trans(byte code) {
+			Operation t = transitions[code];
+			if (t != null)
+				return t;
+			throw new IllegalArgumentException("No type for code: "+code);
+		}	
+	}
 
 	static ID bin2id(ByteBuffer from) {
 		return ID.fromBytes(getByteBytes(from));
@@ -341,7 +359,7 @@ public interface Convert<I,O> {
 	}
 
 	static void date2bin(Date date, ByteBuffer to) {
-		to.putInt(date == null ? -1 : date.daysSinceEra);
+		to.putInt(date == null ? -1 : date.epochDay);
 	}
 
 	static Date bin2date(ByteBuffer from) {
@@ -363,7 +381,7 @@ public interface Convert<I,O> {
 	}
 	
 	static Gist bin2gist(ByteBuffer from) {
-		return gist(getShortBytes(from));
+		return fromBytes(getShortBytes(from));
 	}
 	
 	static URL bin2url(ByteBuffer from) {

@@ -11,6 +11,7 @@ import static vizio.model.Name.as;
 
 import org.junit.Test;
 
+import vizio.engine.NoLimits;
 import vizio.engine.Tracker;
 import vizio.model.Date;
 import vizio.model.Product;
@@ -20,7 +21,7 @@ import vizio.model.User;
 public class TestTracker {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(TestTracker.this::tick, (l) -> true);
+	private Tracker tracker = new Tracker(TestTracker.this::tick, new NoLimits());
 
 	private long tick() {
 		now += 60000;

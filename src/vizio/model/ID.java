@@ -1,7 +1,7 @@
 package vizio.model;
 
-import com.sun.java_cup.internal.runtime.Symbol;
-
+import static java.util.Arrays.copyOfRange;
+import vizio.util.PersistedData;
 
 /**
  * A (database wide) unique identifier.
@@ -11,9 +11,12 @@ public final class ID extends Identifier<ID> {
 	private static final byte[] DIVIDER = {'#'};
 
 	public enum Type {
-	
-		User, Site, Product, Area, Version, Task, Poll;
-		
+		// core domain
+		User, Site, Product, Area, Version, Task, Poll, 
+		// meta
+		Event, History;
+
+		@PersistedData
 		final byte[] symbol;
 
 		private Type() {
@@ -73,11 +76,32 @@ public final class ID extends Identifier<ID> {
 		return ID.id(ID.Type.Task, product, id.asName());
 	}
 	
+	public static ID eventId(long timestamp) {
+		// we just use the long bytes - a 8 bytes long key with no second byte similar to # is an event
+		return new ID(Type.Event, longBytes(timestamp));
+	}
+	
+	public static ID historyId(ID entity) {
+		return entity.type == Type.History ? entity : new ID(Type.History, join(Type.History.symbol, DIVIDER, entity.bytes()));
+	}
+	
 	public static ID fromBytes(byte[] bytes) {
+		if (bytes.length == 8 && bytes[1] != '#') {
+			return new ID(Type.Event, bytes);
+		}
 		return new ID(Type.fromSymbol(bytes[0]), bytes);
 	}
-
+	
 	public boolean isUnique() {
 		return charAt(length()-1) != '*';
+	}
+	
+	public ID entity() {
+		return type == Type.History ? fromBytes(copyOfRange(bytes(), 2, bytes().length)) : this;
+	}
+	
+	@Override
+	public String toString() {
+		return type == Type.Event ? String.valueOf(toLong(bytes())) : super.toString();
 	}
 }

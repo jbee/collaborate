@@ -6,7 +6,7 @@ import static java.lang.Math.min;
 public class Task extends Entity<Task> {
 
 	// creating a task
-	public Product product;
+	public Product product; // needs to be a object since it changes when new task is created
 	public IDN id;
 	public IDN serial; // within an board
 	// opening record

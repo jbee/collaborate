@@ -65,7 +65,7 @@ public abstract class Identifier<T extends Identifier<T>> extends Bytes implemen
 	}
 	
 	@Override
-	public final String toString() {
+	public String toString() {
 		return new String(symbols, StandardCharsets.US_ASCII);
 	}
 	
