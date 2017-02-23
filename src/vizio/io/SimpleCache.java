@@ -13,7 +13,7 @@ import vizio.model.Purpose;
 import vizio.model.Status;
 import vizio.model.Task;
 
-public class SimpleCache implements Cache {
+public class SimpleCache {
 
 	// Problems:
 	// - update index consistently so that queries either see "old" or "new" data but nothing in-between
@@ -49,7 +49,6 @@ public class SimpleCache implements Cache {
 		super();
 	}
 
-	@Override
 	public Task[] tasks(Constraints criteria) {
 		Date today = Date.today();
 		// 1. select index(es)

@@ -174,7 +174,7 @@ public class HTMLRenderer {
 	}
 
 	private void renderUsersList(Task task) {
-		if (task.involvedUsers() > 0) {
+		if (task.participants() > 0) {
 			if (task.pursuedBy.count() > 0) {
 				out.append("<b>[...</b>");
 				renderUsersLinks(task.pursuedBy);
@@ -215,7 +215,7 @@ public class HTMLRenderer {
 		out.append(" status-").append(task.status.name());
 		out.append(" goal-").append(task.purpose.name());
 		out.append(" motive-").append(task.motive.name());
-		out.append(" heat-").append(task.heatType(date(now)).name());
+		out.append(" heat-").append(task.heat(date(now)).name());
 		if (task.exploitable) {
 			out.append(" exploitable");
 		}

@@ -205,6 +205,8 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	
 	private Changelog commit() {
 		txr.close(); // no more reading
+		if (originator == null)
+			throw new IllegalStateException("Acting user has to be updated during a transaction!");
 		if (changed.isEmpty())
 			return Changelog.EMPTY;
 		ByteBuffer buf = ByteBuffer.allocateDirect(1024);

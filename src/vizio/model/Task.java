@@ -66,15 +66,15 @@ public class Task extends Entity<Task> {
 		return min(100, emphasis / age(today));
 	}
 
-	public Heat heatType(Date today) {
-		return Heat.fromTemp(temperature(today));
+	public Heat heat(Date today) {
+		return Heat.valueOf(temperature(today));
 	}
 
 	public int age(Date today) {
 		return today.daysSince(reported) + 1;
 	}
 
-	public int involvedUsers() {
+	public int participants() {
 		return pursuedBy.count() + engagedBy.count();
 	}
 

@@ -7,7 +7,9 @@ import static vizio.engine.Constraints.ValueType.text;
 
 import org.junit.Test;
 
+import vizio.engine.Constraints.Operator;
 import vizio.engine.Constraints.Property;
+import vizio.model.Date;
 import vizio.model.Name;
 
 public class TestContraints {
@@ -41,5 +43,15 @@ public class TestContraints {
 		Constraints constraints = Constraints.parse("[order>>heat]");
 		assertEquals(1, constraints.count());
 		assertSame(Property.heat, constraints.get(0).value[0]);
+	}
+	
+	@Test
+	public void dateYYYYexpandsToRange() {
+		Constraints constraints = Constraints.parse("[reported=2016]");
+		assertEquals(2, constraints.count());
+		assertEquals(Operator.ge, constraints.get(0).op);
+		assertEquals(Date.parse("2016-01-01"), constraints.get(0).value[0]);
+		assertEquals(Operator.le, constraints.get(1).op);
+		assertEquals(Date.parse("2016-12-31"), constraints.get(1).value[0]);
 	}
 }

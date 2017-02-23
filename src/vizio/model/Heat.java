@@ -4,7 +4,7 @@ public enum Heat {
 
 	cold, tepid, warm, hot, burning;
 
-	public static Heat fromTemp(int temp) {
+	public static Heat valueOf(int temp) {
 		if (temp < 25)
 			return cold;
 		if (temp < 50)

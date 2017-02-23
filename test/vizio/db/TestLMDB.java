@@ -16,9 +16,6 @@ import static vizio.model.Template.template;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Rule;

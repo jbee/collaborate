@@ -48,5 +48,19 @@ public final class Date implements Comparable<Date> {
 	public String toString() {
 		return LocalDate.ofEpochDay(epochDay).toString();
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof Date && equalTo((Date) obj);
+	}
+
+	public boolean equalTo(Date other) {
+		return epochDay == other.epochDay;
+	}
+	
+	@Override
+	public int hashCode() {
+		return epochDay;
+	}
 
 }

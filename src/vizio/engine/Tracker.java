@@ -771,7 +771,7 @@ public final class Tracker {
 	}
 
 	private static void expectCanBeInvolved(User user, Task task) {
-		if (task.involvedUsers() >= 5 && !task.pursuedBy.contains(user) && !task.engagedBy.contains(user)) {
+		if (task.participants() >= 5 && !task.pursuedBy.contains(user) && !task.engagedBy.contains(user)) {
 			denyTransition("There are already to much users involved with the task: "+task);
 		}
 	}

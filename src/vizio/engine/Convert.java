@@ -33,7 +33,7 @@ import vizio.model.Version;
 
 @FunctionalInterface
 public interface Convert<I,O> {
-
+	
 	/**
 	 * Two way binary conversion.
 	 * 
@@ -45,7 +45,7 @@ public interface Convert<I,O> {
 	 * @return the passed buffer (to binary) or an entity (from binary)
 	 */
 	O convert(I from, ByteBuffer buf);
-	
+
 	Convert<Tx, User> bin2user = (tx,from) -> { 
 		User u = new User(from.getInt());
 		u.name = bin2name(from);

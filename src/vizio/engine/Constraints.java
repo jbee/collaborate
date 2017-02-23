@@ -1,5 +1,6 @@
 package vizio.engine;
 
+import static java.lang.Integer.parseInt;
 import static vizio.engine.Constraints.Operator.any;
 import static vizio.engine.Constraints.Operator.asc;
 import static vizio.engine.Constraints.Operator.desc;
@@ -20,6 +21,7 @@ import static vizio.engine.Constraints.ValueType.number;
 import static vizio.engine.Constraints.ValueType.property;
 import static vizio.engine.Constraints.ValueType.text;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -37,7 +39,46 @@ import vizio.model.Status;
 import vizio.model.Task;
 
 /**
- * A data structure to describe what {@link Task}s to select and how to present them. 
+ * A data structure to describe what {@link Task}s to select and how to present
+ * them by a list of {@link Constraint}s.
+ * 
+ * A {@link Constraint} is given in a human/machine friendly syntax:
+ * 
+ * <pre>
+ * [property operator value]
+ * </pre>
+ * 
+ * There is a fix set of {@link Property}s and {@link Operator}s. Also the
+ * possible combinations are constraint statically.
+ * 
+ * As the combination of {@link Property} and {@link Operator} determines the
+ * kind of semantic of a value there does not need to be a syntax to distinguish
+ * between numbers, property names or texts.
+ * 
+ * Some combinations require or allow value sets. A set is specified using curly
+ * brackets and commas to separate elements.
+ * 
+ * Some examples for valid constraints:
+ * 
+ * <pre>
+ * [reporter = Frank]
+ * [age > 20]
+ * [maintainers ~ {Frank, Peter}]
+ * [order >> {name, age}]
+ * [first = 15]
+ * [color = heat]
+ * </pre>
+ * 
+ * This would list all task reported by Frank older than 20 days in an area
+ * where Frank or Peter are maintainer. The result would be ordered by name
+ * first, age second and start with the 15 match and would be colored using the
+ * heat of the tasks.
+ * 
+ * The example for <code>order</code> shows, that the set is sometimes used as a
+ * list too, that is to say order of elements matters.
+ * 
+ * While the uniform way of describing constraints can be a bit lengthy it
+ * allows for simple parsing and remembering.
  */
 public final class Constraints {
 
@@ -76,15 +117,81 @@ public final class Constraints {
 				throw new MalformedConstraint("Property `"+prop+"` does not support operation `"+op+"`, supported are: "+prop.ops.toString());
 			}
 			String[] val = parseValue(v);
+			if (val.length == 1) {
+				// just to get rid of those special cases right away
+				if (op == in)
+					op = eq;
+				if (op == nin)
+					op = neq;
+			}
 			if (val.length == 1 && !op.isBinary) {
 				throw new MalformedConstraint("Operation `"+op+"` was used with simple value `"+val[0]+"` but requires a set, use `{???, ???}`");
 			}
 			if (val.length > 1 && !op.isSet) {
 				throw new MalformedConstraint("Operation `"+op+"` was used with set value `"+Arrays.toString(val)+"` but requires a simple value, use e.g. `"+val[0]+"`");
 			}
-			res.add(new Constraint(prop, op, typed(prop, val)));
+			if (prop.type == date && val[0].length() < 10) {
+				parseDate(prop, op, val, res);
+			} else {
+				res.add(constraint(prop, op, val));
+			}
 		}
 		return new Constraints(res.toArray(new Constraint[0]));
+	}
+
+	private static void parseDate(Property prop, Operator op, String[] val, List<Constraint> res) {
+		String date = val[0];
+		switch (op) {
+		case eq:
+			res.add(constraint(prop, ge, startOf(date)));
+			res.add(constraint(prop, le, endOf(date)));
+			return;
+		case gt: res.add(constraint(prop, gt, endOf(date))); return;
+		case ge: res.add(constraint(prop, ge, startOf(date))); return;
+		case lt: res.add(constraint(prop, lt, startOf(date))); return;
+		case le: res.add(constraint(prop, le, endOf(date))); return;
+		case in:
+			if (sequential(val)) {
+				res.add(constraint(prop, ge, startOf(val[0])));
+				res.add(constraint(prop, le, endOf(val[val.length-1])));
+				return;
+			}
+		}
+		throw new MalformedConstraint("Date property "+prop+" does not support value: "+Arrays.toString(val));
+	}
+	
+	private static boolean sequential(String[] val) {
+		int len = val[0].length();
+		for (int i = 1; i < val.length; i++) {
+			if (val[i].length() != len)
+				return false;
+			LocalDate a = LocalDate.parse(startOf(val[i-1]));
+			LocalDate b = LocalDate.parse(startOf(val[i]));
+			if (len == 4 && !b.minusYears(1).isEqual(a)
+				|| len == 7 && !b.minusMonths(1).isEqual(a))
+				return false;
+		}
+		return true;
+	}
+
+	private static String endOf(String date) {
+		return extend(date, "-12", "-31");
+	}
+	
+	private static String startOf(String date) {
+		return extend(date, "-01", "-01");
+	}
+	
+	private static String extend(String val, String on4, String on7) {
+		if (val.length() == 4)
+			val+=on4;
+		if (val.length() == 7)
+			val+=on7;
+		return val;
+	}
+	
+	private static Constraint constraint(Property p, Operator op, String... val) {
+		return new Constraint(p, op, typed(p, val));
 	}
 	
 	private static Object[] typed(Property p, String[] val) {
@@ -155,8 +262,8 @@ public final class Constraints {
 		purpose(property, Purpose.class, eq, neq, in, nin),
 		motive(property, Motive.class, eq, neq, in, nin),
 		version(name, eq, neq, in, nin),
-		reported(date, eq, ge, le, gt, lt, in, nin),
-		resolved(date, eq, ge, le, gt, lt, in, nin),
+		reported(date, eq, ge, le, gt, lt, in),
+		resolved(date, eq, ge, le, gt, lt, in),
 		exploitable(flag, eq, neq),
 		age(number, eq, ge, le, gt, lt),
 		id(number, eq, ge, le, gt, lt, in, nin),
@@ -222,7 +329,7 @@ public final class Constraints {
 		public Comparable<?> access(Task t, Date today) {
 			switch (this) {
 			case emphasis: return t.emphasis;
-			case heat: return t.heatType(today);
+			case heat: return t.heat(today);
 			case status: return t.status;
 			case purpose: return t.purpose;
 			case motive : return t.motive;
@@ -267,7 +374,7 @@ public final class Constraints {
 		/**
 		 * A {@link Date}
 		 */
-		date("\\d\\d\\d\\d-\\d\\d-\\d\\d"),
+		date("\\d\\d\\d\\d(?:-\\d\\d(?:-\\d\\d))"),
 		/**
 		 * essentially true or false but names like "yes"/"no" or such are also acceptable 
 		 */

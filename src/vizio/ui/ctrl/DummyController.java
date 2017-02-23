@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import vizio.engine.Constraints;
+import vizio.engine.NoLimits;
 import vizio.engine.Tracker;
 import vizio.model.Area;
 import vizio.model.Name;
@@ -36,7 +37,7 @@ public class DummyController implements Controller {
 
 	private void init() {
 		now = currentTimeMillis();
-		Tracker tracker = new Tracker(() -> { now += 70000; return now; }, (l) -> true );
+		Tracker tracker = new Tracker(() -> { now += 70000; return now; }, new NoLimits() );
 		tasks = new Task[5];
 		user = tracker.register(as("tester"), email("test@example.com"), "xxx", "salt");
 		user = tracker.activate(user, user.md5);
