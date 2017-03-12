@@ -20,9 +20,11 @@ import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Date;
 import vizio.model.Email;
+import vizio.model.Entity;
 import vizio.model.Gist;
 import vizio.model.IDN;
 import vizio.model.Mail;
+import vizio.model.Mail.Delivery;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
@@ -45,6 +47,8 @@ import vizio.util.Array;
  */
 public final class Tracker {
 
+	private static final long TOKEN_VALIDITY = 600000L;
+	
 	private final Clock clock;
 	private final Limits limits;
 
@@ -56,10 +60,13 @@ public final class Tracker {
 
 	/* Users + Accounts */
 
+	/**
+	 * When a user is registered with just an email the name is also the email.  
+	 */
 	public User register(User user, Name name, Email email) {
 		if (user != null)
 			denyTransition("User with name "+name+" already exists.");
-		if (name.isUnknown()) {
+		if (!name.isEmail()) { // so emails or regular names are OK
 			expectRegular(name);
 		}
 		stressNewUser();
@@ -76,6 +83,11 @@ public final class Tracker {
 	}
 
 	public User confirm(User user) {
+		long now = clock.time();
+		if (now < user.millisTokenExprired && now < user.millisTokenExprired-TOKEN_VALIDITY+60000L) {
+			// protected against requesting to many tokens
+			denyTransition("Wait a minute before requesting another token.");
+		}
 		user = user.clone();
 		confirmOTP(user);
 		touch(user);
@@ -86,7 +98,7 @@ public final class Tracker {
 		stressDoConfirm();
 		user.token = OTP.next();
 		user.encryptedToken = OTP.encrypt(user.token);
-		user.millisTokenExprired = clock.time() + 600000L;
+		user.millisTokenExprired = clock.time() + TOKEN_VALIDITY;
 	}
 
 	public User authenticate(User user, byte[] token) {
@@ -98,8 +110,29 @@ public final class Tracker {
 		}
 		user = user.clone();
 		user.authenticated++;
-		user.token=null;
+		user.token=null; // invalidate token
 		user.millisTokenExprired=clock.time()-1L;
+		touch(user);
+		return user;
+	}
+	
+	/**
+	 * Name a user later on when first just an email was used. 
+	 */
+	public User name(User user, Name name) {
+		expectEmail(user.name);
+		expectRegular(name);
+		stressDoConfiguration(user);
+		user = user.clone();
+		user.name = name;
+		touch(user);
+		return user;
+	}
+	
+	public User configure(User user, Delivery notification) {
+		stressDoConfiguration(user);
+		user = user.clone();
+		user.notification = notification == null ? Delivery.never : notification;
 		touch(user);
 		return user;
 	}
@@ -647,6 +680,13 @@ public final class Tracker {
 		stressNewContent();
 	}
 	
+	private void stressDoConfiguration(User user) {
+		stressLimit(limit("configure@user", user.name), "Too many recent configuration changes by user: "+user.name);
+		stressUser(user);
+		stressLimit(limit("configure", ORIGIN), "Too many recent configuration changes.");
+		stressAction();
+	}
+	
 	private void stressDoConnect(Product product, User originator) {
 		stressLimit(limit("connect@user", originator.name), "Too many recent connections by user: "+originator.name);
 		stressUser(originator);
@@ -707,7 +747,7 @@ public final class Tracker {
 		stressLimit(limit("confirm", ORIGIN), "Too many recent confirm requests.");
 		stressAction();
 	}
-
+	
 	private void stressLimit(Limit limit, String error) {
 		if (!limits.stress(limit, clock)) {
 			denyTransition("Limit exceeded! "+error+" Please try again later!");
@@ -763,7 +803,7 @@ public final class Tracker {
 			denyTransition("Only registered users can create products and areas!");
 		}
 	}
-
+	
 	private static void expectCanReport(User reporter) {
 		if (!reporter.isAuthenticated()) {
 			denyTransition("Only authenticated users can report tasks!");
@@ -791,6 +831,12 @@ public final class Tracker {
 	private static void expectRegular(Name name) {
 		if (!name.isRegular()) {
 			denyTransition("A registered user's name must not use '@' and be shorter than 17 characters! but was: "+name);
+		}
+	}
+	
+	private static void expectEmail(Name name) {
+		if (!name.isEmail()) {
+			denyTransition("Name can obly be changed if previously an email was used but was: "+name);
 		}
 	}
 
@@ -822,4 +868,5 @@ public final class Tracker {
 	private long now() {
 		return clock.time();
 	}
+
 }

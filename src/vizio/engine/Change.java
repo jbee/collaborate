@@ -5,6 +5,7 @@ import static vizio.engine.Change.Operation.absolve;
 import static vizio.engine.Change.Operation.attach;
 import static vizio.engine.Change.Operation.authenticate;
 import static vizio.engine.Change.Operation.compart;
+import static vizio.engine.Change.Operation.configure;
 import static vizio.engine.Change.Operation.confirm;
 import static vizio.engine.Change.Operation.connect;
 import static vizio.engine.Change.Operation.consent;
@@ -41,6 +42,7 @@ import vizio.model.Entity;
 import vizio.model.Gist;
 import vizio.model.ID;
 import vizio.model.IDN;
+import vizio.model.Mail;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
@@ -84,6 +86,8 @@ public interface Change {
 		register,
 		confirm,
 		authenticate,
+		name,
+		configure,
 		// sites
 		launch,
 		restructure,
@@ -163,6 +167,14 @@ public interface Change {
 	
 	static Change authenticate(Name user, byte[] token) {
 		return (t, tx) -> { tx.put(authenticate, t.authenticate(tx.user(user), token)); };
+	}
+	
+	static Change name(Name email, Name name) {
+		return (t, tx) -> { tx.put(Operation.name, t.name(tx.user(email), name)); };
+	}
+	
+	static Change configure(Name user, Mail.Delivery notification) {
+		return (t, tx) -> { tx.put(configure, t.configure(tx.user(user), notification)); };
 	}
 	
 	static Change constitute(Name product, Name originator) {

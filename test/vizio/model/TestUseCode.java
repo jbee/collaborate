@@ -4,7 +4,6 @@ import static org.junit.Assert.fail;
 
 import java.util.BitSet;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 import vizio.engine.Change;
@@ -44,6 +43,11 @@ public class TestUseCode {
 	@Test
 	public void deliveryHasUniqueCode() {
 		assertUniqueCode(Mail.Delivery.class);
+	}
+	
+	@Test
+	public void subjectHasUniqueCode() {
+		assertUniqueCode(Mail.Subject.class);
 	}
 
 	@Test
