@@ -1,7 +1,6 @@
 package vizio.model;
 
 import static java.util.Arrays.copyOfRange;
-import vizio.util.PersistedData;
 
 /**
  * A (database wide) unique identifier.
@@ -10,13 +9,13 @@ public final class ID extends Identifier<ID> {
 
 	private static final byte[] DIVIDER = {':'};
 
+	@UseCode
 	public enum Type {
 		// core domain
-		User, Site, Product, Area, Version, Task, Poll, 
+		User, Site, Product, Area, Version, Task, QPoll, 
 		// meta
 		Event, History;
 
-		@PersistedData
 		final byte[] symbol;
 
 		private Type() {
@@ -53,7 +52,7 @@ public final class ID extends Identifier<ID> {
 	}
 
 	public static ID pollId(Name product, Name area, IDN serial) {
-		return id(ID.Type.Poll, product, area, serial.asName());
+		return id(ID.Type.QPoll, product, area, serial.asName());
 	}
 
 	public static ID siteId(Name owner, Name name) {

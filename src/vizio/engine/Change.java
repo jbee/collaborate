@@ -2,9 +2,10 @@ package vizio.engine;
 
 import static vizio.engine.Change.Operation.abandon;
 import static vizio.engine.Change.Operation.absolve;
-import static vizio.engine.Change.Operation.activate;
 import static vizio.engine.Change.Operation.attach;
+import static vizio.engine.Change.Operation.authenticate;
 import static vizio.engine.Change.Operation.compart;
+import static vizio.engine.Change.Operation.confirm;
 import static vizio.engine.Change.Operation.connect;
 import static vizio.engine.Change.Operation.consent;
 import static vizio.engine.Change.Operation.constitute;
@@ -30,11 +31,15 @@ import static vizio.engine.Change.Operation.tag;
 import static vizio.engine.Change.Operation.unwatch;
 import static vizio.engine.Change.Operation.warn;
 import static vizio.engine.Change.Operation.watch;
+
+import java.util.NoSuchElementException;
+
 import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Email;
 import vizio.model.Entity;
 import vizio.model.Gist;
+import vizio.model.ID;
 import vizio.model.IDN;
 import vizio.model.Motive;
 import vizio.model.Name;
@@ -49,10 +54,12 @@ import vizio.model.Task;
 import vizio.model.Template;
 import vizio.model.User;
 import vizio.model.Version;
-import vizio.util.PersistedData;
 
 /**
  * All the possible changes wrapped as lazy 'action'.
+ * 
+ * All {@link Change}s are constructed from keys like {@link Name}s and {@link IDN}s.
+ * The actual loading and storing occurs when the {@link Change} is {@link #apply(Tracker, Tx)}ed.
  */
 @FunctionalInterface
 public interface Change {
@@ -67,64 +74,59 @@ public interface Change {
 	 * What can be done to tracker data 
 	 */
 	enum Operation {
-		// users
-		register('a'),
-		activate('b'),
-		// sites
-		launch('c'),
-		restructure('d'),
-		// products
-		constitute('e'),
-		connect('f'),
-		disconnect('g'),
-		// areas
-		open('h'), 
-		compart('i'),
-		leave('j'),
-		// versions
-		tag('k'),
-		// polls
-		poll('l'),
-		consent('m'),
-		dissent('n'),		
-		// tasks
-		relocate('o'),
-		attach('p'), 
 		
-		propose('q'),
-		indicate('r'),
-		warn('s'),
-		request('t'),
-		fork('u'),
-		
-		absolve('v'),
-		resolve('w'),
-		dissolve('x'),
-		
-		emphasise('y'),
-
-		pursue('z'),
-		abandon('A'),
-		engage('B'),
-		
-		watch('C'),
-		unwatch('D');
-
-		/**
-		 * A code used to store the type compact.
-		 * We use letters for readability only. 
+		/*
+		 * !!!OBS!!!
+		 * ALWAYS ADD AT THE END (since ordinal is stored) 
 		 */
-		@PersistedData
-		final char code;
 		
-		private Operation(char code) {
-			this.code = code;
-		}
+		// users
+		register,
+		confirm,
+		authenticate,
+		// sites
+		launch,
+		restructure,
+		// products
+		constitute,
+		connect,
+		disconnect,
+		// areas
+		open, 
+		compart,
+		leave,
+		// versions
+		tag,
+		// polls
+		poll,
+		consent,
+		dissent,		
+		// tasks
+		relocate,
+		attach, 
+		
+		propose,
+		indicate,
+		warn,
+		request,
+		fork,
+		
+		absolve,
+		resolve,
+		dissolve,
+		
+		emphasise,
 
+		pursue,
+		abandon,
+		engage,
+		
+		watch,
+		unwatch;
 	}
 	
 	/**
-	 * An application level transaction made available to a change. 
+	 * An application level transaction made available to a {@link Change}. 
 	 */
 	interface Tx {
 
@@ -139,12 +141,28 @@ public interface Change {
 		void put(Operation op, Entity<?> e);
 	}
 	
-	static Change register(Name user, Email email, String unsaltedMd5, String salt) {
-		return (t, tx) -> { tx.put(register, t.register(user, email, unsaltedMd5, salt)); };
+	class EntityNotFound extends NoSuchElementException {
+
+		public EntityNotFound(ID id) {
+			super(id.toString());
+		}
+		
 	}
 	
-	static Change activate(Name user, byte[] activationKey) {
-		return (t, tx) -> { tx.put(activate, t.activate(tx.user(user), activationKey)); };
+	static Change register(Name user, Email email) {
+		return (t, tx) -> { 
+			User u = null;
+			try { u = tx.user(user); } catch (EntityNotFound e) { };
+			tx.put(register, t.register(u, user, email)); 
+		};
+	}
+	
+	static Change confirm(Name user) {
+		return (t, tx) -> { tx.put(confirm, t.confirm(tx.user(user))); };
+	}
+	
+	static Change authenticate(Name user, byte[] token) {
+		return (t, tx) -> { tx.put(authenticate, t.authenticate(tx.user(user), token)); };
 	}
 	
 	static Change constitute(Name product, Name originator) {

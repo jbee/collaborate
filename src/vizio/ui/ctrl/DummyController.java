@@ -39,8 +39,7 @@ public class DummyController implements Controller {
 		now = currentTimeMillis();
 		Tracker tracker = new Tracker(() -> { now += 70000; return now; }, new NoLimits() );
 		tasks = new Task[5];
-		user = tracker.register(as("tester"), email("test@example.com"), "xxx", "salt");
-		user = tracker.activate(user, user.md5);
+		user = tracker.register(null, as("tester"), email("test@example.com"));
 		Product product = tracker.constitute(as("vizio"), user);
 		Area area = tracker.compart(product, as("core"), user);
 		Area ui = tracker.compart(product, as("ui"), user);

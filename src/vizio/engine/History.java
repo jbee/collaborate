@@ -14,6 +14,14 @@ import vizio.model.User;
 public final class History implements Iterable<ID> {
 
 	public final ID entity;
+	/**
+	 * Index 0 always contains the very first (oldest) event.
+	 * Index 1 and onwards contain the history of events limited to some length.
+	 * This is called compaction of events.
+	 * On first event index 1 holds same event as index 0.
+	 * When compaction occurs the oldest event (index 1) is replaced first.
+	 * Order is always maintained from oldest to newest (most recent) event.
+	 */
 	public final long[] events;
 	
 	public History(ID entity, long[] events) {
@@ -29,6 +37,13 @@ public final class History implements Iterable<ID> {
 	
 	public int length() {
 		return events.length-1;
+	}
+	
+	/**
+	 * Compaction means that at least one event has been dropped to not have the history grow limit-less.
+	 */
+	public boolean isCompacted() {
+		return events[0] != events[1];
 	}
 
 	@Override

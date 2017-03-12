@@ -18,7 +18,6 @@ import static vizio.engine.Convert.site2bin;
 import static vizio.engine.Convert.task2bin;
 import static vizio.engine.Convert.user2bin;
 import static vizio.engine.Convert.version2bin;
-import static vizio.engine.Tracker.activationKey;
 import static vizio.model.Email.email;
 import static vizio.model.Gist.gist;
 import static vizio.model.Name.as;
@@ -99,7 +98,7 @@ public class TestConvert {
 	public void pollConversion() {
 		User user1 = newTestUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
-		User user2 = tracker.register(as("user2"), email("user2@example.com"), "user2pwd", "salt");
+		User user2 = tracker.register(null, as("user2"), email("user2@example.com"));
 		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
 		assertConsistentConversion(bin2poll, poll2bin, poll1);
 	}
@@ -122,8 +121,8 @@ public class TestConvert {
 	}
 	
 	private User newTestUser() {
-		User u1 = tracker.register(as("user1"), email("user1@example.com"), "user1pwd", "salt");
-		u1 = tracker.activate(u1, activationKey("user1pwd", "salt"));
+		User u1 = tracker.register(null, as("user1"), email("user1@example.com"));
+		u1 = tracker.authenticate(u1, u1.token);
 		return u1;
 	}
 

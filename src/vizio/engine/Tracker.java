@@ -16,16 +16,13 @@ import static vizio.model.Status.absolved;
 import static vizio.model.Status.dissolved;
 import static vizio.model.Status.resolved;
 import static vizio.model.Status.unsolved;
-
-import java.security.MessageDigest;
-import java.util.Arrays;
-
 import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Date;
 import vizio.model.Email;
 import vizio.model.Gist;
 import vizio.model.IDN;
+import vizio.model.Mail;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
@@ -59,53 +56,56 @@ public final class Tracker {
 
 	/* Users + Accounts */
 
-	public User register(Name name, Email email, String pass, String salt) {
-		expectRegular(name);
+	public User register(User user, Name name, Email email) {
+		if (user != null)
+			denyTransition("User with name "+name+" already exists.");
+		if (name.isUnknown()) {
+			expectRegular(name);
+		}
 		stressNewUser();
-		User user = new User(1);
+		user = new User(1);
 		user.name = name;
 		user.email = email;
-		user.md5 = activationKey(pass, salt); // acts as activationKey
+		user.notification=Mail.Delivery.daily;
+		user.authenticated = 0;
 		user.sites = Names.empty();
 		user.watches = 0;
-		user.millisLastActive=clock.time(); // cannot use touch as version should stay same
+		user.millisLastActive=now(); // cannot use touch as version should stay same
+		confirmOTP(user);
 		return user;
 	}
 
-	public User activate(User user, byte[] activationKey) {
-		expectNotActivated(user);
-		if (!Arrays.equals(user.md5, activationKey)) {
-			denyTransition("Wrong activation key");
-		}
-		stressDoActivate();
+	public User confirm(User user) {
 		user = user.clone();
-		user.activated = true;
-		user.millisLastActive=clock.time(); // cannot use touch as version should stay same
+		confirmOTP(user);
+		touch(user);
 		return user;
 	}
 
-	public void login(User user, String plainPass, String salt) {
-		expectActivated(user);
-		if (!Arrays.equals(md5(md5(plainPass)+salt), user.md5)) {
-			denyTransition("Wrong passphrase!");
-		}
+	private void confirmOTP(User user) {
+		stressDoConfirm();
+		user.token = OTP.next();
+		user.encryptedToken = OTP.encrypt(user.token);
+		user.millisTokenExprired = clock.time() + 600000L;
 	}
 
-	private static byte[] md5(String pass) {
-		try {
-			return MessageDigest.getInstance("MD5").digest(pass.getBytes("UTF-8"));
-		} catch (Exception e) {
-			denyTransition(e.getMessage());
-			return null;
+	public User authenticate(User user, byte[] token) {
+		if (clock.time() > user.millisTokenExprired) {
+			denyTransition("Token expired!");
 		}
-	}
-	
-	public static byte[] activationKey(String pass, String salt) {
-		return md5(pass+salt);
+		if (!OTP.isToken(token, user.encryptedToken)) {
+			denyTransition("Incorrect token!");
+		}
+		user = user.clone();
+		user.authenticated++;
+		user.token=null;
+		user.millisTokenExprired=clock.time()-1L;
+		touch(user);
+		return user;
 	}
 
 	private void touch(User user) {
-		user.millisLastActive = clock.time();
+		user.millisLastActive = now();
 		user.version++;
 	}
 
@@ -113,7 +113,7 @@ public final class Tracker {
 
 	public Product constitute(Name product, User originator) {
 		expectRegistered(originator);
-		expectActivated(originator);
+		expectAuthenticated(originator);
 		expectRegular(product);
 		stressNewProduct(originator);
 		Product p = new Product(1);
@@ -129,7 +129,7 @@ public final class Tracker {
 	
 	public Product connect(Product product, Integration endpoint, User originator) {
 		expectRegistered(originator);
-		expectActivated(originator);
+		expectAuthenticated(originator);
 		expectOriginMaintainer(product, originator);
 		expectCanConnect(product);
 		stressDoConnect(product, originator);
@@ -148,7 +148,7 @@ public final class Tracker {
 	
 	public Product disconnect(Product product, Name integration, User originator) {
 		expectRegistered(originator);
-		expectActivated(originator);
+		expectAuthenticated(originator);
 		expectOriginMaintainer(product, originator);
 		stressDoConnect(product, originator);
 		Integration endpoint = new Integration(integration, null);
@@ -188,7 +188,7 @@ public final class Tracker {
 
 	private Area compart(Name product, Name area, User originator) {
 		expectRegistered(originator);
-		expectActivated(originator);
+		expectAuthenticated(originator);
 		if (area.isEditable()) {
 			expectRegular(area);
 		}
@@ -216,7 +216,7 @@ public final class Tracker {
 
 	public Task relocate(Task task, Area to, User originator) {
 		expectNoBoard(task.area);
-		expectActivated(originator);
+		expectAuthenticated(originator);
 		if (task.area.name.isUnknown()) {
 			expectMaintainer(to, originator); // pull from ~
 		} else {
@@ -236,7 +236,7 @@ public final class Tracker {
 
 	public Version tag(Product product, Name version, User originator) {
 		expectRegistered(originator);
-		expectActivated(originator);
+		expectAuthenticated(originator);
 		if (version.isEditable()) {
 			expectRegular(version);
 		}
@@ -286,7 +286,7 @@ public final class Tracker {
 
 	private Task report(Product product, Motive motive, Purpose purpose, Gist gist, User reporter, Area area, Version version, boolean exploitable) {
 		if (!area.isOpen()) {
-			expectActivated(reporter);
+			expectAuthenticated(reporter);
 			expectMaintainer(area, reporter);
 		}
 		expectCanReport(reporter);
@@ -304,7 +304,7 @@ public final class Tracker {
 		}
 		task.base = version;
 		task.reporter = reporter.name;
-		task.reported = date(clock.time());
+		task.reported = date(now());
 		task.gist = gist;
 		task.motive = motive;
 		task.purpose = purpose;
@@ -321,7 +321,7 @@ public final class Tracker {
 	
 	public Task attach(Task task, User initiator, Attachments attachments) {
 		if (!task.area.isOpen()) {
-			expectActivated(initiator);
+			expectAuthenticated(initiator);
 			expectMaintainer(task.area, initiator);
 		}
 		stressDoAttach(task, initiator);
@@ -336,7 +336,7 @@ public final class Tracker {
 	private int xp(Task task, int base) {
 		if (task.reporter.equalTo(task.solver))
 			return 0; // prevent XP mining by adding and resolving tasks using same user
-		Date today = date(clock.time());
+		Date today = date(now());
 		int age = today.daysSince(task.reported);
 		if (age <= 0)
 			return 0; // prevent XP mining by adding and resolving tasks using different users
@@ -391,12 +391,12 @@ public final class Tracker {
 
 	private Task solve(Task task, User by, Gist conclusion) {
 		expectRegistered(by);
-		expectActivated(by);
+		expectAuthenticated(by);
 		expectUnsolved(task);
 		stressDoSolve(task, by);
 		task = task.clone();
 		task.solver = by.name;
-		task.resolved = date(clock.time());
+		task.resolved = date(now());
 		task.conclusion = conclusion;
 		return task;
 	}
@@ -404,7 +404,7 @@ public final class Tracker {
 	/* User voting */
 
 	public Task emphasise(Task task, User voter) {
-		long now = clock.time();
+		long now = now();
 		if (voter.canEmphasise(now) && task.canBeEmphasisedBy(voter.name)) {
 			voter.emphasised(now);
 			task = task.clone();
@@ -416,7 +416,7 @@ public final class Tracker {
 
 	public Poll poll(Matter matter, Area area, User initiator, User affected) {
 		expectRegistered(initiator);
-		expectActivated(initiator);
+		expectAuthenticated(initiator);
 		if (matter != participation) {
 			expectMaintainer(area, initiator);
 		}
@@ -428,7 +428,7 @@ public final class Tracker {
 		poll.matter = matter;
 		poll.initiator = initiator.name;
 		poll.affected = affected.name;
-		poll.start = date(clock.time());
+		poll.start = date(now());
 		poll.outcome = Outcome.unsettled;
 		poll.consenting = Names.empty();
 		poll.dissenting = Names.empty();
@@ -447,7 +447,7 @@ public final class Tracker {
 
 	private Poll vote(Poll poll, User voter, boolean consent) {
 		expectRegistered(voter);
-		expectActivated(voter);
+		expectAuthenticated(voter);
 		if (poll.canVote(voter.name) && (
 				consent && !poll.consenting.contains(voter.name)
 			|| !consent && !poll.dissenting.contains(voter.name))) {
@@ -469,7 +469,7 @@ public final class Tracker {
 	}
 
 	private void settle(Poll poll) {
-		poll.end = date(clock.time());
+		poll.end = date(now());
 		boolean accepted = poll.isAccepted();
 		poll.outcome = accepted ? consent : dissent;
 		if (!accepted)
@@ -491,7 +491,7 @@ public final class Tracker {
 
 	public Task pursue(Task task, User user) {
 		expectRegistered(user);
-		expectActivated(user);
+		expectAuthenticated(user);
 		expectCanBeInvolved(user, task);
 		if (task.engagedBy.contains(user) || !task.pursuedBy.contains(user)) {
 			stressDoList(task, user);
@@ -505,7 +505,7 @@ public final class Tracker {
 
 	public Task abandon(Task task, User user) {
 		expectRegistered(user);
-		expectActivated(user);
+		expectAuthenticated(user);
 		expectCanBeInvolved(user, task);
 		if (task.pursuedBy.contains(user) || task.engagedBy.contains(user)) {
 			stressDoList(task, user);
@@ -519,7 +519,7 @@ public final class Tracker {
 
 	public Task engage(Task task, User user) {
 		expectRegistered(user);
-		expectActivated(user);
+		expectAuthenticated(user);
 		expectCanBeInvolved(user, task);
 		expectMaintainer(task.area, user);
 		if (!task.engagedBy.contains(user) || task.pursuedBy.contains(user)) {
@@ -536,7 +536,7 @@ public final class Tracker {
 
 	public Task watch(Task task, User user) {
 		expectRegistered(user);
-		expectActivated(user);
+		expectAuthenticated(user);
 		expectCanWatch(user);
 		if (!task.watchedBy.contains(user)) {
 			stressDoList(task, user);
@@ -562,7 +562,7 @@ public final class Tracker {
 	/* A user's sites */
 
 	public Site launch(Name site, Template template, User owner) {
-		expectActivated(owner);
+		expectAuthenticated(owner);
 		expectNoUserSiteYet(site, owner);
 		expectCanHaveMoreSites(owner);
 		stessNewSite(owner);
@@ -574,7 +574,7 @@ public final class Tracker {
 
 	public Site restructure(Site site, Template template, User owner) {
 		expectRegistered(owner);
-		expectActivated(owner);
+		expectAuthenticated(owner);
 		expectOwner(site, owner);
 		stressDoUpdate(site, owner);
 		site = site.clone();
@@ -703,8 +703,8 @@ public final class Tracker {
 		stressAction();		
 	}
 	
-	private void stressDoActivate() {
-		stressLimit(limit("activate", ORIGIN), "Too many recent user activations.");
+	private void stressDoConfirm() {
+		stressLimit(limit("confirm", ORIGIN), "Too many recent confirm requests.");
 		stressAction();
 	}
 
@@ -765,8 +765,8 @@ public final class Tracker {
 	}
 
 	private static void expectCanReport(User reporter) {
-		if (!reporter.activated) {
-			denyTransition("Only activated users can report tasks!");
+		if (!reporter.isAuthenticated()) {
+			denyTransition("Only authenticated users can report tasks!");
 		}
 	}
 
@@ -794,15 +794,9 @@ public final class Tracker {
 		}
 	}
 
-	private static void expectNotActivated(User user) {
-		if (user.activated) {
-			denyTransition("User account already activated!");
-		}
-	}
-
-	private static void expectActivated(User user) {
-		if (!user.activated) {
-			denyTransition("User account must be activated first!");
+	private static void expectAuthenticated(User user) {
+		if (!user.isAuthenticated()) {
+			denyTransition("User account must be authenticated first!");
 		}
 	}
 	
@@ -813,8 +807,8 @@ public final class Tracker {
 	}
 
 	private static void expectCanWatch(User user) {
-		if (!user.activated) {
-			denyTransition("Only active users can watch");
+		if (!user.isAuthenticated()) {
+			denyTransition("Only authenticated users can watch");
 		}
 		if (!user.canWatch()) {
 			denyTransition("User has reached maximum number of watched tasks. Unwatch tasks or increase limit by closing tasks.");
@@ -825,5 +819,7 @@ public final class Tracker {
 		throw new IllegalStateException(reason);
 	}
 
-
+	private long now() {
+		return clock.time();
+	}
 }

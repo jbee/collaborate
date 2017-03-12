@@ -1,5 +1,6 @@
 package vizio.model;
 
+@UseCode
 public enum Purpose {
 
 	clarification, // confirming defects, localizing area, exploring ideas

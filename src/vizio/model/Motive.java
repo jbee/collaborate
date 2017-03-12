@@ -1,5 +1,6 @@
 package vizio.model;
 
+@UseCode
 public enum Motive {
 
 	/**

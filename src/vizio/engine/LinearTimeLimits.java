@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Keeps track of {@link Limit}s.
  * 
  * A limit can be {@link #stress(Limit)}ed or exclusively {@link #alloc(Limit)}ated.
- * When allocated any further attempt to stress or allocate will cause a {@link ConcurrentModification}
+ * When allocated any further attempt to stress or allocate will cause a {@link ConcurrentUsage}
  * till the allocated {@link Limit} is {@link #free(Limit)}ed again. 
  * 
  * This way {@link Limits} can act as concurrent modification detection.
@@ -38,10 +38,10 @@ public final class LinearTimeLimits implements Limits {
 	}
 
 	@Override
-	public boolean alloc(Limit l, Clock clock) throws ConcurrentModification {
+	public boolean alloc(Limit l, Clock clock) throws ConcurrentUsage {
 		LimitsPerPeriod limits = periodLimits(l, clock);
 		if (!limits.allocated.compareAndSet(false, true)) {
-			throw new ConcurrentModification(l);
+			throw new ConcurrentUsage(l);
 		}
 		return limits.stress(clock.time());
 	}

@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -63,9 +64,9 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	 * Applies the changes to the DB.
 	 * 
 	 * @return a list of changed entities each given as a pair: before and after the change 
-	 * @throws ConcurrentModification when trying to change an entity already changed by an ongoing transaction (in another thread)
+	 * @throws ConcurrentUsage when trying to change an entity already changed by an ongoing transaction (in another thread)
 	 */
-	public static Changelog run(Change set, DB db, Clock clock, Limits limits) throws ConcurrentModification {
+	public static Changelog run(Change set, DB db, Clock clock, Limits limits) throws ConcurrentUsage {
 		final long now = max(lastTick.incrementAndGet(), clock.time());
 		final Clock fixedNow = () -> now;
 		try (Transaction tx = new Transaction(fixedNow, limits, db)) {
@@ -116,7 +117,10 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 		Object res = possiblyChanged(id);
 		if (res != null)
 			return (T) res;		
-		T e = reader.convert(this, txr.get(id));
+		ByteBuffer buf = txr.get(id);
+		if (buf == null)
+			throw new Change.EntityNotFound(id);
+		T e = reader.convert(this, buf);
 		loaded.put(id, e);
 		return e;
 	}
@@ -133,18 +137,36 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 			putFields(op, e); // "auto"-update fields with updates
 			changed.put(id, e);
 			changeTypes.computeIfAbsent(id, (id_) -> new ArrayList<>()).add(op);
+			putUser(e, id);
+		}
+	}
+
+	/**
+	 * Since users are normally not explicitly "put" we do keep track of loaded users.
+	 * They might have changed in place (except when they are stored explicitly).   
+	 */
+	private void putUser(Entity<?> e, final ID id) {
+		if (loadedUsers.isEmpty()) {
+			if (e instanceof User) {
+				trackOriginator(id); // registered user
+			}
+		} else {
 			for (User user : loadedUsers.values()) {
 				if (user.version > user.initalVersion) {
 					final ID userID = user.uniqueID();
-					if (originator == null) {
-						originator = userID;
-					} else if (!userID.equalTo(originator)){
-						throw new IllegalArgumentException("All changes within one transation must originate from same user.");
-					}
+					trackOriginator(userID);
 					changed.put(userID, user);
 					loadedUsers.remove(user);	
 				}
 			}
+		}
+	}
+
+	private void trackOriginator(final ID userID) {
+		if (originator == null) {
+			originator = userID;
+		} else if (!userID.equalTo(originator)){
+			throw new IllegalArgumentException("All changes within one transation must originate from same user.");
 		}
 	}
 
@@ -209,7 +231,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 			throw new IllegalStateException("Acting user has to be updated during a transaction!");
 		if (changed.isEmpty())
 			return Changelog.EMPTY;
-		ByteBuffer buf = ByteBuffer.allocateDirect(1024);
+		ByteBuffer buf = ByteBuffer.allocateDirect(4096);
 		try (TxW tx = db.write()) {
 			Changelog log = writeChanges(buf, tx);
 			writeEventLog(tx, log, buf);
@@ -227,7 +249,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 			res[i++] = new Changelog.Entry(loaded.get(id), changeTypes.get(id).toArray(new Change.Operation[0]), val);
 			switch (id.type) {
 			case Area:    write(tx, id, (Area)val, area2bin, buf); break;
-			case Poll:    write(tx, id, (Poll)val, poll2bin, buf); break;
+			case QPoll:    write(tx, id, (Poll)val, poll2bin, buf); break;
 			case Site:    write(tx, id, (Site)val, site2bin, buf); break;
 			case Task:    write(tx, id, (Task)val, task2bin, buf); break;
 			case User:    write(tx, id, (User)val, user2bin, buf); break;
@@ -251,7 +273,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 			if (history == null) {
 				buf.putLong(timestamp).putLong(timestamp).flip();
 			} else {
-				if (history.remaining() >= 32) {
+				if (history.remaining() >= 64) {
 					buf.putLong(history.getLong());
 					history.getLong(); // throw away oldest
 					buf.put(history).putLong(timestamp).flip();
@@ -280,7 +302,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	}
 	
 	@Override
-	public boolean stress(Limit limit, Clock clock) throws ConcurrentModification {
+	public boolean stress(Limit limit, Clock clock) throws ConcurrentUsage {
 		if (!limit.isSpecific()) {
 			return limits.stress(limit, clock);
 		}
@@ -288,7 +310,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	}
 
 	@Override
-	public boolean alloc(Limit limit, Clock clock) throws ConcurrentModification {
+	public boolean alloc(Limit limit, Clock clock) throws ConcurrentUsage {
 		if (allocated.contains(limit))
 			return true;
 		if (limits.alloc(limit, clock)) {

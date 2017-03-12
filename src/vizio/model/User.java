@@ -10,13 +10,16 @@ public final class User extends Entity<User> {
 	public Name name;
 	// account
 	public Email email;
-	public byte[] md5;
-	public boolean activated;
+	public int authenticated; // count
+	public byte[] token; // mem only
+	public byte[] encryptedToken; // persisted
+	public long millisTokenExprired;
 	
 	// user data
 	public Names sites;
 	public int watches; // n tasks
-
+	public Mail.Delivery notification;
+	
 	// change log
 	public long millisLastActive;
 	
@@ -52,9 +55,13 @@ public final class User extends Entity<User> {
 	}
 
 	public boolean canEmphasise(long now) {
-		return activated
+		return isAuthenticated()
 			&&	now - millisEmphasised > emphDelay()
 			&& (emphasisedToday < emphPerDay() || date(now).after(date(millisEmphasised)));
+	}
+
+	public boolean isAuthenticated() {
+		return authenticated > 0 && name.isEditable();
 	}
 
 	public void emphasised(long now) {

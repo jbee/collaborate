@@ -3,6 +3,9 @@ package vizio.engine;
 import vizio.model.Identifier;
 import vizio.model.Name;
 
+/**
+ * A limit is an {@link Identifier} for a counter. 
+ */
 public final class Limit extends Identifier<Limit> {
 
 	private static final byte[] DIVIDER = {'#'};

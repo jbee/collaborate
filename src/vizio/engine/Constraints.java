@@ -197,7 +197,11 @@ public final class Constraints {
 	private static Object[] typed(Property p, String[] val) {
 		Object[] res = new Object[val.length];
 		for (int i = 0; i < val.length; i++) {
-			res[i] = typed(p, val[i]);
+			try {
+				res[i] = typed(p, val[i]);
+			} catch (RuntimeException e) {
+				throw new MalformedConstraint("Failed to parse property "+p+" value: "+val[i], e);
+			}
 		}
 		return res;
 	}
@@ -210,12 +214,12 @@ public final class Constraints {
 		case property : return p.value(val);
 		case text     : return Gist.gist(val);
 		case flag     : return "true|yes|on|1".matches(val) ? Boolean.TRUE : Boolean.FALSE;
-		default       : throw new MalformedConstraint("Unsupported type: "+p.type);
+		default       : throw new MalformedConstraint("Unsupported value type: "+p.type);
 		}
 	}
 
 	private static String[] parseValue(String value) {
-		if ("{}".equals(value))
+		if ("{}".equals(value) || value == null || value.isEmpty())
 			return new String[0];
 		if (value.charAt(0) == '{') {
 			value = value.substring(1, value.lastIndexOf('}'));
@@ -451,6 +455,11 @@ public final class Constraints {
 		public MalformedConstraint(String message) {
 			super(message);
 		}
+
+		public MalformedConstraint(String message, Throwable cause) {
+			super(message, cause);
+		}
+		
 	}
 
 }

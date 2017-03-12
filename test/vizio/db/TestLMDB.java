@@ -5,10 +5,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static vizio.engine.Change.activate;
+import static vizio.engine.Change.authenticate;
 import static vizio.engine.Change.launch;
 import static vizio.engine.Change.register;
-import static vizio.engine.Tracker.activationKey;
 import static vizio.model.Email.email;
 import static vizio.model.Name.as;
 import static vizio.model.Template.template;
@@ -87,7 +86,6 @@ public class TestLMDB {
 			u1.name = as("user1");
 			u1.email = email("pass1");
 			u1.sites = Names.empty();
-			u1.md5 = "foo".getBytes();
 			try (TxW tx = db.write()) {
 				ByteBuffer buf = ByteBuffer.allocateDirect(1024);
 				Convert.site2bin.convert(s1, buf);
@@ -131,20 +129,24 @@ public class TestLMDB {
 			DB db = new LMDB(env);
 			Name user = as("abc");
 			Name site = as("def");
-			Change change = 
-					register(user, email("test@example.com"), "foo", "salt")
-					.and(activate(user, activationKey("foo","salt")))
-					.and(launch(user, site, template("ghi")));
-			
 			Clock realTime = () -> System.currentTimeMillis();
-			Changelog changed = Transaction.run(change, db , realTime, new LinearTimeLimits(5));
+			LinearTimeLimits limits = new LinearTimeLimits(5);
+
+			Change change = register(user, email("test@example.com"));
+			Changelog changed = Transaction.run(change, db , realTime, limits);
 			
-			assertEquals(2, changed.length());
+			assertEquals(1, changed.length());
 			
-			assertArrayEquals(new Change.Operation[]{Change.Operation.register, Change.Operation.activate}, changed.get(0).transitions);
+			assertArrayEquals(new Change.Operation[]{Change.Operation.register}, changed.get(0).transitions);
 			assertNull(changed.get(0).before);
 			assertNotNull(changed.get(0).after);
 
+			User usr = (User)changed.get(0).after;
+			change = authenticate(user, usr.token).and(launch(user, site, template("ghi")));
+			changed = Transaction.run(change, db, realTime, limits);
+					
+			assertEquals(2, changed.length());
+			
 			assertArrayEquals(new Change.Operation[]{Change.Operation.launch}, changed.get(1).transitions);
 			assertNull(changed.get(1).before);
 			assertNotNull(changed.get(1).after);
@@ -174,8 +176,7 @@ public class TestLMDB {
 			assertEquals(changed.timestamp, e.timestamp);
 			assertEquals(ID.userId(user), e.originator);
 			assertEquals(2, e.cardinality());
-			assertEquals(Change.Operation.register, e.transition(0).ops[0]);
-			assertEquals(Change.Operation.activate, e.transition(0).ops[1]);
+			assertEquals(Change.Operation.authenticate, e.transition(0).ops[0]);
 			assertEquals(Change.Operation.launch, e.transition(1).ops[0]);
 		}		
 	}

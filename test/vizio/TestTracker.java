@@ -32,8 +32,8 @@ public class TestTracker {
 	public void heatAddsHalfOfWhatIsMissing() {
 		long now = currentTimeMillis();
 		Date today = date(now);
-		User user = tracker.register(as("moos"), email("moos@example.com"), "xxx", "salt");
-		user = tracker.activate(user, user.md5);
+		User user = tracker.register(null, as("moos"), email("moos@example.com"));
+		user = tracker.authenticate(user, user.token);
 		Product product = tracker.constitute(as("test"), user);
 		Task task = tracker.reportDefect(product, gist("A problem"), user, product.somewhere, product.somewhen, false);
 
@@ -45,38 +45,38 @@ public class TestTracker {
 		assertTrue(user.millisEmphasised >= before);
 		assertFalse(user.canEmphasise(currentTimeMillis()));
 
-		user = tracker.register(as("user2"), email("user2@example.com"), "xxx", "salt");
-		user = tracker.activate(user, user.md5);
+		user = tracker.register(null, as("user2"), email("user2@example.com"));
+		user = tracker.authenticate(user, user.token);
 		task = tracker.emphasise(task, user);
 		assertEquals(75, task.temperature(today));
 
-		user = tracker.register(as("user3"), email("user3@example.com"), "xxx", "salt");
-		user = tracker.activate(user, user.md5);
+		user = tracker.register(null, as("user3"), email("user3@example.com"));
+		user = tracker.authenticate(user, user.token);
 		task = tracker.emphasise(task, user);
 		assertEquals(87, task.temperature(today));
 
-		user = tracker.register(as("user4"), email("user4@example.com"), "xxx", "salt");
-		user = tracker.activate(user, user.md5);
+		user = tracker.register(null, as("user4"), email("user4@example.com"));
+		user = tracker.authenticate(user, user.token);
 		task = tracker.emphasise(task, user);
 		assertEquals(93, task.temperature(today));
 
-		user = tracker.register(as("user5"), email("user5@example.com"), "xxx", "salt");
-		user = tracker.activate(user, user.md5);
+		user = tracker.register(null, as("user5"), email("user5@example.com"));
+		user = tracker.authenticate(user, user.token);
 		task = tracker.emphasise(task, user);
 		assertEquals(96, task.temperature(today));
 
-		user = tracker.register(as("user6"), email("user6@example.com"), "xxx", "salt");
-		user = tracker.activate(user, user.md5);
+		user = tracker.register(null, as("user6"), email("user6@example.com"));
+		user = tracker.authenticate(user, user.token);
 		task = tracker.emphasise(task, user);
 		assertEquals(98, task.temperature(today));
 
-		user = tracker.register(as("user7"), email("user8@example.com"), "xxx", "salt");
-		user = tracker.activate(user, user.md5);
+		user = tracker.register(null, as("user7"), email("user8@example.com"));
+		user = tracker.authenticate(user, user.token);
 		task = tracker.emphasise(task, user);
 		assertEquals(99, task.temperature(today));
 
-		user = tracker.register(as("user9"), email("user10@example.com"), "xxx", "salt");
-		user = tracker.activate(user, user.md5);
+		user = tracker.register(null, as("user9"), email("user10@example.com"));
+		user = tracker.authenticate(user, user.token);
 		task = tracker.emphasise(task, user);
 		assertEquals(100, task.temperature(today));
 	}

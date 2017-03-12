@@ -140,7 +140,7 @@ public class HTMLRenderer {
 		}
 		out.append("</h5>");
 		renderUsersList(task);
-		if (viewer.activated) {
+		if (viewer.isAuthenticated()) {
 			if (task.pursuedBy.contains(viewer) || task.engagedBy.contains(viewer)) {
 				renderTaskActionLink(task, "btn", Action.abandon, "&minus;");
 			} else {

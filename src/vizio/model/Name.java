@@ -75,7 +75,7 @@ public final class Name extends Identifier<Name> {
 	}
 
 	/**
-	 * @return editable names can be created by users.
+	 * @return editable names can be created by users. An email is an editable name as well.
 	 */
 	public boolean isEditable() {
 		return !isNonEditable();

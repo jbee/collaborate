@@ -2,6 +2,7 @@ package vizio.model;
 
 public final class Poll extends Entity<Poll> {
 
+	@UseCode
 	public static enum Matter {
 		// on maintainers
 		participation, resignation,

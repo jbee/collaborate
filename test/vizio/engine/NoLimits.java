@@ -9,12 +9,12 @@ public class NoLimits implements Limits {
 	}
 
 	@Override
-	public boolean stress(Limit l, Clock clock) throws ConcurrentModification {
+	public boolean stress(Limit l, Clock clock) throws ConcurrentUsage {
 		return true;
 	}
 
 	@Override
-	public boolean alloc(Limit l, Clock clock) throws ConcurrentModification {
+	public boolean alloc(Limit l, Clock clock) throws ConcurrentUsage {
 		return true;
 	}
 

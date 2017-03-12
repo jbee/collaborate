@@ -2,6 +2,7 @@ package vizio.model;
 
 import static java.util.Arrays.asList;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import vizio.util.Array;
@@ -50,4 +51,19 @@ public final class Attachments implements Iterable<URL>, Comparable<Attachments>
 	private Attachments wrap(URL[] res) {
 		return urls == res ? this : new Attachments(res);
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		return obj instanceof Attachments && equalTo((Attachments) obj);
+	}
+	
+	@Override
+	public int hashCode() {
+		return Arrays.hashCode(urls);
+	}
+
+	public boolean equalTo(Attachments other) {
+		return Arrays.equals(urls, other.urls);
+	}
+	
 }

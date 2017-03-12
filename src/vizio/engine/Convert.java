@@ -15,11 +15,13 @@ import vizio.model.Email;
 import vizio.model.Gist;
 import vizio.model.ID;
 import vizio.model.IDN;
+import vizio.model.Mail;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
 import vizio.model.Outcome;
 import vizio.model.Poll;
+import vizio.model.UseCode;
 import vizio.model.Poll.Matter;
 import vizio.model.Product;
 import vizio.model.Purpose;
@@ -46,14 +48,23 @@ public interface Convert<I,O> {
 	 */
 	O convert(I from, ByteBuffer buf);
 
+	
+	Motive[] motives = Motive.values();
+	Outcome[] outcomes = Outcome.values();
+	Purpose[] purposes = Purpose.values();
+	Status[] status = Status.values();
+	Matter[] matters = Matter.values();
+	Mail.Delivery[] deliveries = Mail.Delivery.values();
+	Change.Operation[] operations = Change.Operation.values();
+	
 	Convert<Tx, User> bin2user = (tx,from) -> { 
 		User u = new User(from.getInt());
 		u.name = bin2name(from);
 		u.email = Email.fromBytes(getShortBytes(from));
-		byte[] md5 = new byte[from.get()];
-		from.get(md5);
-		u.md5 = md5;
-		u.activated = from.get() > 0;
+		u.notification = bin2enum(deliveries, from);
+		u.authenticated = from.getInt();
+		u.encryptedToken = getShortBytes(from);
+		u.millisTokenExprired = from.getLong();
 		u.sites = bin2names(from);
 		u.watches = from.getInt();
 		u.millisLastActive = from.getLong();
@@ -70,9 +81,10 @@ public interface Convert<I,O> {
 		to.putInt(u.version);
 		name2bin(u.name, to);
 		putShortBytes(u.email, to);
-		to.put((byte) u.md5.length);
-		to.put(u.md5);
-		to.put((byte) (u.activated ? 1 : 0));
+		enum2bin(u.notification, to);
+		to.putInt(u.authenticated);
+		putShortBytes(u.encryptedToken, to);
+		to.putLong(u.millisTokenExprired);
 		names2bin(u.sites, to);
 		to.putInt(u.watches);
 		to.putLong(u.millisLastActive);
@@ -110,9 +122,9 @@ public interface Convert<I,O> {
 		t.reporter = bin2name(from);
 		t.reported = bin2date(from);
 		t.gist = bin2gist(from);
-		t.motive = bin2enum(Motive.class, from);
-		t.purpose = bin2enum(Purpose.class, from);
-		t.status = bin2enum(Status.class, from);
+		t.motive = bin2enum(motives, from);
+		t.purpose = bin2enum(purposes, from);
+		t.status = bin2enum(status, from);
 		t.changeset = bin2names(from);
 		t.exploitable = from.get() > 0;
 		t.basis = bin2IDN(from);
@@ -206,7 +218,7 @@ public interface Convert<I,O> {
 		Poll p = new Poll(from.getInt());
 		p.serial = new IDN(from.getInt());
 		p.area = tx.area(bin2name(from), bin2name(from));
-		p.matter = bin2enum(Matter.class, from);
+		p.matter = bin2enum(matters, from);
 		p.affected = bin2name(from);
 		p.initiator = bin2name(from);
 		p.start = bin2date(from);
@@ -214,7 +226,7 @@ public interface Convert<I,O> {
 		p.dissenting = bin2names(from);
 		p.expiry = bin2date(from);
 		p.end = bin2date(from);
-		p.outcome = bin2enum(Outcome.class, from);
+		p.outcome = bin2enum(outcomes, from);
 		return p;
 	};
 
@@ -245,8 +257,8 @@ public interface Convert<I,O> {
 		a.tasks = from.getInt();
 		a.exclusive = from.get() > 0;
 		a.board = from.get() > 0;
-		a.motive = bin2enum(Motive.class, from);
-		a.purpose = bin2enum(Purpose.class, from);
+		a.motive = bin2enum(motives, from);
+		a.purpose = bin2enum(purposes, from);
 		return a;
 	};
 
@@ -275,7 +287,7 @@ public interface Convert<I,O> {
 			int sn = from.get();
 			Change.Operation[] transitions = new Change.Operation[sn];
 			for (int j = 0; j < sn; j++) {
-				transitions[j] = Mapping.bin2trans(from.get());
+				transitions[j] = bin2enum(operations, from);
 			}
 			changes[i] = new Event.Transition(entity, transitions);
 		}
@@ -290,7 +302,7 @@ public interface Convert<I,O> {
 			id2bin(c.entity, to);
 			to.put((byte) c.ops.length);
 			for (Change.Operation t : c.ops) {
-				to.put((byte) t.code);
+				enum2bin(t, to);
 			}
 		}
 		return to;
@@ -308,23 +320,6 @@ public interface Convert<I,O> {
 	 * Utility helpers
 	 */
 	
-	final class Mapping {
-		private static final Operation[] transitions = new Operation[128];
-
-		static {
-			for (Operation t : Operation.values()) {
-				transitions[t.code] = t;
-			}
-		}
-		
-		public static Operation bin2trans(byte code) {
-			Operation t = transitions[code];
-			if (t != null)
-				return t;
-			throw new IllegalArgumentException("No type for code: "+code);
-		}	
-	}
-
 	static ID bin2id(ByteBuffer from) {
 		return ID.fromBytes(getByteBytes(from));
 	}
@@ -358,12 +353,31 @@ public interface Convert<I,O> {
 	}
 
 	static <E extends Enum<E>> void enum2bin(E value, ByteBuffer to) {
-		to.putShort((short) (value == null ? -1 : value.ordinal()));
+		if (value == null) {
+			to.put((byte)-1);
+		} else if (value.getClass().isAnnotationPresent(UseCode.class)) {
+			to.put((byte) value.name().charAt(0));
+		} else {
+			to.put((byte) value.ordinal());
+		}
 	}
 
-	static <E extends Enum<E>> E bin2enum(Class<E> type, ByteBuffer from) {
-		short ordinal = from.getShort();
-		return ordinal < 0 ? null : type.getEnumConstants()[ordinal];
+	static <E extends Enum<E>> E bin2enum(E[] constants, ByteBuffer from) {
+		byte code = from.get();
+		if (code < 0)
+			return null;
+		// the extra check for range above 65 allows to introduce @UseCode later on 
+		// ordinal values will most likely be below 64 and codes will definitely be above 64
+		// so when we move from ordinal to code we can read both ordinal and code correctly
+		// the next store will then change to code
+		if (code > 64 && constants[0].getClass().isAnnotationPresent(UseCode.class)) {
+			for (E c : constants) {
+				if (c.name().charAt(0) == code)
+					return c;
+			}
+			return null;
+		} 
+		return constants[code];
 	}
 
 	static void date2bin(Date date, ByteBuffer to) {
@@ -449,10 +463,13 @@ public interface Convert<I,O> {
 	}
 	
 	static void putShortBytes(Bytes seq, ByteBuffer to) {
-		if (seq == null) {
+		putShortBytes(seq == null ? null : seq.bytes(), to);
+	}
+
+	static void putShortBytes(byte[] bytes, ByteBuffer to) {
+		if (bytes == null) {
 			to.putShort((short) -1);
 		} else {
-			byte[] bytes = seq.bytes();
 			to.putShort((short) bytes.length);
 			if (bytes.length > 0) {
 				to.put(bytes);
