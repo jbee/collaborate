@@ -18,6 +18,7 @@ public final class Area extends Entity<Area> {
 	 * Do only maintainers get to stress?
 	 */
 	public boolean exclusive;
+	public boolean abandoned;
 
 	/**
 	 * {@link Poll}s have a {@link Poll#serial} that is unique within the affected {@link Area}.
@@ -61,5 +62,10 @@ public final class Area extends Entity<Area> {
 	@Override
 	public ID computeID() {
 		return ID.areaId(product, name);
+	}
+	
+	@Override
+	public Name product() {
+		return product;
 	}
 }

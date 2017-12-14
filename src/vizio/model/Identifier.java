@@ -28,7 +28,7 @@ public abstract class Identifier<T extends Identifier<T>> extends Bytes implemen
 		}
 		return -1;
 	}
-
+	
 	@Override
 	public final int length() {
 		return symbols.length;

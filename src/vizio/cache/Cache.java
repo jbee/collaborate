@@ -1,25 +1,44 @@
-package vizio.engine;
+package vizio.cache;
 
 import java.util.concurrent.Future;
 
+import vizio.engine.Changes;
+import vizio.model.Names;
 import vizio.model.Task;
 
+/**
+ * The {@link Cache} is a fast lookup mechanism for computing lists of
+ * {@link Task}s with certain properties described by {@link Criteria}.
+ * 
+ * Given a list of {@link Criteria} the cache delivers a result set of
+ * {@link Tasks}. The data is consistent but not necessarily updated with all
+ * changes already persisted.
+ * 
+ * The {@link #invalidate(Changes)} method is used to update the cache with
+ * changes that already have occurred (are persisted).
+ */
 public interface Cache {
 
 	final class Tasks {
 		
+		public static final Tasks NONE = new Tasks(new Task[0], 0, Names.empty());
+		
 		public final Task[] list;
-		public final int maxLength;
-		public Tasks(Task[] list, int maxLength) {
+		public final int totalMatches;
+		public final Names unindexedProducts;
+		public Tasks(Task[] list, int totalMatches, Names unindexedProducts) {
 			super();
 			this.list = list;
-			this.maxLength = maxLength;
+			this.totalMatches = totalMatches;
+			this.unindexedProducts = unindexedProducts;
 		}
 	}
+
+	Tasks CANCELLED = new Tasks(new Task[0], -1, Names.empty());
 	
-	Future<Tasks> tasks(Constraints constraints);
+	Future<Tasks> tasks(Criteria constraints);
 	
-	void invalidate(Changelog log);
+	Future<Void> invalidate(Changes changes);
 	
 	// Properties of the cache:
 	// - cache per product
@@ -28,7 +47,7 @@ public interface Cache {
 	// - values for a key are not sorted
 	// - insert adds to first empty (null) slot (might inc length if all slots are taken; no remove occured)
 	// - remove simply sets a slot to empty (null)
-	// - update changes the object (task) not the array slot
+	// - update changes the object (task) in place - not the array slot (therefore write do copy before changing the object)
 	
 	/*
 	 * 
@@ -46,12 +65,12 @@ Is there a situation when one has to know the old value to find the tasks that n
 It should be that such updates are updates to the task itself in what case the task is updated from DB by setting all fields to new values (in-place) to avoid finding all usages in the different indexes.
 
 changes to a task that require updating that particular task in cache
-- adding new tasks
 - solving a task
 - attach (an URL)
 - relocate
 - adding/removing user from one of the tasks user lists (approchedBy, watchedBy, enlistedBy)
 - emphasise
+- (adding new tasks)
 
 changes that might have an effect on tasks:
 - leave (maintainer leaves area)

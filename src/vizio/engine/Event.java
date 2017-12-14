@@ -26,6 +26,8 @@ public final class Event implements Comparable<Event>, Iterable<Event.Transition
 	 * 
 	 * The neat by-effect of this trick is that keys are chronological order and time-slices can
 	 * easily be extracted using cursors.
+	 * 
+	 * This class will expect the {@link Event} creating class to take care of this "trick".
 	 */
 	public final long timestamp; // also the key
 	public final ID originator; 

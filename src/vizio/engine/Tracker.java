@@ -16,15 +16,16 @@ import static vizio.model.Status.absolved;
 import static vizio.model.Status.dissolved;
 import static vizio.model.Status.resolved;
 import static vizio.model.Status.unsolved;
+
+import java.util.EnumMap;
+
 import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Date;
 import vizio.model.Email;
-import vizio.model.Entity;
 import vizio.model.Gist;
 import vizio.model.IDN;
 import vizio.model.Mail;
-import vizio.model.Mail.Delivery;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
@@ -39,6 +40,7 @@ import vizio.model.Status;
 import vizio.model.Task;
 import vizio.model.Template;
 import vizio.model.User;
+import vizio.model.User.Notifications;
 import vizio.model.Version;
 import vizio.util.Array;
 
@@ -73,9 +75,10 @@ public final class Tracker {
 		user = new User(1);
 		user.name = name;
 		user.email = email;
-		user.notification=Mail.Delivery.daily;
+		user.notifications=new EnumMap<>(Notifications.class);
 		user.authenticated = 0;
 		user.sites = Names.empty();
+		user.contributesToProducts = Names.empty();
 		user.watches = 0;
 		user.millisLastActive=now(); // cannot use touch as version should stay same
 		confirmOTP(user);
@@ -129,17 +132,16 @@ public final class Tracker {
 		return user;
 	}
 	
-	public User configure(User user, Delivery notification) {
+	public User configure(User user, EnumMap<Notifications, Mail.Delivery> notifications) {
 		stressDoConfiguration(user);
 		user = user.clone();
-		user.notification = notification == null ? Delivery.never : notification;
+		user.notifications = notifications == null ? new EnumMap<>(Notifications.class) : notifications;
 		touch(user);
 		return user;
 	}
 
 	private void touch(User user) {
-		user.millisLastActive = now();
-		user.version++;
+		user.touch(now());
 	}
 
 	/* Products */
@@ -156,6 +158,7 @@ public final class Tracker {
 		p.origin = compart(p.name, Name.ORIGIN, originator);
 		p.somewhere = compart(p.name, Name.UNKNOWN, originator);
 		p.somewhen = tag(p, Name.UNKNOWN, originator);
+		originator.contributesToProducts = originator.contributesToProducts.add(product);
 		touch(originator);
 		return p;
 	}
@@ -232,6 +235,7 @@ public final class Tracker {
 		a.maintainers=new Names(originator.name);
 		a.tasks = 0;
 		a.polls = 0;
+		originator.contributesToProducts = originator.contributesToProducts.add(product);
 		touch(originator);
 		return a;
 	}
@@ -348,6 +352,7 @@ public final class Tracker {
 		task.watchedBy = new Names(reporter.name);
 		task.changeset = Names.empty();
 		task.attachments = Attachments.NONE;
+		reporter.contributesToProducts = reporter.contributesToProducts.add(task.product.name);
 		touch(reporter);
 		return task;
 	}
@@ -360,6 +365,7 @@ public final class Tracker {
 		stressDoAttach(task, initiator);
 		task = task.clone();
 		task.attachments = attachments;
+		initiator.contributesToProducts = initiator.contributesToProducts.add(task.product.name);
 		touch(initiator);
 		return task;
 	}
@@ -393,7 +399,6 @@ public final class Tracker {
 		task = solve(task, by, conclusion);
 		task.status = absolved;
 		by.absolved++;
-		touch(by);
 		return task;
 	}
 
@@ -403,7 +408,6 @@ public final class Tracker {
 		task.status = resolved;
 		by.xp += xp(task, 2);
 		by.resolved++;
-		touch(by);
 		if (!task.changeset.isEmpty()) { // publishing is something that is resolved when its done
 			task.base = task.base.clone();
 			task.base.changeset = task.changeset;
@@ -418,7 +422,6 @@ public final class Tracker {
 		task.status = dissolved;
 		by.xp += xp(task, 5);
 		by.dissolved++;
-		touch(by);
 		return task;
 	}
 
@@ -431,6 +434,8 @@ public final class Tracker {
 		task.solver = by.name;
 		task.resolved = date(now());
 		task.conclusion = conclusion;
+		by.contributesToProducts = by.contributesToProducts.add(task.product.name);
+		touch(by);
 		return task;
 	}
 
@@ -460,12 +465,13 @@ public final class Tracker {
 		poll.serial = new IDN(poll.area.polls);
 		poll.matter = matter;
 		poll.initiator = initiator.name;
-		poll.affected = affected.name;
+		poll.affected = matter == Matter.abandonment ? Name.ORIGIN : affected.name;
 		poll.start = date(now());
 		poll.outcome = Outcome.unsettled;
 		poll.consenting = Names.empty();
 		poll.dissenting = Names.empty();
 		poll.expiry = poll.start.plusDays(min(14, area.maintainers.count()));
+		initiator.contributesToProducts = initiator.contributesToProducts.add(area.product);
 		touch(initiator);
 		return poll;
 	}
@@ -509,6 +515,8 @@ public final class Tracker {
 			return;
 		poll.area = poll.area.clone();
 		switch (poll.matter) {
+		case abandonment:
+			poll.area.abandoned=accepted; break;
 		case inclusion:
 			poll.area.exclusive=false; break;
 		case exclusion:
@@ -531,6 +539,7 @@ public final class Tracker {
 			task = task.clone();
 			task.engagedBy = task.engagedBy.remove(user);
 			task.pursuedBy = task.pursuedBy.add(user);
+			user.contributesToProducts = user.contributesToProducts.add(task.product.name);
 			touch(user);
 		}
 		return task;
@@ -560,6 +569,7 @@ public final class Tracker {
 			task = task.clone();
 			task.engagedBy = task.engagedBy.add(user);
 			task.pursuedBy = task.pursuedBy.remove(user);
+			user.contributesToProducts = user.contributesToProducts.add(task.product.name);
 			touch(user);
 		}
 		return task;
@@ -576,6 +586,7 @@ public final class Tracker {
 			task = task.clone();
 			task.watchedBy = task.watchedBy.add(user);
 			user.watches++;
+			user.contributesToProducts = user.contributesToProducts.add(task.product.name);
 			touch(user);
 		}
 		return task;

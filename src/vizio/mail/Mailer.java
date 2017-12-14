@@ -12,5 +12,5 @@ public interface Mailer {
 	/**
 	 * Enqueues a new email for delivery as specified. 
 	 */
-	void deliver(Mail mail);
+	boolean deliver(Mail mail);
 }

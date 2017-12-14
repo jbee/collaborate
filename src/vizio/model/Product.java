@@ -48,6 +48,11 @@ public final class Product extends Entity<Product> {
 		return ID.productId(name);
 	}
 	
+	@Override
+	public Name product() {
+		return name;
+	}
+	
 	public static final class Integration {
 		public final Name name;
 		public final URL base;

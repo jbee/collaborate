@@ -1,16 +1,24 @@
 package vizio.db;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
+import org.lmdbjava.Cursor;
 import org.lmdbjava.CursorIterator;
 import org.lmdbjava.CursorIterator.IteratorType;
+import org.lmdbjava.CursorIterator.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
+import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
 import vizio.model.ID;
+import vizio.model.ID.Type;
 
 public final class LMDB implements DB {
 
@@ -32,93 +40,81 @@ public final class LMDB implements DB {
 	}
 	
 	@Override
-	public TxW write() {
-		return new LMDB_TxW(env);
+	public TxRW write() {
+		return new LMDB_TxRW(env);
 	}
 
-	Dbi<ByteBuffer> table(ID id) {
-		return tables[id.type.ordinal()];
+	Dbi<ByteBuffer> table(ID.Type type) {
+		return tables[type.ordinal()];
 	}
 	
-	private final class LMDB_TxR implements TxR {
+	private class LMDB_TxR implements TxR {
 
-		private final Txn<ByteBuffer> txn;
-		private final ByteBuffer key;
+		final Txn<ByteBuffer> txn;
+		final ByteBuffer key;
 		
 		public LMDB_TxR(Env<ByteBuffer> env) {
-			super();
-			this.txn = env.txnRead();
+			this(env.txnRead());
+		}
+		
+		LMDB_TxR(Txn<ByteBuffer> txn) {
+			this.txn = txn;
 			this.key = ByteBuffer.allocateDirect(env.getMaxKeySize());
 		}
 
 		@Override
-		public ByteBuffer get(ID id) {
-			key.clear();
-			key.put(id.bytes()).flip();
-			return table(id).get(txn, key);
+		public final ByteBuffer get(ID id) {
+			setKey(id);
+			return table(id.type).get(txn, key);
 		}
 		
 		@Override
-		public void range(ID id, Predicate<ByteBuffer> consumer) {
-			if (id.isUnique()) {
-				consumer.test(get(id));
-				return;
+		public void range(ID first, BiPredicate<ID, ByteBuffer> consumer) {
+			try (CursorIterator<ByteBuffer> it = iterator(first)) {
+				KeyVal<ByteBuffer> e = it.next();
+				byte[] k = new byte[e.key().remaining()];
+				e.key().get(k);
+				while (it.hasNext() && consumer.test(ID.fromBytes(k), e.val()));
 			}
+		}
+		
+		private CursorIterator<ByteBuffer> iterator(ID first) {
+			Dbi<ByteBuffer> table = table(first.type);
 			key.clear();
-			key.put(id.bytes());
+			key.put(first.bytes());
 			key.position(key.position()-2);
 			key.flip();
-			try (CursorIterator<ByteBuffer> it = table(id).iterate(txn, key, IteratorType.FORWARD)) {
-				boolean consume = it.hasNext();
-				while (consume) {
-					consume = consumer.test(it.next().val()) && it.hasNext(); 
-				}
-			}
+			return table.iterate(txn, key, IteratorType.FORWARD);			
 		}
 		
 		@Override
-		public void close() {
+		public final void close() {
 			txn.close();
+		}
+		
+		final void setKey(ID id) {
+			key.clear();
+			key.put(id.bytes()).flip();
 		}
 	}
 
-	private class LMDB_TxW implements TxW {
+	private class LMDB_TxRW extends LMDB_TxR implements TxRW {
 
-		private final Txn<ByteBuffer> txn;
-		private final ByteBuffer key;
-		
-		public LMDB_TxW(Env<ByteBuffer> env) {
-			super();
-			this.txn = env.txnWrite();
-			this.key = ByteBuffer.allocateDirect(env.getMaxKeySize());
+		public LMDB_TxRW(Env<ByteBuffer> env) {
+			super(env.txnWrite());
 		}
 		
-		@Override
-		public ByteBuffer get(ID id) {
-			putKey(id);
-			return table(id).get(txn, key);
-		}
-
 		@Override
 		public void put(ID id, ByteBuffer value) {
-			putKey(id);
-			table(id).put(txn, key, value);
+			setKey(id);
+			table(id.type).put(txn, key, value);
 		}
 
 		@Override
 		public void commit() {
 			txn.commit();			
 		}
-		
-		@Override
-		public void close() {
-			txn.close();
-		}
 
-		private void putKey(ID id) {
-			key.clear();
-			key.put(id.bytes()).flip();
-		}
 	}
 
 }

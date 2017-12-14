@@ -1,4 +1,4 @@
-package vizio.model;
+package vizio;
 
 import static org.junit.Assert.fail;
 
@@ -7,7 +7,19 @@ import java.util.BitSet;
 import org.junit.Test;
 
 import vizio.engine.Change;
+import vizio.model.Heat;
+import vizio.model.Mail;
+import vizio.model.Motive;
+import vizio.model.Outcome;
+import vizio.model.Poll;
+import vizio.model.Purpose;
+import vizio.model.Status;
+import vizio.model.UseCode;
+import vizio.model.User;
+import vizio.model.Mail.Delivery;
+import vizio.model.Mail.Subject;
 import vizio.model.Poll.Matter;
+import vizio.model.User.Notifications;
 
 /**
  * Make sure the enums that are annotated do follow the "contract" of not having
@@ -58,6 +70,11 @@ public class TestUseCode {
 	@Test
 	public void heatHasUniqueCode() {
 		assertUniqueCode(Heat.class);
+	}
+	
+	@Test
+	public void notificationsHaveUniqueCode() {
+		assertUniqueCode(User.Notifications.class);
 	}
 	
 	private static <E extends Enum<E>> void assertUniqueCode(Class<E> type) {

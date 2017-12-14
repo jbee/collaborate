@@ -2,6 +2,8 @@ package vizio.model;
 
 import static java.util.Arrays.copyOfRange;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * A (database wide) unique identifier.
  */
@@ -11,10 +13,11 @@ public final class ID extends Identifier<ID> {
 
 	@UseCode
 	public enum Type {
-		// core domain
-		User, Site, Product, Area, Version, Task, QPoll, 
-		// meta
-		Event, History;
+		// core domain (uses upper case symbols)
+		User, Site, Product, Area, Version, Task, 
+		
+		// support domain (uses lower case symbols)
+		poll, event, history;
 
 		final byte[] symbol;
 
@@ -39,20 +42,20 @@ public final class ID extends Identifier<ID> {
 		this.type = type;
 	}
 
-	private static ID id(Type type, Name name, Name... names) {
-		byte[] id = join(type.symbol, DIVIDER, name.bytes());
+	private static ID id(Type type, Name level1, Name... names) {
+		byte[] id = join(type.symbol, DIVIDER, level1.bytes());
 		for (Name n : names) {
 			id = join(id, DIVIDER, n.bytes());
 		}
 		return new ID(type, id);
 	}
-
+	
 	public static ID productId(Name product) {
 		return id(ID.Type.Product, product);
 	}
 
 	public static ID pollId(Name product, Name area, IDN serial) {
-		return id(ID.Type.QPoll, product, area, serial.asName());
+		return id(ID.Type.poll, product, area, serial.asName());
 	}
 
 	public static ID siteId(Name owner, Name name) {
@@ -76,31 +79,39 @@ public final class ID extends Identifier<ID> {
 	}
 	
 	public static ID eventId(long timestamp) {
-		// we just use the long bytes - a 8 bytes long key with no second byte similar to # is an event
-		return new ID(Type.Event, longBytes(timestamp));
+		// we just use the hex string of the long number - a key without a : is an event
+		return new ID(Type.event, Long.toHexString(timestamp).getBytes(StandardCharsets.US_ASCII));
 	}
 	
 	public static ID historyId(ID entity) {
-		return entity.type == Type.History ? entity : new ID(Type.History, join(Type.History.symbol, DIVIDER, entity.bytes()));
+		return entity.type == Type.history ? entity : new ID(Type.history, join(Type.history.symbol, DIVIDER, entity.bytes()));
 	}
 	
 	public static ID fromBytes(byte[] bytes) {
-		if (bytes.length == 8 && bytes[1] != '#') {
-			return new ID(Type.Event, bytes);
+		if (bytes[1] != DIVIDER[0]) {
+			return new ID(Type.event, bytes);
 		}
 		return new ID(Type.fromSymbol(bytes[0]), bytes);
 	}
 	
-	public boolean isUnique() {
-		return charAt(length()-1) != '*';
+	public ID entity() {
+		return type == Type.history ? fromBytes(copyOfRange(bytes(), 2, bytes().length)) : this;
 	}
 	
-	public ID entity() {
-		return type == Type.History ? fromBytes(copyOfRange(bytes(), 2, bytes().length)) : this;
+	public boolean startsWith(Name name) {
+		byte[] a = bytes();
+		byte[] b = name.bytes();
+		if (b.length + 2 < a.length)
+			return false;
+		for (int i = 0; i < b.length; i++) {
+			if (a[i+2] != b[i])
+				return false;
+		}
+		return a.length-2 == b.length || a[b.length+1] == ':';
 	}
 	
 	@Override
 	public String toString() {
-		return type == Type.Event ? String.valueOf(toLong(bytes())) : super.toString();
+		return type == Type.event ? String.valueOf(toLong(bytes())) : super.toString();
 	}
 }

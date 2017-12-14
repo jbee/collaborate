@@ -7,6 +7,8 @@ package vizio.model;
  */
 public final class IDN implements Comparable<IDN> {
 
+	public static final IDN ZERO = new IDN(0);
+	
 	public final int num;
 
 	public IDN(int num) {

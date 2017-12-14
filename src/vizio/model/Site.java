@@ -17,4 +17,9 @@ public final class Site extends Entity<Site> {
 	public ID computeID() {
 		return ID.siteId(owner, name);
 	}
+	
+	@Override
+	public Name product() {
+		return Name.ORIGIN;
+	}
 }

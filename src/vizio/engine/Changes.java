@@ -6,9 +6,9 @@ import java.util.Iterator;
 
 import vizio.model.Entity;
 
-public final class Changelog implements Iterable<Changelog.Entry<?>>{
+public final class Changes implements Iterable<Changes.Entry<?>>{
 
-	public static final Changelog EMPTY = new Changelog(0, new Entry[0]);
+	public static final Changes EMPTY = new Changes(0, new Entry[0]);
 	
 	public static final class Entry<T extends Entity<T>> {
 		
@@ -35,7 +35,7 @@ public final class Changelog implements Iterable<Changelog.Entry<?>>{
 	public final long timestamp;
 	private final Entry<?>[] log;
 	
-	public Changelog(long timestamp, Entry<?>[] log) {
+	public Changes(long timestamp, Entry<?>[] log) {
 		super();
 		this.timestamp = timestamp;
 		this.log = log;
@@ -48,7 +48,7 @@ public final class Changelog implements Iterable<Changelog.Entry<?>>{
 	public int length() {
 		return log.length;
 	}
-
+	
 	@Override
 	public Iterator<Entry<?>> iterator() {
 		return asList(log).iterator();

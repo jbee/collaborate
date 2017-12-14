@@ -33,29 +33,23 @@ import static vizio.engine.Change.Operation.unwatch;
 import static vizio.engine.Change.Operation.warn;
 import static vizio.engine.Change.Operation.watch;
 
-import java.util.NoSuchElementException;
+import java.util.EnumMap;
 
-import vizio.model.Area;
 import vizio.model.Attachments;
 import vizio.model.Email;
 import vizio.model.Entity;
 import vizio.model.Gist;
-import vizio.model.ID;
 import vizio.model.IDN;
 import vizio.model.Mail;
 import vizio.model.Motive;
 import vizio.model.Name;
 import vizio.model.Names;
-import vizio.model.Poll;
 import vizio.model.Poll.Matter;
-import vizio.model.Product;
 import vizio.model.Product.Integration;
 import vizio.model.Purpose;
-import vizio.model.Site;
-import vizio.model.Task;
 import vizio.model.Template;
 import vizio.model.User;
-import vizio.model.Version;
+import vizio.model.User.Notifications;
 
 /**
  * All the possible changes wrapped as lazy 'action'.
@@ -132,31 +126,15 @@ public interface Change {
 	/**
 	 * An application level transaction made available to a {@link Change}. 
 	 */
-	interface Tx {
-
-		User user(Name user);
-		Site site(Name user, Name site);
-		Poll poll(Name product, Name area, IDN serial);
-		Product product(Name product);
-		Area area(Name product, Name area);
-		Version version(Name product, Name version);
-		Task task(Name product, IDN id);
+	interface Tx extends Repository {
 
 		void put(Operation op, Entity<?> e);
-	}
-	
-	class EntityNotFound extends NoSuchElementException {
-
-		public EntityNotFound(ID id) {
-			super(id.toString());
-		}
-		
 	}
 	
 	static Change register(Name user, Email email) {
 		return (t, tx) -> { 
 			User u = null;
-			try { u = tx.user(user); } catch (EntityNotFound e) { };
+			try { u = tx.user(user); } catch (Repository.UnknownEntity e) { };
 			tx.put(register, t.register(u, user, email)); 
 		};
 	}
@@ -173,8 +151,8 @@ public interface Change {
 		return (t, tx) -> { tx.put(Operation.name, t.name(tx.user(email), name)); };
 	}
 	
-	static Change configure(Name user, Mail.Delivery notification) {
-		return (t, tx) -> { tx.put(configure, t.configure(tx.user(user), notification)); };
+	static Change configure(Name user, EnumMap<Notifications, Mail.Delivery> notifications) {
+		return (t, tx) -> { tx.put(configure, t.configure(tx.user(user), notifications)); };
 	}
 	
 	static Change constitute(Name product, Name originator) {

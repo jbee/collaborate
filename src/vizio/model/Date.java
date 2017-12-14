@@ -39,6 +39,10 @@ public final class Date implements Comparable<Date> {
 	public Date plusDays(int days) {
 		return new Date(epochDay+days);
 	}
+	
+	public Date minusDays(int days) {
+		return new Date(epochDay-days);
+	}
 
 	public static Date today() {
 		return date(System.currentTimeMillis());

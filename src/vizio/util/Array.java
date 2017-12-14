@@ -9,6 +9,11 @@ import java.util.function.BiPredicate;
 
 public final class Array {
 
+	public static int nextPowerOf2(int num)
+	{
+	    return num <= 1 ? 1 : Integer.highestOneBit(num - 1) << 1;
+	}
+	
 	public static <T> int indexOf(T[] arr, T e, BiPredicate<T, T> eq) {
 		for (int i = 0; i < arr.length; i++) {
 			if (eq.test(arr[i], e))

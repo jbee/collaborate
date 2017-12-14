@@ -4,8 +4,9 @@ import static vizio.model.Attachments.attachments;
 import static vizio.model.Gist.fromBytes;
 
 import java.nio.ByteBuffer;
+import java.util.EnumMap;
+import java.util.Map.Entry;
 
-import vizio.engine.Change.Operation;
 import vizio.engine.Change.Tx;
 import vizio.model.Area;
 import vizio.model.Attachments;
@@ -21,7 +22,6 @@ import vizio.model.Name;
 import vizio.model.Names;
 import vizio.model.Outcome;
 import vizio.model.Poll;
-import vizio.model.UseCode;
 import vizio.model.Poll.Matter;
 import vizio.model.Product;
 import vizio.model.Purpose;
@@ -30,7 +30,9 @@ import vizio.model.Status;
 import vizio.model.Task;
 import vizio.model.Template;
 import vizio.model.URL;
+import vizio.model.UseCode;
 import vizio.model.User;
+import vizio.model.User.Notifications;
 import vizio.model.Version;
 
 @FunctionalInterface
@@ -56,12 +58,13 @@ public interface Convert<I,O> {
 	Matter[] matters = Matter.values();
 	Mail.Delivery[] deliveries = Mail.Delivery.values();
 	Change.Operation[] operations = Change.Operation.values();
+	Notifications[] notifications = Notifications.values();
 	
-	Convert<Tx, User> bin2user = (tx,from) -> { 
+	Convert<Repository, User> bin2user = (tx,from) -> { 
 		User u = new User(from.getInt());
 		u.name = bin2name(from);
 		u.email = Email.fromBytes(getShortBytes(from));
-		u.notification = bin2enum(deliveries, from);
+		u.notifications = bin2enumMap(notifications, deliveries, from);
 		u.authenticated = from.getInt();
 		u.encryptedToken = getShortBytes(from);
 		u.millisTokenExprired = from.getLong();
@@ -74,14 +77,15 @@ public interface Convert<I,O> {
 		u.dissolved = from.getInt();
 		u.millisEmphasised = from.getLong();
 		u.emphasisedToday = from.getInt();
+		u.contributesToProducts = bin2names(from);
 		return u;
 	};
 	
 	Convert<User,ByteBuffer> user2bin = (u,to) -> { 
-		to.putInt(u.version);
+		to.putInt(u.version());
 		name2bin(u.name, to);
 		putShortBytes(u.email, to);
-		enum2bin(u.notification, to);
+		enumMap2bin(u.notifications, to);
 		to.putInt(u.authenticated);
 		putShortBytes(u.encryptedToken, to);
 		to.putLong(u.millisTokenExprired);
@@ -93,11 +97,12 @@ public interface Convert<I,O> {
 		to.putInt(u.resolved);
 		to.putInt(u.dissolved);
 		to.putLong(u.millisEmphasised);
-		to.putInt(u.emphasisedToday);		
+		to.putInt(u.emphasisedToday);
+		names2bin(u.contributesToProducts, to);
 		return to; 
 	};
 
-	Convert<Tx, Version> bin2version = (tx,from) -> { 
+	Convert<Repository, Version> bin2version = (tx,from) -> { 
 		Version v = new Version(from.getInt());
 		v.product = bin2name(from);
 		v.name = bin2name(from);
@@ -106,14 +111,14 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Version,ByteBuffer> version2bin = (v,to) -> { 
-		to.putInt(v.version);
+		to.putInt(v.version());
 		name2bin(v.product, to);
 		name2bin(v.name, to);
 		names2bin(v.changeset, to);
 		return to;
 	};
 	
-	Convert<Tx, Task> bin2task = (tx,from) -> { 
+	Convert<Repository, Task> bin2task = (tx,from) -> { 
 		Task t = new Task(from.getInt());
 		t.product = tx.product(bin2name(from));
 		t.area = tx.area(t.product.name, bin2name(from));
@@ -142,7 +147,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Task,ByteBuffer> task2bin = (t,to) -> { 
-		to.putInt(t.version);
+		to.putInt(t.version());
 		name2bin(t.product.name, to);
 		name2bin(t.area.name, to);
 		IDN2bin(t.id, to);
@@ -169,7 +174,7 @@ public interface Convert<I,O> {
 		return to;
 	};
 
-	Convert<Tx, Site> bin2site = (tx,from) -> { 
+	Convert<Repository, Site> bin2site = (tx,from) -> { 
 		int version = from.getInt();
 		Name owner = bin2name(from);
 		Name name = bin2name(from);
@@ -178,14 +183,14 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Site,ByteBuffer> site2bin = (site,to) -> { 
-		to.putInt(site.version);
+		to.putInt(site.version());
 		name2bin(site.owner, to);
 		name2bin(site.name, to);
 		putIntBytes(site.template, to);
 		return to;
 	};
 	
-	Convert<Tx, Product> bin2product = (tx,from) -> { 
+	Convert<Repository, Product> bin2product = (tx,from) -> { 
 		Product p = new Product(from.getInt());
 		p.name = bin2name(from);
 		p.tasks = from.getInt();
@@ -203,7 +208,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Product,ByteBuffer> product2bin = (p,to) -> { 
-		to.putInt(p.version);
+		to.putInt(p.version());
 		name2bin(p.name, to);
 		to.putInt(p.tasks);
 		to.put((byte) p.integrations.length);
@@ -214,7 +219,7 @@ public interface Convert<I,O> {
 		return to;
 	};
 	
-	Convert<Tx, Poll> bin2poll = (tx,from) -> { 
+	Convert<Repository, Poll> bin2poll = (tx,from) -> { 
 		Poll p = new Poll(from.getInt());
 		p.serial = new IDN(from.getInt());
 		p.area = tx.area(bin2name(from), bin2name(from));
@@ -231,7 +236,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Poll,ByteBuffer> poll2bin = (p,to) -> { 
-		to.putInt(p.version);
+		to.putInt(p.version());
 		IDN2bin(p.serial, to);
 		name2bin(p.area.product, to);
 		name2bin(p.area.name, to);
@@ -247,7 +252,7 @@ public interface Convert<I,O> {
 		return to;
 	};
 	
-	Convert<Tx, Area> bin2area = (tx,from) -> { 
+	Convert<Repository, Area> bin2area = (tx,from) -> { 
 		Area a = new Area(from.getInt());
 		a.product = bin2name(from);
 		a.name = bin2name(from);
@@ -256,6 +261,7 @@ public interface Convert<I,O> {
 		a.polls = from.getInt();
 		a.tasks = from.getInt();
 		a.exclusive = from.get() > 0;
+		a.abandoned = from.get() > 0;
 		a.board = from.get() > 0;
 		a.motive = bin2enum(motives, from);
 		a.purpose = bin2enum(purposes, from);
@@ -263,7 +269,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Area,ByteBuffer> area2bin = (a,to) -> { 
-		to.putInt(a.version);
+		to.putInt(a.version());
 		name2bin(a.product, to);
 		name2bin(a.name, to);
 		name2bin(a.basis, to);
@@ -271,13 +277,14 @@ public interface Convert<I,O> {
 		to.putInt(a.polls);
 		to.putInt(a.tasks);
 		to.put((byte) (a.exclusive ? 1 : 0));
+		to.put((byte) (a.abandoned ? 1 : 0));
 		to.put((byte) (a.board ? 1 : 0));
 		enum2bin(a.motive, to);
 		enum2bin(a.purpose, to);
 		return to;
 	};
 	
-	Convert<Tx, Event> bin2event = (tx, from) -> {
+	Convert<Repository, Event> bin2event = (tx, from) -> {
 		long timestamp = from.getLong();
 		ID user = bin2id(from);
 		int n = from.getShort();
@@ -285,11 +292,11 @@ public interface Convert<I,O> {
 		for (int i = 0; i < n; i++) {
 			ID entity = bin2id(from);
 			int sn = from.get();
-			Change.Operation[] transitions = new Change.Operation[sn];
+			Change.Operation[] ops = new Change.Operation[sn];
 			for (int j = 0; j < sn; j++) {
-				transitions[j] = bin2enum(operations, from);
+				ops[j] = bin2enum(operations, from);
 			}
-			changes[i] = new Event.Transition(entity, transitions);
+			changes[i] = new Event.Transition(entity, ops);
 		}
 		return new Event(timestamp, user, changes);
 	};
@@ -298,11 +305,11 @@ public interface Convert<I,O> {
 		to.putLong(e.timestamp);
 		id2bin(e.originator, to);
 		to.putShort((short) e.cardinality());
-		for (Event.Transition c : e) {
-			id2bin(c.entity, to);
-			to.put((byte) c.ops.length);
-			for (Change.Operation t : c.ops) {
-				enum2bin(t, to);
+		for (Event.Transition t : e) {
+			id2bin(t.entity, to);
+			to.put((byte) t.ops.length);
+			for (Change.Operation op : t.ops) {
+				enum2bin(op, to);
 			}
 		}
 		return to;
@@ -378,6 +385,27 @@ public interface Convert<I,O> {
 			return null;
 		} 
 		return constants[code];
+	}
+	
+	static <K extends Enum<K>, V extends Enum<V>> void enumMap2bin(EnumMap<K, V> map, ByteBuffer to) {
+		if (map == null) {
+			to.put((byte) 0);
+			return;
+		}
+		to.put((byte) map.size());
+		for (Entry<K, V> e : map.entrySet()) {
+			enum2bin(e.getKey(), to);
+			enum2bin(e.getValue(), to);
+		}
+	}
+	
+	static <K extends Enum<K>, V extends Enum<V>> EnumMap<K, V> bin2enumMap(K[] keys, V[] values, ByteBuffer from) {
+		int l = from.get();
+		EnumMap<K, V> res = new EnumMap<>(keys[0].getDeclaringClass());
+		for (int i = 0; i < l; i++) {
+			res.put(bin2enum(keys, from), bin2enum(values, from));
+		}
+		return res;
 	}
 
 	static void date2bin(Date date, ByteBuffer to) {

@@ -7,12 +7,22 @@ import vizio.model.ID;
 import vizio.model.User;
 
 /**
- * A history keep track of the transformations of {@link Entity}s over time. 
+ * A history keeps track of the transformations of {@link Entity}s over time. It
+ * is essentially a list of {@link Event}s for a certain entity. This list is
+ * limited in length. If two many changes occur the older ones are no longer
+ * included in the list. They could however be recovered by looking at the
+ * {@link Event}s directly. This is done to keep a low memory profile while
+ * providing the most useful data right away without needing to search through
+ * all events.
  * 
- * If the entity is a {@link User} the events are not the transformations done one the user but by the user.
+ * If the entity is a {@link User} the events are not the transformations done
+ * one the user but by the user.
  */
 public final class History implements Iterable<ID> {
 
+	/**
+	 * The effected entity. 
+	 */
 	public final ID entity;
 	/**
 	 * Index 0 always contains the very first (oldest) event.

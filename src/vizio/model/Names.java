@@ -7,6 +7,12 @@ import java.util.Iterator;
 
 import vizio.util.Array;
 
+/**
+ * A sorted set of {@link Name}s.
+ * 
+ * While it is sorted order must not have a particular meaning. It is the order
+ * names were added.
+ */
 public class Names implements Iterable<Name>, Comparable<Names> {
 
 	private static final Name[] EMPTY = new Name[0];

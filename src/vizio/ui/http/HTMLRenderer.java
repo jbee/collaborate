@@ -51,10 +51,10 @@ public class HTMLRenderer {
 	}
 
 	private void renderStaticMenu() {
-		out.append("<div class='menu'><h1>LiTTr</h1><span class='group'></span>");
+		out.append("<div class='menu'><span class='group'><h1>TaCo</h1></span>");
 		// Liberated Task Coordination
 		// Reality Tracker (track what really is not would we believe or want to be)
-
+		// ColTT
 		out.append("</div>");
 	}
 

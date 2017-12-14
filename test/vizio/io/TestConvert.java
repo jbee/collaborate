@@ -24,18 +24,19 @@ import static vizio.model.Name.as;
 import static vizio.model.Template.template;
 
 import java.nio.ByteBuffer;
+import java.util.function.Predicate;
 
 import org.junit.Test;
 
 import vizio.engine.Change;
-import vizio.engine.Change.Operation;
 import vizio.engine.Convert;
 import vizio.engine.Event;
 import vizio.engine.Event.Transition;
+import vizio.engine.History;
 import vizio.engine.NoLimits;
+import vizio.engine.Repository;
 import vizio.engine.Tracker;
 import vizio.model.Area;
-import vizio.model.Entity;
 import vizio.model.ID;
 import vizio.model.IDN;
 import vizio.model.Name;
@@ -126,14 +127,14 @@ public class TestConvert {
 		return u1;
 	}
 
-	static <T> void assertConsistentConversion(Convert<Change.Tx,T> reader, Convert<T, ByteBuffer> writer, T value) {
+	static <T> void assertConsistentConversion(Convert<Repository,T> reader, Convert<T, ByteBuffer> writer, T value) {
 		ByteBuffer buf = ByteBuffer.allocate(2048);
 		writer.convert(value, buf);
 		byte[] written = new byte[buf.position()];
 		buf.flip();
 		buf.get(written);
 		assertTrue(written.length > 0);
-		T read = reader.convert(new TestPM(), ByteBuffer.wrap(written));
+		T read = reader.convert(new TestRepository(), ByteBuffer.wrap(written));
 		buf = ByteBuffer.allocate(2048);
 		writer.convert(read, buf);
 		byte[] rewritten = new byte[buf.position()];
@@ -142,7 +143,7 @@ public class TestConvert {
 		assertArrayEquals(written, rewritten);
 	}
 
-	static class TestPM implements Change.Tx {
+	static class TestRepository implements Repository {
 
 		@Override
 		public User user(Name user) {
@@ -194,10 +195,26 @@ public class TestConvert {
 			res.area = area(product, area);
 			return res;
 		}
+		
+		@Override
+		public Event event(long timestamp) throws UnknownEntity {
+			throw new UnknownEntity(ID.eventId(timestamp));
+		}
+		
+		@Override
+		public History history(ID entity) throws UnknownEntity {
+			throw new UnknownEntity(ID.historyId(entity));
+		}
+		
+		@Override
+		public void tasks(Name product, Predicate<Task> consumer) {
+			// TODO Auto-generated method stub
+			
+		}
 
 		@Override
-		public void put(Operation type, Entity<?> e) {
-			// TODO Auto-generated method stub
+		public void close() {
+			// nothing to do
 		}
 		
 	}

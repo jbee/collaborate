@@ -1,4 +1,4 @@
-package vizio.db;
+package vizio.engine;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -25,20 +25,22 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
+import vizio.db.DB;
+import vizio.db.LMDB;
 import vizio.db.DB.TxR;
-import vizio.db.DB.TxW;
+import vizio.db.DB.TxRW;
 import vizio.engine.Change;
-import vizio.engine.Changelog;
+import vizio.engine.Changes;
 import vizio.engine.Clock;
 import vizio.engine.Convert;
 import vizio.engine.Event;
 import vizio.engine.History;
 import vizio.engine.LinearTimeLimits;
+import vizio.engine.Tracker;
 import vizio.engine.Transaction;
 import vizio.model.ID;
 import vizio.model.ID.Type;
 import vizio.model.Name;
-import vizio.model.Names;
 import vizio.model.Site;
 import vizio.model.User;
 
@@ -74,19 +76,18 @@ public class TestLMDB {
 	
 	@Test
 	public void putGetAdapterAPI() throws IOException {
+		Tracker tracker = new Tracker(() -> System.currentTimeMillis(), new NoLimits());
 		final File path = tmp.newFolder();
 		try (Env<ByteBuffer> env = Env.create()
 				.setMapSize(1014*1024*10)
 				.setMaxDbs(10)
 				.open(path)) {
 			DB db = new LMDB(env);
-			Site s1 = new Site(1, as("abc"), as("def"), template("ghi"));
-			Site s2 = new Site(1, as("jkl"), as("mno"), template("pqr"));
-			User u1 = new User(1);
-			u1.name = as("user1");
-			u1.email = email("pass1");
-			u1.sites = Names.empty();
-			try (TxW tx = db.write()) {
+			User u1 = tracker.register(null, as("user1"), email("pass1"));
+			u1 = tracker.authenticate(u1, u1.token);
+			Site s1 = tracker.launch(as("def"), template("ghi"), u1);
+			Site s2 = tracker.launch(as("mno"), template("pqr"), u1);
+			try (TxRW tx = db.write()) {
 				ByteBuffer buf = ByteBuffer.allocateDirect(1024);
 				Convert.site2bin.convert(s1, buf);
 				buf.flip();
@@ -133,7 +134,7 @@ public class TestLMDB {
 			LinearTimeLimits limits = new LinearTimeLimits(5);
 
 			Change change = register(user, email("test@example.com"));
-			Changelog changed = Transaction.run(change, db , realTime, limits);
+			Changes changed = Transaction.run(change, db , realTime, limits);
 			
 			assertEquals(1, changed.length());
 			

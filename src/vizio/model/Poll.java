@@ -7,7 +7,9 @@ public final class Poll extends Entity<Poll> {
 		// on maintainers
 		participation, resignation,
 		// attitude towards anonymous participation
-		inclusion, exclusion
+		inclusion, exclusion,
+		// towards the area (non user related)
+		abandonment
 	}
 
 	public IDN serial;
@@ -29,6 +31,11 @@ public final class Poll extends Entity<Poll> {
 	@Override
 	public ID computeID() {
 		return ID.pollId(area.product, area.name, serial);
+	}
+	
+	@Override
+	public Name product() {
+		return area.product;
 	}
 	
 	public boolean canVote(Name voter) {

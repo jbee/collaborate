@@ -8,7 +8,7 @@ import static vizio.model.Name.as;
 import java.util.Arrays;
 import java.util.Random;
 
-import vizio.engine.Constraints;
+import vizio.cache.Criteria;
 import vizio.engine.NoLimits;
 import vizio.engine.Tracker;
 import vizio.model.Area;
@@ -40,6 +40,7 @@ public class DummyController implements Controller {
 		Tracker tracker = new Tracker(() -> { now += 70000; return now; }, new NoLimits() );
 		tasks = new Task[5];
 		user = tracker.register(null, as("tester"), email("test@example.com"));
+		user = tracker.authenticate(user, user.token);
 		Product product = tracker.constitute(as("vizio"), user);
 		Area area = tracker.compart(product, as("core"), user);
 		Area ui = tracker.compart(product, as("ui"), user);
@@ -59,7 +60,7 @@ public class DummyController implements Controller {
 	}
 
 	@Override
-	public Task[] tasks(Constraints selection, Context ctx) {
+	public Task[] tasks(Criteria selection, Context ctx) {
 		return Arrays.copyOf(tasks, new Random().nextInt(tasks.length)+1) ;
 	}
 
@@ -71,19 +72,19 @@ public class DummyController implements Controller {
 	@Override
 	public Menu[] menus(Context ctx) {
 		return new Menu[] {
-				new Menu("My", Action.my, new Site(1, Name.MY, Name.as("dashboard"), Template.BLANK_PAGE)),
-				new Menu("jan's", Action.user,
+				new Menu(as("jan"), Action.user,
 						new Site(1, as("jan"), Name.as("@home"), Template.BLANK_PAGE),
 						new Site(1, as("jan"), Name.as("special"), Template.BLANK_PAGE)
-						)
+						),
+				new Menu(Name.MY, Action.my, new Site(1, Name.MY, Name.as("dashboard"), Template.BLANK_PAGE)),
 				};
 	}
 
 	@Override
 	public View view(Context ctx) {
-        Widget left = new Widget("Assorted tasks", Coloring.heat, new Constraints());
-        Widget right = new Widget("Some others...", Coloring.goal, new Constraints());
-        Widget right2 = new Widget("And more", Coloring.motive, new Constraints());
+        Widget left = new Widget("Assorted tasks", Coloring.heat, new Criteria());
+        Widget right = new Widget("Some others...", Coloring.goal, new Criteria());
+        Widget right2 = new Widget("And more", Coloring.motive, new Criteria());
 		return new View(new Silo("My Tasks", left), new Silo("Inbox", right), new Silo("Urgent", right2));
 	}
 

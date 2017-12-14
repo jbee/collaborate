@@ -6,7 +6,7 @@ body, input, select {
 	font-size: 9pt;
 }
 
-h1 { margin: 0; padding: 0; }
+h1 { margin: 0; padding: 0; font-weight: 700; font-size: 100%; }
 h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 
 .footer { clear: left; border-top: 1px solid #bbb; padding-top: 15px; }
@@ -59,8 +59,7 @@ a.stress { clear: right; }
 .scheme-motive .motive-proposal    td { background-color: #ddddff; } 
 .scheme-motive .motive-intention   td { background-color: #ffffbb; } 
 
-.menu { border-top: 1px solid #bbb; margin: 0; padding: 2px 20px; }
-.menu:first-child { border-top-width: 0; }
+.menu { border-bottom: 1px solid #bbb; margin: 0; padding: 2px 20px; }
 .menu * { display: inline-block; }
 .menu .group { font-weight: 600; width: 80px; text-align: right; margin-right: 1em; }
 .menu ul { padding: 0; margin: 0; }

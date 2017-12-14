@@ -51,6 +51,11 @@ public class Task extends Entity<Task> {
 		return ID.taskId(product.name, id);
 	}
 	
+	@Override
+	public Name product() {
+		return product.name;
+	}
+	
 	/**
 	 * {@link Heat} is aggregated temperature. When {@link User} vote on
 	 * {@link Task}s the task receives some heat. The actual amount depends on
@@ -84,6 +89,10 @@ public class Task extends Entity<Task> {
 
 	public boolean canBeEmphasisedBy(Name user) {
 		return (!area.exclusive || area.maintainers.contains(user));
+	}
+	
+	public boolean isSolved() {
+		return status != Status.unsolved;
 	}
 
 }

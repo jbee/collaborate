@@ -26,4 +26,9 @@ public final class Version extends Entity<Version> {
 	public ID computeID() {
 		return ID.versionId(product, name);
 	}
+	
+	@Override
+	public Name product() {
+		return product;
+	}
 }

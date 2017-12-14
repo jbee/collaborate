@@ -3,16 +3,35 @@ package vizio.model;
 public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparable<T> {
 
 	public final transient int initalVersion;
-	public int version;
+	private int version;
 	
 	private transient ID uniqueId;
 	
 	protected abstract ID computeID();
 	
+	/**
+	 * @return name of the {@link Product} this entity is related to or
+	 *         {@link Name#ORIGIN} if the entity is not related to any
+	 *         particular product like a user or a user site.
+	 */
+	public abstract Name product();
+	
 	public Entity(int initalVersion) {
 		super();
 		this.initalVersion = initalVersion;
 		this.version = initalVersion;
+	}
+	
+	public int version() {
+		return version;
+	}
+	
+	public boolean isModified() {
+		return version > initalVersion;
+	}
+	
+	final void modified() {
+		version++;
 	}
 
 	/**
@@ -32,7 +51,7 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	public final T clone() {
 		try {
 			T res = (T) super.clone();
-			res.version++;
+			res.modified();
 			return res;
 		} catch (CloneNotSupportedException e) {
 			// should never happen

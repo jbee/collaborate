@@ -2,25 +2,12 @@ package vizio.engine;
 
 import static java.lang.Math.max;
 import static vizio.engine.Convert.area2bin;
-import static vizio.engine.Convert.bin2area;
-import static vizio.engine.Convert.bin2poll;
-import static vizio.engine.Convert.bin2product;
-import static vizio.engine.Convert.bin2site;
-import static vizio.engine.Convert.bin2task;
-import static vizio.engine.Convert.bin2user;
-import static vizio.engine.Convert.bin2version;
 import static vizio.engine.Convert.poll2bin;
 import static vizio.engine.Convert.product2bin;
 import static vizio.engine.Convert.site2bin;
 import static vizio.engine.Convert.task2bin;
 import static vizio.engine.Convert.user2bin;
 import static vizio.engine.Convert.version2bin;
-import static vizio.model.ID.areaId;
-import static vizio.model.ID.pollId;
-import static vizio.model.ID.productId;
-import static vizio.model.ID.siteId;
-import static vizio.model.ID.userId;
-import static vizio.model.ID.versionId;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -28,19 +15,17 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import vizio.db.DB;
-import vizio.db.DB.TxW;
+import vizio.db.DB.TxRW;
 import vizio.engine.Change.Operation;
 import vizio.engine.Change.Tx;
 import vizio.engine.Event.Transition;
 import vizio.model.Area;
 import vizio.model.Entity;
 import vizio.model.ID;
-import vizio.model.IDN;
 import vizio.model.Name;
 import vizio.model.Poll;
 import vizio.model.Product;
@@ -58,7 +43,7 @@ import vizio.model.Version;
  * returned. It will also keep track of updated user entities without the need
  * to {@link #put(Entity)} them explicitly.
  */
-public final class Transaction implements Tx, Limits, AutoCloseable {
+public final class Transaction extends DAO implements Tx, Limits {
 
 	/**
 	 * Applies the changes to the DB.
@@ -66,7 +51,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	 * @return a list of changed entities each given as a pair: before and after the change 
 	 * @throws ConcurrentUsage when trying to change an entity already changed by an ongoing transaction (in another thread)
 	 */
-	public static Changelog run(Change set, DB db, Clock clock, Limits limits) throws ConcurrentUsage {
+	public static Changes run(Change set, DB db, Clock clock, Limits limits) throws ConcurrentUsage {
 		final long now = max(lastTick.incrementAndGet(), clock.time());
 		final Clock fixedNow = () -> now;
 		try (Transaction tx = new Transaction(fixedNow, limits, db)) {
@@ -88,44 +73,24 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	
 	private final LinkedHashMap<ID, Entity<?>> changed = new LinkedHashMap<>();
 	private final HashMap<ID, ArrayList<Change.Operation>> changeTypes = new HashMap<>();
-	private final HashMap<ID, Entity<?>> loaded = new HashMap<>();
 	private final HashMap<ID, User> loadedUsers = new HashMap<>();
 	private final Set<Limit> allocated = new HashSet<>();
 	
 	private final Clock clock;
 	private final Limits limits;
 	private final DB db;
-	private final DB.TxR txr;
 
 	private ID originator;
 	
-	private Transaction(Clock clock, Limits lc, DB limits) {
-		super();
+	private Transaction(Clock clock, Limits limits, DB db) {
+		super(db.read());
 		this.clock = clock;
-		this.limits = lc;
-		this.db = limits;
-		this.txr = limits.read();
+		this.limits = limits;
+		this.db = db;
 	}
 	
 	@Override
-	public void close() {
-		txr.close();
-	}
-
-	@SuppressWarnings("unchecked")
-	private <T extends Entity<T>> T load(ID id, Convert<Tx, T> reader) {
-		Object res = possiblyChanged(id);
-		if (res != null)
-			return (T) res;		
-		ByteBuffer buf = txr.get(id);
-		if (buf == null)
-			throw new Change.EntityNotFound(id);
-		T e = reader.convert(this, buf);
-		loaded.put(id, e);
-		return e;
-	}
-	
-	private Object possiblyChanged(ID id) {
+	protected Object possiblyChanged(ID id) {
 		Object res = changed.get(id);
 		return res != null ? res : loaded.get(id);
 	}
@@ -152,7 +117,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 			}
 		} else {
 			for (User user : loadedUsers.values()) {
-				if (user.version > user.initalVersion) {
+				if (user.isModified()) {
 					final ID userID = user.uniqueID();
 					trackOriginator(userID);
 					changed.put(userID, user);
@@ -178,7 +143,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 			put(op, t.product);
 			put(op, t.area);
 			put(op, t.base);
-		} else if (e instanceof Product && e.version == 1) {
+		} else if (e instanceof Product && e.version() == 1) {
 			Product p = (Product)e;
 			put(op, p.origin);
 			put(op, p.somewhere);
@@ -188,68 +153,36 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 	
 	@Override
 	public User user(Name user) {
-		ID id = userId(user);
-		User res = load(id, bin2user);
-		loadedUsers.put(id, res);
+		User res = super.user(user);
+		loadedUsers.put(res.uniqueID(), res);
 		return res;
 	}
 
-	@Override
-	public Site site(Name user, Name site) {
-		return load(siteId(user, site), bin2site);
-	}
-
-	@Override
-	public Poll poll(Name product, Name area, IDN serial) {
-		return load(pollId(product, area, serial), bin2poll);
-	}
-
-	@Override
-	public Product product(Name product) {
-		return load(productId(product), bin2product);
-	}
-
-	@Override
-	public Area area(Name product, Name area) {
-		return load(areaId(product, area), bin2area);
-	}
-
-	@Override
-	public Version version(Name product, Name version) {
-		return load(versionId(product, version), bin2version);
-	}
-
-	@Override
-	public Task task(Name product, IDN id) {
-		return load(ID.taskId(product, id), bin2task);
-	}
-	
-	
-	private Changelog commit() {
-		txr.close(); // no more reading
+	private Changes commit() {
+		super.close(); // no more reading
 		if (originator == null)
 			throw new IllegalStateException("Acting user has to be updated during a transaction!");
 		if (changed.isEmpty())
-			return Changelog.EMPTY;
+			return Changes.EMPTY;
 		ByteBuffer buf = ByteBuffer.allocateDirect(4096);
-		try (TxW tx = db.write()) {
-			Changelog log = writeChanges(buf, tx);
-			writeEventLog(tx, log, buf);
+		try (TxRW tx = db.write()) {
+			Changes log = writeTx(tx, buf);
+			writeHistoryAndEvent(tx, log, buf);
 			tx.commit();
 			return log;
 		}
 	}
 	
-	private Changelog writeChanges(ByteBuffer buf, TxW tx) {
-		Changelog.Entry<?>[] res = new Changelog.Entry[changed.size()];
+	private Changes writeTx(TxRW tx, ByteBuffer buf) {
+		Changes.Entry<?>[] res = new Changes.Entry[changed.size()];
 		int i = 0;
 		for (Entry<ID,Entity<?>> e : changed.entrySet()) {
 			ID id = e.getKey();
 			Entity<?> val = e.getValue();
-			res[i++] = new Changelog.Entry(loaded.get(id), changeTypes.get(id).toArray(new Change.Operation[0]), val);
+			res[i++] = new Changes.Entry(loaded.get(id), changeTypes.get(id).toArray(new Change.Operation[0]), val);
 			switch (id.type) {
+			case poll:    write(tx, id, (Poll)val, poll2bin, buf); break;
 			case Area:    write(tx, id, (Area)val, area2bin, buf); break;
-			case QPoll:    write(tx, id, (Poll)val, poll2bin, buf); break;
 			case Site:    write(tx, id, (Site)val, site2bin, buf); break;
 			case Task:    write(tx, id, (Task)val, task2bin, buf); break;
 			case User:    write(tx, id, (User)val, user2bin, buf); break;
@@ -258,14 +191,14 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 			default: throw new UnsupportedOperationException("Cannot store entities of type: "+id);
 			}
 		}
-		return new Changelog(clock.time(), res);
+		return new Changes(clock.time(), res);
 	}
 
-	private void writeEventLog(TxW tx, Changelog log, ByteBuffer buf) {
-		final Transition[] transitions = new Transition[log.length()];
-		final long timestamp = log.timestamp;
+	private void writeHistoryAndEvent(TxRW tx, Changes changes, ByteBuffer buf) {
+		final Transition[] transitions = new Transition[changes.length()];
+		final long timestamp = changes.timestamp;
 		int i = 0;
-		for (Changelog.Entry<?> e : log) {
+		for (Changes.Entry<?> e : changes) {
 			ID id = e.after.uniqueID();
 			transitions[i++] = new Transition(id, e.transitions);
 			ID hid = ID.historyId(id);
@@ -288,7 +221,7 @@ public final class Transaction implements Tx, Limits, AutoCloseable {
 		write(tx, e.uniqueID() , e, Convert.event2bin, buf);
 	}
 	
-	private static <T> void write(TxW tx, ID id, T e, Convert<T, ByteBuffer> writer, ByteBuffer buf) {
+	private static <T> void write(TxRW tx, ID id, T e, Convert<T, ByteBuffer> writer, ByteBuffer buf) {
 		writer.convert(e, buf).flip();
 		tx.put(id, buf);
 		buf.clear();
