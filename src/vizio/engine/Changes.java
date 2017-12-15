@@ -5,6 +5,7 @@ import static java.util.Arrays.asList;
 import java.util.Iterator;
 
 import vizio.model.Entity;
+import vizio.model.ID.Type;
 
 public final class Changes implements Iterable<Changes.Entry<?>>{
 
@@ -29,6 +30,10 @@ public final class Changes implements Iterable<Changes.Entry<?>>{
 		
 		public boolean isUpdate() {
 			return before != null;
+		}
+		
+		public Type type() {
+			return after.uniqueID().type;
 		}
 	}
 	

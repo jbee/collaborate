@@ -174,11 +174,11 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	
 	private static final Pattern CONSTRAINT = Pattern.compile("\\s*\\[([a-z]+)\\s*([=<>?!~]{1,2})\\s*([^\\]]+)\\]");
 	
-	public static Criteria parse(String s) throws MalformedConstraint {
+	public static Criteria parse(String s) throws IllDefinedCriterium {
 		return parse(s, new HashMap<Criteria.Property, Name>());
 	}
 	
-	public static Criteria parse(String s, Map<Property, Name> context) throws MalformedConstraint {
+	public static Criteria parse(String s, Map<Property, Name> context) throws IllDefinedCriterium {
 		Matcher m = CONSTRAINT.matcher(s);
 		List<Criterium> res = new ArrayList<>();
 		while (m.find()) {
@@ -188,7 +188,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			Property prop = Property.property(p.toLowerCase());
 			Operator op = Operator.forSymbol(o);
 			if (!prop.ops.contains(op)) {
-				throw new MalformedConstraint("Property `"+prop+"` does not support operation `"+op+"`, supported are: "+prop.ops.toString());
+				throw new IllDefinedCriterium("Property `"+prop+"` does not support operation `"+op+"`, supported are: "+prop.ops.toString());
 			}
 			String[] val = parseValue(v);
 			if (val.length == 1) {
@@ -200,12 +200,12 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 				// @ can be used to refer the name for that property given by the context (useful for all properties of type name)
 				if (prop.type == name && "@".equals(val[0])) {
 					if (!context.containsKey(prop))
-						throw new MalformedConstraint("No context substitution known for property: "+prop);
+						throw new IllDefinedCriterium("No context substitution known for property: "+prop);
 					val[0] = context.get(prop).toString();
 				}
 			}
-			if (val.length > 1 && !op.setOp) {
-				throw new MalformedConstraint("Operation `"+op+"` was used with set value `"+Arrays.toString(val)+"` but requires a simple value, use e.g. `"+val[0]+"`");
+			if (val.length > 1 && !op.allowsMultipleArguments) {
+				throw new IllDefinedCriterium("Operation `"+op+"` was used with set value `"+Arrays.toString(val)+"` but requires a simple value, use e.g. `"+val[0]+"`");
 			}
 			if (prop.type == date && val[0].length() < 10) {
 				parseDate(prop, op, val, res);
@@ -234,7 +234,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 				return;
 			}
 		}
-		throw new MalformedConstraint("Date property "+prop+" does not support value: "+Arrays.toString(val));
+		throw new IllDefinedCriterium("Date property "+prop+" does not support value: "+Arrays.toString(val));
 	}
 	
 	private static boolean sequentialYearsOrMonths(String[] val) {
@@ -277,7 +277,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			try {
 				res[i] = typed(p, val[i]);
 			} catch (RuntimeException e) {
-				throw new MalformedConstraint("Failed to parse property "+p+" value: "+val[i], e);
+				throw new IllDefinedCriterium("Failed to parse property "+p+" value: "+val[i], e);
 			}
 		}
 		return res;
@@ -291,7 +291,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		case property : return p.value(val);
 		case text     : return Gist.gist(val);
 		case flag     : return "true|yes|on|1".matches(val) ? Boolean.TRUE : Boolean.FALSE;
-		default       : throw new MalformedConstraint("Unsupported value type: "+p.type);
+		default       : throw new IllDefinedCriterium("Unsupported value type: "+p.type);
 		}
 	}
 
@@ -442,14 +442,14 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 				if (v.name().equalsIgnoreCase(name))
 					return v;
 			}
-			throw new MalformedConstraint("No such value: `"+name+"` valid values are: "+Arrays.toString(values));
+			throw new IllDefinedCriterium("No such value: `"+name+"` valid values are: "+Arrays.toString(values));
 		}
 
 		public static Property property(String name) {
 			try {
 				return valueOf(name);
 			} catch (IllegalArgumentException e) {
-				throw new MalformedConstraint("No such property: `"+name+"`, valid properties are: "+ Arrays.toString(values()));
+				throw new IllDefinedCriterium("No such property: `"+name+"`, valid properties are: "+ Arrays.toString(values()));
 			}
 		}
 
@@ -538,12 +538,12 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		;
 
 		public final String symbol;
-		public final boolean setOp;
+		public final boolean allowsMultipleArguments;
 		public final boolean isSelector;
 
-		private Operator(String symbol, boolean set, boolean selector) {
+		private Operator(String symbol, boolean multi, boolean selector) {
 			this.symbol = symbol;
-			this.setOp = set;
+			this.allowsMultipleArguments = multi;
 			this.isSelector = selector;
 		}
 
@@ -552,7 +552,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 				if (op.symbol.equals(symbol))
 					return op;
 			}
-			throw new MalformedConstraint("No such operator `"+symbol+"`, valid operators are "+Arrays.toString(Operator.values()));
+			throw new IllDefinedCriterium("No such operator `"+symbol+"`, valid operators are "+Arrays.toString(Operator.values()));
 		}
 		
 		public boolean isFilter() {
@@ -574,13 +574,13 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		return b.toString();
 	}
 
-	public static class MalformedConstraint extends IllegalArgumentException {
+	public static class IllDefinedCriterium extends IllegalArgumentException {
 
-		public MalformedConstraint(String message) {
+		public IllDefinedCriterium(String message) {
 			super(message);
 		}
 
-		public MalformedConstraint(String message, Throwable cause) {
+		public IllDefinedCriterium(String message, Throwable cause) {
 			super(message, cause);
 		}
 		

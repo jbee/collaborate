@@ -45,9 +45,9 @@ public interface Cache {
 	// - no cross product searches
 	// - values for a key are stored in an array growing with power of 2, using a length field to keep track of how many slots are in use
 	// - values for a key are not sorted
-	// - insert adds to first empty (null) slot (might inc length if all slots are taken; no remove occured)
+	// - insert adds to first empty (null) slot (might inc length if all slots are taken; no remove occurred)
 	// - remove simply sets a slot to empty (null)
-	// - update changes the object (task) in place - not the array slot (therefore write do copy before changing the object)
+	// - update changes the object (task) in place - not the array slot (writes work with their own instances)
 	
 	/*
 	 * 

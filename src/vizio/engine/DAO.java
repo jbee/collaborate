@@ -56,7 +56,7 @@ public class DAO implements Repository {
 	
 	@SuppressWarnings("unchecked")
 	private final <T extends Entity<T>> T load(ID id, Convert<Repository, T> reader) {
-		Object res = possiblyChanged(id);
+		Object res = transactionObject(id);
 		if (res != null)
 			return (T) res;		
 		T e = loadObject(id, reader);
@@ -68,7 +68,14 @@ public class DAO implements Repository {
 		return reader.convert(this, read(id));
 	}
 	
-	protected Object possiblyChanged(ID id) {
+	/**
+	 * Override this to return an object already changed in the running
+	 * transaction.
+	 * 
+	 * @return returns the object as it is already present in the running
+	 *         transaction. Returns null if the object has not been loaded yet.
+	 */
+	protected Object transactionObject(ID id) {
 		return loaded.get(id);
 	}
 	

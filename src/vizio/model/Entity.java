@@ -30,6 +30,10 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 		return version > initalVersion;
 	}
 	
+	/**
+	 * This is just visible at all to allow the user to increment its version
+	 * without cloning it.
+	 */
 	final void modified() {
 		version++;
 	}
@@ -79,6 +83,15 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 
 	public final boolean equalTo(T other) {
 		return uniqueID().equalTo(other.uniqueID());
+	}
+	
+	/**
+	 * @return two instances are the same if they have the same {@link ID} AND
+	 *         are of the same {@link #version()}. This does not compare them
+	 *         field by field!
+	 */
+	public final boolean sameAs(T other) {
+		return equalTo(other) && version == other.version();
 	}
 	
 	@Override

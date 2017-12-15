@@ -16,17 +16,27 @@ import vizio.cache.Criteria.Criterium;
 import vizio.cache.Criteria.Property;
 import vizio.db.DB;
 import vizio.db.DB.TxR;
+import vizio.engine.Change;
 import vizio.engine.Changes;
+import vizio.engine.Changes.Entry;
 import vizio.engine.DAO;
+import vizio.engine.Event;
+import vizio.engine.History;
 import vizio.engine.Repository;
+import vizio.model.Area;
 import vizio.model.Date;
+import vizio.model.ID.Type;
 import vizio.model.IDN;
 import vizio.model.Motive;
 import vizio.model.Name;
+import vizio.model.Poll;
 import vizio.model.Product;
 import vizio.model.Purpose;
+import vizio.model.Site;
 import vizio.model.Status;
 import vizio.model.Task;
+import vizio.model.User;
+import vizio.model.Version;
 
 /**
  * Each worker is responsible for a single {@link Product}.
@@ -44,20 +54,23 @@ final class CacheWorker implements Cache {
 	 * The {@link IDN} order is also the order by reported {@link Date}.
 	 * This can be used to narrow down with related date ranges.
 	 */
-	private Task[] byIDN;
+	private Task[] byIDN; // fix (growing at the end)
 	private int usage; // last index in use
 	
 	// caches: best to worst filtering
-	private Map<Name, TaskSet> byUser = new HashMap<>();
-	private Map<Name, TaskSet> byMaintainer = new HashMap<>();
-	private Map<Name, TaskSet> bySolver = new HashMap<>();
-	private Map<Name, TaskSet> byReporter = new HashMap<>();
-	private Map<Name, TaskSet> byWatcher = new HashMap<>();
-	private Map<Name, TaskSet> byArea = new HashMap<>();
+	private Map<Name, TaskSet> byUser = new HashMap<>(); // almost fix
+	private Map<Name, TaskSet> byMaintainer = new HashMap<>(); // almost fix
+	private Map<Name, TaskSet> bySolver = new HashMap<>(); // almost fix
+	private Map<Name, TaskSet> byReporter = new HashMap<>(); // fix
+	private Map<Name, TaskSet> byWatcher = new HashMap<>(); // almost fix
+	private Map<Name, TaskSet> byArea = new HashMap<>(); // almost fix
+	private Map<Name, TaskSet> byVersion = new HashMap<>(); // almost fix
 	
-	private EnumMap<Status, TaskSet> byStatus = new EnumMap<>(Status.class);
-	private EnumMap<Purpose, TaskSet> byPurpose = new EnumMap<>(Purpose.class);
-	private EnumMap<Motive, TaskSet> byMotive = new EnumMap<>(Motive.class);
+	private EnumMap<Purpose, TaskSet> byPurpose = new EnumMap<>(Purpose.class); // fix
+	private EnumMap<Motive, TaskSet> byMotive = new EnumMap<>(Motive.class); // fix
+	private EnumMap<Status, TaskSet> byStatus = new EnumMap<>(Status.class); // almost fix
+	
+	//TODO have a list of task ordered by latest changes?
 	
 	public CacheWorker(Name product, DB db) {
 		super();
@@ -108,6 +121,7 @@ final class CacheWorker implements Cache {
 		for (Name n : t.watchedBy)
 			getOrInit(n, byWatcher).init(t.id);
 		getOrInit(t.area.name, byArea).init(t.id);
+		getOrInit(t.base.name, byVersion).init(t.id);
 		getOrInit(t.status, byStatus).init(t.id);
 		getOrInit(t.purpose, byPurpose).init(t.id);
 		getOrInit(t.motive, byMotive).init(t.id);
@@ -146,7 +160,48 @@ final class CacheWorker implements Cache {
 		return null;
 	}
 	
+	/**
+	 * Changes to take care of:
+	 * 
+	 * - change to the{@link Product}, {@link Area}s.
+	 * - {@link Task} changes (obviously)
+	 * 
+	 * Changes to ignore:
+	 * 
+	 * - change to {@link User}, {@link Site}, {@link Poll} and {@link Version}
+	 * - new {@link Event}s or {@link History}
+	 */
 	private void update(Changes changes) {
+		for (Changes.Entry<?> e : changes) {
+			switch (e.type()) {
+			case Area: updateArea((Entry<Area>) e); break;
+			case Product: updateProduct((Entry<Product>) e); break;
+			case Task: updateTask((Entry<Task>) e); break;
+			default: // just ignore those changes
+			}
+		}
+	}
+	
+	private void updateTask(Entry<Task> e) {
+		// TODO Auto-generated method stub
+		
+		// when task is created we have to make sure to use correct instance of version and areas shared by all with same
+		// if the index is not empty switch the version and area to those used already otherwise have that be the one used.
+	}
+
+	private void updateProduct(Entry<Product> e) {
+		// TODO Auto-generated method stub
+		// pick a task, update the product, unless the version in use is higher than the version updating?
+		
+		// cases:
+		// - new product
+		// - integration added
+		// - integration removed
+		// - new task (count inc)
+	}
+
+	private void updateArea(Entry<Area> e) {
+		// TODO Auto-generated method stub
 		
 	}
 	
@@ -179,6 +234,12 @@ final class CacheWorker implements Cache {
 				members = tmp;
 			}
 			members[++usage] = (short) task.num;
+		}
+		
+		int first() {
+			int i = 0;
+			while (i <= usage && members[i] == 0) i++;
+			return members[i] == 0 ? -1 : members[i];
 		}
 		
 		boolean contains(IDN task) {

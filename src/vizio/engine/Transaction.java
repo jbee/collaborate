@@ -90,7 +90,7 @@ public final class Transaction extends DAO implements Tx, Limits {
 	}
 	
 	@Override
-	protected Object possiblyChanged(ID id) {
+	protected Object transactionObject(ID id) {
 		Object res = changed.get(id);
 		return res != null ? res : loaded.get(id);
 	}
@@ -98,7 +98,7 @@ public final class Transaction extends DAO implements Tx, Limits {
 	@Override
 	public void put(Operation op, Entity<?> e) {
 		final ID id = e.uniqueID();
-		if (e != possiblyChanged(id)) { // only do real updates
+		if (e != transactionObject(id)) { // only do real updates
 			putFields(op, e); // "auto"-update fields with updates
 			changed.put(id, e);
 			changeTypes.computeIfAbsent(id, (id_) -> new ArrayList<>()).add(op);
