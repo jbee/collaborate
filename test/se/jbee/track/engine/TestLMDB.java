@@ -26,23 +26,14 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
 import se.jbee.track.db.DB;
-import se.jbee.track.db.LMDB;
 import se.jbee.track.db.DB.TxR;
 import se.jbee.track.db.DB.TxRW;
-import se.jbee.track.engine.Change;
-import se.jbee.track.engine.Changes;
-import se.jbee.track.engine.Clock;
-import se.jbee.track.engine.Convert;
-import se.jbee.track.engine.Event;
-import se.jbee.track.engine.History;
-import se.jbee.track.engine.LinearTimeLimits;
-import se.jbee.track.engine.Tracker;
-import se.jbee.track.engine.Transaction;
+import se.jbee.track.db.LMDB;
 import se.jbee.track.model.ID;
+import se.jbee.track.model.ID.Type;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Site;
 import se.jbee.track.model.User;
-import se.jbee.track.model.ID.Type;
 
 public class TestLMDB {
 
@@ -84,7 +75,7 @@ public class TestLMDB {
 				.open(path)) {
 			DB db = new LMDB(env);
 			User u1 = tracker.register(null, as("user1"), email("pass1"));
-			u1 = tracker.authenticate(u1, u1.token);
+			u1 = tracker.authenticate(u1, u1.otp);
 			Site s1 = tracker.launch(as("def"), template("ghi"), u1);
 			Site s2 = tracker.launch(as("mno"), template("pqr"), u1);
 			try (TxRW tx = db.write()) {
@@ -116,7 +107,7 @@ public class TestLMDB {
 			}
 			assertEquals(s1.name, s1r.name);
 			assertEquals(s2.name, s2r.name);
-			assertEquals(u1.name, u1r.name);
+			assertEquals(u1.alias, u1r.alias);
 		}
 	}
 	
@@ -143,7 +134,7 @@ public class TestLMDB {
 			assertNotNull(changed.get(0).after);
 
 			User usr = (User)changed.get(0).after;
-			change = authenticate(user, usr.token).and(launch(user, site, template("ghi")));
+			change = authenticate(user, usr.otp).and(launch(user, site, template("ghi")));
 			changed = Transaction.run(change, db, realTime, limits);
 					
 			assertEquals(2, changed.length());
@@ -170,7 +161,7 @@ public class TestLMDB {
 				e = Convert.bin2event.convert(null, buf);
 			}
 			assertEquals(site, s.name);
-			assertEquals(user, u.name);
+			assertEquals(user, u.alias);
 			assertNotNull(sh);
 			assertEquals(1, sh.length());
 			assertNotNull(e);

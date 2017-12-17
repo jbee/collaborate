@@ -7,7 +7,6 @@ import static se.jbee.track.cache.Criteria.ValueType.text;
 
 import org.junit.Test;
 
-import se.jbee.track.cache.Criteria;
 import se.jbee.track.cache.Criteria.Operator;
 import se.jbee.track.cache.Criteria.Property;
 import se.jbee.track.model.Date;
@@ -28,9 +27,9 @@ public class TestCriteria {
 		Criteria criteria = Criteria.parse("[color=heat][length=20][user~{foo,bar}]");
 		assertEquals(3, criteria.count());
 		assertEquals("[color = heat][length = 20][user ~ {foo, bar}]", criteria.toString());
-		assertSame(Name.class, criteria.get(0).value[0].getClass());
-		assertSame(Integer.class, criteria.get(1).value[0].getClass());
-		assertSame(Name.class, criteria.get(2).value[0].getClass());
+		assertSame(Name.class, criteria.get(0).values[0].getClass());
+		assertSame(Integer.class, criteria.get(1).values[0].getClass());
+		assertSame(Name.class, criteria.get(2).values[0].getClass());
 	}
 	
 	@Test
@@ -43,7 +42,7 @@ public class TestCriteria {
 	public void test3() {
 		Criteria criteria = Criteria.parse("[order>>heat]");
 		assertEquals(1, criteria.count());
-		assertSame(Property.heat, criteria.get(0).value[0]);
+		assertSame(Property.heat, criteria.get(0).values[0]);
 	}
 	
 	@Test
@@ -51,8 +50,8 @@ public class TestCriteria {
 		Criteria criteria = Criteria.parse("[reported=2016]");
 		assertEquals(2, criteria.count());
 		assertEquals(Operator.ge, criteria.get(0).op);
-		assertEquals(Date.parse("2016-01-01"), criteria.get(0).value[0]);
+		assertEquals(Date.parse("2016-01-01"), criteria.get(0).values[0]);
 		assertEquals(Operator.le, criteria.get(1).op);
-		assertEquals(Date.parse("2016-12-31"), criteria.get(1).value[0]);
+		assertEquals(Date.parse("2016-12-31"), criteria.get(1).values[0]);
 	}
 }

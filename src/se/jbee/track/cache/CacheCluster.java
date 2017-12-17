@@ -47,7 +47,7 @@ public class CacheCluster implements Cache {
 		if (included.count() == 1) {
 			Cache cache = productCaches.get(included.iterator().next());
 			if (cache == null)
-				return readyFuture(new Tasks(Tasks.NONE.list, 0, included));
+				return readyFuture(new Tasks(Tasks.NONE.matches, 0, included));
 			return cache.tasks(constraints);
 		}
 		//TODO	

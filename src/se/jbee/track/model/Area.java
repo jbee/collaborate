@@ -18,6 +18,9 @@ public final class Area extends Entity<Area> {
 	 * Do only maintainers get to stress?
 	 */
 	public boolean exclusive;
+	/**
+	 * An informational flag to mark areas that are not actively maintained any longer.
+	 */
 	public boolean abandoned;
 
 	/**

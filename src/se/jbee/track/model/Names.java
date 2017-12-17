@@ -1,6 +1,7 @@
 package se.jbee.track.model;
 
 import static java.util.Arrays.asList;
+import static java.util.Arrays.copyOf;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -29,7 +30,7 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 	}
 
 	private int indexOf(User user) {
-		return indexOf(user.name);
+		return indexOf(user.alias);
 	}
 
 	private int indexOf(Name name) {
@@ -41,7 +42,7 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 	}
 
 	public Names remove(User user) {
-		return remove(user.name);
+		return remove(user.alias);
 	}
 
 	public Names add(Name user) {
@@ -53,7 +54,7 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 	}
 
 	public Names add(User user) {
-		return add(user.name);
+		return add(user.alias);
 	}
 
 	public boolean contains(User user) {
@@ -85,6 +86,15 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 	@Override
 	public int compareTo(Names other) {
 		return Array.compare(names, other.names);
+	}
+
+	public Names union(Names other) {
+		Name[] res = copyOf(names, names.length+other.names.length);
+		int k = names.length;
+		for (Name n : other.names)
+			if (!contains(n))
+				res[k++] = n;
+		return wrap(copyOf(res, k));
 	}
 
 }

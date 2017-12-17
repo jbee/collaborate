@@ -17,7 +17,6 @@ import static se.jbee.track.model.ID.versionId;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.List;
 import java.util.function.Predicate;
 
 import se.jbee.track.db.DB;
@@ -33,7 +32,6 @@ import se.jbee.track.model.Site;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
-import se.jbee.track.model.ID.Type;
 
 /**
  * Reading {@link Entity}s from a {@link DB} via a {@link Repository} abstraction.  

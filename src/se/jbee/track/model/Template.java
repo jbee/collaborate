@@ -1,6 +1,6 @@
 package se.jbee.track.model;
 
-import java.nio.charset.StandardCharsets;
+import static java.nio.charset.StandardCharsets.UTF_16BE;
 
 public final class Template extends Bytes implements Comparable<Template> {
 
@@ -10,7 +10,7 @@ public final class Template extends Bytes implements Comparable<Template> {
 		if (!FULL_TEXT_ONLY.matcher(template).matches()) {
 			throw new IllegalArgumentException("Template contains illegal characters.");
 		}
-		return new Template(template.getBytes(StandardCharsets.UTF_16));
+		return new Template(template.getBytes(UTF_16BE));
 	}
 	
 	public static Template fromBytes(byte[] template) {
@@ -36,7 +36,7 @@ public final class Template extends Bytes implements Comparable<Template> {
 	
 	@Override
 	public String toString() {
-		return new String(template, StandardCharsets.UTF_16);
+		return new String(template, UTF_16BE);
 	}
 
 }

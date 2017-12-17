@@ -18,8 +18,8 @@ import se.jbee.track.ui.view.Coloring;
 import se.jbee.track.ui.view.Menu;
 import se.jbee.track.ui.view.Page;
 import se.jbee.track.ui.view.View;
-import se.jbee.track.ui.view.Widget;
 import se.jbee.track.ui.view.View.Silo;
+import se.jbee.track.ui.view.Widget;
 
 public class HTMLRenderer {
 
@@ -128,12 +128,12 @@ public class HTMLRenderer {
 		out.append(">");
 		out.append("<td>");
 		renderTaskLink(task);
-		if (viewer.canEmphasise(now) && task.canBeEmphasisedBy(viewer.name)) {
+		if (viewer.canEmphasise(now) && task.canBeEmphasisedBy(viewer.alias)) {
 			renderStressLink(task);
 		}
 		out.append("</td>");
 		out.append("<td><h5>");
-		if (task.isVisibleTo(viewer.name)) {
+		if (task.isVisibleTo(viewer.alias)) {
 			out.append(task.gist.toString());
 		} else {
 			out.append("<i>(protected)</i>");
@@ -141,7 +141,7 @@ public class HTMLRenderer {
 		out.append("</h5>");
 		renderUsersList(task);
 		if (viewer.isAuthenticated()) {
-			if (task.pursuedBy.contains(viewer) || task.engagedBy.contains(viewer)) {
+			if (task.aspirants.contains(viewer) || task.participants.contains(viewer)) {
 				renderTaskActionLink(task, "btn", Action.abandon, "&minus;");
 			} else {
 				renderTaskActionLink(task, "btn", Action.enlist, "&plus;");
@@ -175,12 +175,12 @@ public class HTMLRenderer {
 
 	private void renderUsersList(Task task) {
 		if (task.participants() > 0) {
-			if (task.pursuedBy.count() > 0) {
+			if (task.aspirants.count() > 0) {
 				out.append("<b>[...</b>");
-				renderUsersLinks(task.pursuedBy);
+				renderUsersLinks(task.aspirants);
 				out.append(" <b>]</b>");
 			}
-			renderUsersLinks(task.engagedBy);
+			renderUsersLinks(task.participants);
 		}
 	}
 

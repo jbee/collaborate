@@ -1,24 +1,17 @@
 package se.jbee.track.db;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
-import java.util.function.Predicate;
 
-import org.lmdbjava.Cursor;
 import org.lmdbjava.CursorIterator;
 import org.lmdbjava.CursorIterator.IteratorType;
 import org.lmdbjava.CursorIterator.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
-import org.lmdbjava.GetOp;
 import org.lmdbjava.Txn;
 
 import se.jbee.track.model.ID;
-import se.jbee.track.model.ID.Type;
 
 public final class LMDB implements DB {
 

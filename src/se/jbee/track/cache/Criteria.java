@@ -35,9 +35,11 @@ import se.jbee.track.model.Date;
 import se.jbee.track.model.Gist;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
+import se.jbee.track.model.Names;
 import se.jbee.track.model.Purpose;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
+import se.jbee.track.model.User;
 
 /**
  * A data structure to describe what {@link Task}s to select and how to present
@@ -77,6 +79,13 @@ import se.jbee.track.model.Task;
  * 
  * The example for <code>order</code> shows, that the set is sometimes used as a
  * list too, that is to say order of elements matters.
+ * 
+ * If in/nin are used the values are alternatives (OR).
+ * To test for AND use multiple {@link Criterium}s.
+ * <pre>
+ * [user ~ Frank]
+ * [user ~ Paul]
+ * </pre>
  * 
  * While the uniform way of describing constraints can be a bit lengthy it
  * allows for simple parsing and remembering.
@@ -166,20 +175,20 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		T res = v0;
 		for (Criterium ct : criteria) {
 			if (ct.prop == p && included.contains(ct.op))
-				for (Object v : ct.value)
+				for (Object v : ct.values)
 					res = merge.apply(res, elemType.cast(v));
 		}
 		return res;
 	}
 	
-	private static final Pattern CONSTRAINT = Pattern.compile("\\s*\\[([a-z]+)\\s*([=<>?!~]{1,2})\\s*([^\\]]+)\\]");
+	private static final Pattern CRITERIUM = Pattern.compile("\\s*\\[([a-z]+)\\s*([=<>?!~]{1,2})\\s*([^\\]]+)\\]");
 	
 	public static Criteria parse(String s) throws IllDefinedCriterium {
 		return parse(s, new HashMap<Criteria.Property, Name>());
 	}
 	
 	public static Criteria parse(String s, Map<Property, Name> context) throws IllDefinedCriterium {
-		Matcher m = CONSTRAINT.matcher(s);
+		Matcher m = CRITERIUM.matcher(s);
 		List<Criterium> res = new ArrayList<>();
 		while (m.find()) {
 			String p = m.group(1);
@@ -309,13 +318,13 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 
 		public Property prop;
 		public Operator op;
-		public Object[] value;
+		public Object[] values;
 
-		public Criterium(Property prop, Operator op, Object... value) {
+		public Criterium(Property prop, Operator op, Object... values) {
 			super();
 			this.prop = prop;
 			this.op = op;
-			this.value = value;
+			this.values = values;
 		}
 
 		public boolean matches(Task t, Date today) {
@@ -323,23 +332,54 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 				return true; // basically we ignore these as filter
 			Comparable<?> val = prop.access(t, today);
 			switch (op) {
-			case eq:  
-			case in:  return isValue(val);
-			case neq: 
-			case nin: return !isValue(val);
-			case lt:  return cmp(val, value[0]) <  0;
-			case le:  return cmp(val, value[0]) <= 0;
-			case gt:  return cmp(val, value[0]) >  0;
-			case ge:  return cmp(val, value[0]) >= 0;
+			// set comparisons
+			case eq:  return isSameSet(val);
+			case in:  return isMember(val);
+			case neq: return !isSameSet(val);
+			case nin: return !isMember(val);
+			// non set comparisons
+			case lt:  return cmp(val, values[0]) <  0;
+			case le:  return cmp(val, values[0]) <= 0;
+			case gt:  return cmp(val, values[0]) >  0;
+			case ge:  return cmp(val, values[0]) >= 0;
 			default:  return false;
 			}
 		}
 		
-		public boolean isValue(Object other) {
-			if (value.length == 1)
-				return value[0].equals(other);
-			for (int i = 0; i < value.length; i++)
-				if (value[i].equals(other))
+		public boolean isSameSet(Comparable<?> entityValue) {
+			if (prop.type == name && entityValue instanceof Names) {
+				Names set = (Names) entityValue;
+				if (set.count() != values.length)
+					return false;
+				for (int i = 0; i< values.length; i++) {
+					if (!set.contains((Name)values[i]))
+						return false;
+				}
+				return true;
+			}
+			return values.length == 1 && values[0].equals(entityValue);
+		}
+		
+		public boolean isMember(Comparable<?> entityValue) {
+			if (prop.type == name && entityValue instanceof Names) {
+				Names set = (Names) entityValue;
+				for (int i = 0; i< values.length; i++) {
+					if (set.contains((Name)values[i]))
+						return true;
+				}
+				return false;
+			}
+			if (prop.type == text) {
+				Gist g = (Gist) entityValue;
+				for (int i = 0; i < values.length; i++)
+					if (g.contains((Gist)values[i]))
+						return true;
+				return false;
+			}
+			if (values.length == 1)
+				return values[0].equals(entityValue);
+			for (int i = 0; i < values.length; i++)
+				if (values[i].equals(entityValue))
 					return true;
 			return false;
 		}
@@ -353,14 +393,14 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 
 		@Override
 		public String toString() {
-			String val = value.length == 1 ? value[0].toString() : "{"+join(value, ", ")+"}";
+			String val = values.length == 1 ? values[0].toString() : "{"+join(values, ", ")+"}";
 			return "["+prop.name()+" "+op+" "+val+"]";
 		}
 		
 	}
 	
 	/**
-	 * Properties a task can be filtered by
+	 * Properties a task can be filtered by.
 	 */
 	public static enum Property {
 		// result properties
@@ -380,6 +420,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		reported(date, 50, eq, ge, le, gt, lt, in),
 		resolved(date, 50, eq, ge, le, gt, lt, in),
 		exploitable(flag, 1, eq, neq),
+		archived(flag, 1, eq, neq),
 		age(number, 15, eq, ge, le, gt, lt),
 		id(number, 100, eq, ge, le, gt, lt, in, nin),
 		origin(number, 20, eq, ge, le, gt, lt, in, nin),
@@ -390,10 +431,10 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		user(name, 40, eq, neq, in, nin),
 		maintainer(name, 30, eq, neq, in, nin),
 		watcher(name, 25, eq, neq, in, nin),
-		pursued_by(name, 45, eq, neq, in, nin),
-		engaged_by(name, 45, eq, neq, in, nin),
+		aspirant(name, 45, eq, neq, in, nin),
+		participant(name, 45, eq, neq, in, nin),
 		area(name, 20, eq, neq, in, nin),
-		product(name, 0, eq, neq, in, nin),
+		product(name, 1, eq, neq, in, nin),
 		url(text, 70, eq, gt, lt, in, nin), //TODO when eq, gt or lt is used and the value is not an URL (starts with http) then we somehow have to know what kind of integration URL is meant and look for that
 		gist(text, 70, eq, gt, lt, in, nin),
 		conclusion(text, 70, eq, gt, lt, in, nin);
@@ -464,6 +505,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			case reported: return t.reported;
 			case resolved: return t.resolved;
 			case exploitable : return t.exploitable;
+			case archived: return t.archived;
 			case age: t.age(today);
 			default:
 			case id: return t.id;
@@ -472,11 +514,11 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			case serial: return t.serial;
 			case reporter: return t.reporter;
 			case solver: return t.solver;
-			case pursued_by: return t.pursuedBy;
-			case engaged_by: return t.engagedBy;
-			case user: return t.engagedBy;
+			case aspirant: return t.aspirants;
+			case participant: return t.participants;
+			case user: return t.users();
 			case maintainer: return t.area.maintainers;
-			case watcher: return t.watchedBy;
+			case watcher: return t.watchers;
 			case area: return t.area.name;
 			case product: return t.product.name;
 			case gist: return t.gist; 
@@ -531,7 +573,13 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		lt("<", false, false), 
 		ge(">=", false, false), 
 		le("<=", false, false), 
+		/**
+		 * Is the value one of a set of alternatives?
+		 */
 		in("~", true, true), 
+		/**
+		 * Is the value not one of a set of alternatives?
+		 */
 		nin("!~", true, false), 
 		asc(">>", true, false),
 		desc("<<", true, false)

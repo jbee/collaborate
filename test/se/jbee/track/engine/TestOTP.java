@@ -8,8 +8,6 @@ import java.util.Arrays;
 
 import org.junit.Test;
 
-import se.jbee.track.engine.OTP;
-
 public class TestOTP {
 
 	@Test

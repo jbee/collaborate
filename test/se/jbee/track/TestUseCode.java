@@ -11,15 +11,11 @@ import se.jbee.track.model.Heat;
 import se.jbee.track.model.Mail;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Outcome;
-import se.jbee.track.model.Poll;
+import se.jbee.track.model.Poll.Matter;
 import se.jbee.track.model.Purpose;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.UseCode;
 import se.jbee.track.model.User;
-import se.jbee.track.model.Mail.Delivery;
-import se.jbee.track.model.Mail.Subject;
-import se.jbee.track.model.Poll.Matter;
-import se.jbee.track.model.User.Notifications;
 
 /**
  * Make sure the enums that are annotated do follow the "contract" of not having

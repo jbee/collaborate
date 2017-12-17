@@ -14,6 +14,8 @@ public final class Product extends Entity<Product> {
 	
 	/**
 	 * The area used to manage a product's areas and versions.
+	 * 
+	 * If the origin is abandoned the product is abandoned. 
 	 *
 	 * <pre>*</pre>
 	 */
@@ -38,7 +40,7 @@ public final class Product extends Entity<Product> {
 	public Version somewhen;
 
 	public int tasks;
-
+	
 	public Product(int version) {
 		super(version);
 	}

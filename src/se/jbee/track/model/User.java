@@ -43,20 +43,21 @@ public final class User extends Entity<User> {
 		}
 	}
 	
-	private static final int MINIMUM_WATCH_LIMIT = 20;
+	private static final int INITIAL_WATCH_LIMIT = 20;
 
-	public Name name;
+	public Name alias;
 	// account
 	public Email email;
 	public int authenticated; // count
-	public byte[] token; // mem only
-	public byte[] encryptedToken; // persisted
-	public long millisTokenExprired;
+	public transient byte[] otp; // mem only
+	public byte[] encryptedOtp; // persisted
+	public long millisOtpExprires;
 	
 	// user data
 	public Names sites;
 	public int watches; // n tasks
 	public EnumMap<Notifications,Mail.Delivery> notifications;
+	//TODO preferred page size?
 	
 	// change log
 	public long millisLastActive;
@@ -66,6 +67,7 @@ public final class User extends Entity<User> {
 	public int absolved;
 	public int resolved;
 	public int dissolved;
+	public int abandoned;
 	public Names contributesToProducts;
 	
 	// voting tasks
@@ -87,7 +89,7 @@ public final class User extends Entity<User> {
 	
 	@Override
 	public ID computeID() {
-		return ID.userId(name);
+		return ID.userId(alias);
 	}
 	
 	@Override
@@ -96,7 +98,7 @@ public final class User extends Entity<User> {
 	}
 	
 	public boolean isAnonymous() {
-		return name.isEmail();
+		return alias.isEmail();
 	}
 
 	public int emphDelay() {
@@ -114,7 +116,7 @@ public final class User extends Entity<User> {
 	}
 
 	public boolean isAuthenticated() {
-		return authenticated > 0 && name.isEditable();
+		return authenticated > 0 && alias.isEditable();
 	}
 
 	public void emphasised(long now) {
@@ -131,7 +133,7 @@ public final class User extends Entity<User> {
 	}
 
 	public boolean canWatch() {
-		return watches < MINIMUM_WATCH_LIMIT + (xp / 10);
+		return watches < INITIAL_WATCH_LIMIT + (xp / 10);
 	}
 
 }

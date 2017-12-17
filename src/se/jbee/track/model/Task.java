@@ -19,6 +19,7 @@ public class Task extends Entity<Task> {
 	public Status status;
 	public Names changeset;
 	public boolean exploitable;
+	
 	// working with a task (data that might change)
 	public IDN basis; // direct predecessor
 	public IDN origin; // initial "impulse" that lead to this task
@@ -34,13 +35,31 @@ public class Task extends Entity<Task> {
 	 * but the newly released version.
 	 */
 	public Version base;
-	public Names pursuedBy;
-	public Names engagedBy;
-	public Names watchedBy; // OBS! this is the only real dynamic length field...
+	/**
+	 * Users that plan to work with this task.
+	 */
+	public Names aspirants;
+	/**
+	 * Users actively working with this task. 
+	 */
+	public Names participants;
+	/**
+	 * Both {@link #aspirants} and {@link #participants()} are users of this task.
+	 * This field is used to avoid recomputing the union again and again.
+	 */
+	private transient Names users;
+	/**
+	 * Users that want to follow progress of this task.
+	 */
+	public Names watchers; // OBS! this is the only real dynamic length field...
+	
 	// resolving a task (closing record)
 	public Name solver;
 	public Date resolved;
 	public Gist conclusion;
+	
+	// archiving 
+	public boolean archived;
 
 	public Task(int version) {
 		super(version);
@@ -80,7 +99,7 @@ public class Task extends Entity<Task> {
 	}
 
 	public int participants() {
-		return pursuedBy.count() + engagedBy.count();
+		return aspirants.count() + participants.count();
 	}
 
 	public boolean isVisibleTo(Name user) {
@@ -95,4 +114,13 @@ public class Task extends Entity<Task> {
 		return status != Status.unsolved;
 	}
 
+	public Names users() {
+		if (users == null)
+			users = participants.union(aspirants);
+		return users;
+	}
+	
+	public void changed() {
+		users = null;
+	}
 }

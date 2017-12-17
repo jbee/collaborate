@@ -22,6 +22,7 @@ import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
 import se.jbee.track.model.Outcome;
 import se.jbee.track.model.Poll;
+import se.jbee.track.model.Poll.Matter;
 import se.jbee.track.model.Product;
 import se.jbee.track.model.Purpose;
 import se.jbee.track.model.Site;
@@ -31,9 +32,8 @@ import se.jbee.track.model.Template;
 import se.jbee.track.model.URL;
 import se.jbee.track.model.UseCode;
 import se.jbee.track.model.User;
-import se.jbee.track.model.Version;
-import se.jbee.track.model.Poll.Matter;
 import se.jbee.track.model.User.Notifications;
+import se.jbee.track.model.Version;
 
 @FunctionalInterface
 public interface Convert<I,O> {
@@ -60,14 +60,29 @@ public interface Convert<I,O> {
 	Change.Operation[] operations = Change.Operation.values();
 	Notifications[] notifications = Notifications.values();
 	
+	/**
+	 * Entity Version Numbers (EVN) are used to indicate the format of an
+	 * binary entry so that the binary structure can change and older entries
+	 * are identified and updated correctly.
+	 */
+	byte USER_EVN = 1;
+	byte TASK_EVN = 1;
+	byte POLL_EVN = 1;
+	byte AREA_EVN = 1;
+	byte VERSION_EVN = 1;
+	byte PRODUCT_EVN = 1;
+	byte SITE_EVN = 1;
+	byte EVENT_EVN = 1;
+	
 	Convert<Repository, User> bin2user = (tx,from) -> { 
+		byte evn = from.get(); // ignore so far
 		User u = new User(from.getInt());
-		u.name = bin2name(from);
+		u.alias = bin2name(from);
 		u.email = Email.fromBytes(getShortBytes(from));
 		u.notifications = bin2enumMap(notifications, deliveries, from);
 		u.authenticated = from.getInt();
-		u.encryptedToken = getShortBytes(from);
-		u.millisTokenExprired = from.getLong();
+		u.encryptedOtp = getShortBytes(from);
+		u.millisOtpExprires = from.getLong();
 		u.sites = bin2names(from);
 		u.watches = from.getInt();
 		u.millisLastActive = from.getLong();
@@ -75,20 +90,22 @@ public interface Convert<I,O> {
 		u.absolved = from.getInt();
 		u.resolved = from.getInt();
 		u.dissolved = from.getInt();
+		u.abandoned = from.getInt();
 		u.millisEmphasised = from.getLong();
 		u.emphasisedToday = from.getInt();
 		u.contributesToProducts = bin2names(from);
 		return u;
 	};
 	
-	Convert<User,ByteBuffer> user2bin = (u,to) -> { 
+	Convert<User,ByteBuffer> user2bin = (u,to) -> {
+		to.put(USER_EVN);
 		to.putInt(u.version());
-		name2bin(u.name, to);
+		name2bin(u.alias, to);
 		putShortBytes(u.email, to);
 		enumMap2bin(u.notifications, to);
 		to.putInt(u.authenticated);
-		putShortBytes(u.encryptedToken, to);
-		to.putLong(u.millisTokenExprired);
+		putShortBytes(u.encryptedOtp, to);
+		to.putLong(u.millisOtpExprires);
 		names2bin(u.sites, to);
 		to.putInt(u.watches);
 		to.putLong(u.millisLastActive);
@@ -96,6 +113,7 @@ public interface Convert<I,O> {
 		to.putInt(u.absolved);
 		to.putInt(u.resolved);
 		to.putInt(u.dissolved);
+		to.putInt(u.abandoned);
 		to.putLong(u.millisEmphasised);
 		to.putInt(u.emphasisedToday);
 		names2bin(u.contributesToProducts, to);
@@ -103,6 +121,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Repository, Version> bin2version = (tx,from) -> { 
+		byte evn = from.get(); // ignore so far
 		Version v = new Version(from.getInt());
 		v.product = bin2name(from);
 		v.name = bin2name(from);
@@ -111,6 +130,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Version,ByteBuffer> version2bin = (v,to) -> { 
+		to.put(VERSION_EVN);
 		to.putInt(v.version());
 		name2bin(v.product, to);
 		name2bin(v.name, to);
@@ -119,6 +139,7 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<Repository, Task> bin2task = (tx,from) -> { 
+		byte evn = from.get(); // ignore so far
 		Task t = new Task(from.getInt());
 		t.product = tx.product(bin2name(from));
 		t.area = tx.area(t.product.name, bin2name(from));
@@ -132,13 +153,14 @@ public interface Convert<I,O> {
 		t.status = bin2enum(status, from);
 		t.changeset = bin2names(from);
 		t.exploitable = from.get() > 0;
+		t.archived = from.get() > 0;
 		t.basis = bin2IDN(from);
 		t.origin = bin2IDN(from);
 		t.emphasis = from.getInt();
 		t.base = tx.version(t.product.name, bin2name(from));
-		t.pursuedBy = bin2names(from);
-		t.engagedBy = bin2names(from);
-		t.watchedBy = bin2names(from);
+		t.aspirants = bin2names(from);
+		t.participants = bin2names(from);
+		t.watchers = bin2names(from);
 		t.solver = bin2name(from);
 		t.resolved = bin2date(from);
 		t.conclusion = bin2gist(from);
@@ -147,6 +169,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Task,ByteBuffer> task2bin = (t,to) -> { 
+		to.put(TASK_EVN);
 		to.putInt(t.version());
 		name2bin(t.product.name, to);
 		name2bin(t.area.name, to);
@@ -160,13 +183,14 @@ public interface Convert<I,O> {
 		enum2bin(t.status, to);
 		names2bin(t.changeset, to);
 		to.put((byte) (t.exploitable ? 1 : 0));
+		to.put((byte) (t.archived ? 1 : 0));
 		IDN2bin(t.basis, to);
 		IDN2bin(t.origin, to);
 		to.putInt(t.emphasis);
 		name2bin(t.base.name, to);
-		names2bin(t.pursuedBy, to);
-		names2bin(t.engagedBy, to);
-		names2bin(t.watchedBy, to);
+		names2bin(t.aspirants, to);
+		names2bin(t.participants, to);
+		names2bin(t.watchers, to);
 		name2bin(t.solver, to);
 		date2bin(t.resolved, to);
 		gist2bin(t.conclusion, to);
@@ -175,6 +199,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Repository, Site> bin2site = (tx,from) -> { 
+		byte evn = from.get(); // ignore so far
 		int version = from.getInt();
 		Name owner = bin2name(from);
 		Name name = bin2name(from);
@@ -183,6 +208,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Site,ByteBuffer> site2bin = (site,to) -> { 
+		to.put(SITE_EVN);
 		to.putInt(site.version());
 		name2bin(site.owner, to);
 		name2bin(site.name, to);
@@ -191,6 +217,7 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<Repository, Product> bin2product = (tx,from) -> { 
+		byte evn = from.get(); // ignore so far
 		Product p = new Product(from.getInt());
 		p.name = bin2name(from);
 		p.tasks = from.getInt();
@@ -208,6 +235,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Product,ByteBuffer> product2bin = (p,to) -> { 
+		to.put(PRODUCT_EVN);
 		to.putInt(p.version());
 		name2bin(p.name, to);
 		to.putInt(p.tasks);
@@ -220,6 +248,7 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<Repository, Poll> bin2poll = (tx,from) -> { 
+		byte evn = from.get(); // ignore so far
 		Poll p = new Poll(from.getInt());
 		p.serial = new IDN(from.getInt());
 		p.area = tx.area(bin2name(from), bin2name(from));
@@ -236,6 +265,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Poll,ByteBuffer> poll2bin = (p,to) -> { 
+		to.put(POLL_EVN);
 		to.putInt(p.version());
 		IDN2bin(p.serial, to);
 		name2bin(p.area.product, to);
@@ -253,6 +283,7 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<Repository, Area> bin2area = (tx,from) -> { 
+		byte evn = from.get(); // ignore so far
 		Area a = new Area(from.getInt());
 		a.product = bin2name(from);
 		a.name = bin2name(from);
@@ -269,6 +300,7 @@ public interface Convert<I,O> {
 	};
 
 	Convert<Area,ByteBuffer> area2bin = (a,to) -> { 
+		to.put(AREA_EVN);
 		to.putInt(a.version());
 		name2bin(a.product, to);
 		name2bin(a.name, to);
@@ -285,6 +317,7 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<Repository, Event> bin2event = (tx, from) -> {
+		byte evn = from.get(); // ignore so far
 		long timestamp = from.getLong();
 		ID user = bin2id(from);
 		int n = from.getShort();
@@ -302,6 +335,7 @@ public interface Convert<I,O> {
 	};
 	
 	Convert<Event, ByteBuffer> event2bin = (e,to) -> {
+		to.put(EVENT_EVN);
 		to.putLong(e.timestamp);
 		id2bin(e.originator, to);
 		to.putShort((short) e.cardinality());

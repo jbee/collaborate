@@ -97,6 +97,8 @@ public final class Transaction extends DAO implements Tx, Limits {
 	
 	@Override
 	public void put(Operation op, Entity<?> e) {
+		if (e.isCurrupted())
+			throw new IllegalStateException("Currupted entities cannot be stored!");
 		final ID id = e.uniqueID();
 		if (e != transactionObject(id)) { // only do real updates
 			putFields(op, e); // "auto"-update fields with updates

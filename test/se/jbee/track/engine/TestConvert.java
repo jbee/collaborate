@@ -1,4 +1,4 @@
-package se.jbee.track.io;
+package se.jbee.track.engine;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
@@ -28,26 +28,19 @@ import java.util.function.Predicate;
 
 import org.junit.Test;
 
-import se.jbee.track.engine.Change;
-import se.jbee.track.engine.Convert;
-import se.jbee.track.engine.Event;
-import se.jbee.track.engine.History;
-import se.jbee.track.engine.NoLimits;
-import se.jbee.track.engine.Repository;
-import se.jbee.track.engine.Tracker;
 import se.jbee.track.engine.Event.Transition;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Poll;
+import se.jbee.track.model.Poll.Matter;
 import se.jbee.track.model.Product;
 import se.jbee.track.model.Site;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
-import se.jbee.track.model.Poll.Matter;
 
 public class TestConvert {
 
@@ -123,7 +116,7 @@ public class TestConvert {
 	
 	private User newTestUser() {
 		User u1 = tracker.register(null, as("user1"), email("user1@example.com"));
-		u1 = tracker.authenticate(u1, u1.token);
+		u1 = tracker.authenticate(u1, u1.otp);
 		return u1;
 	}
 
@@ -148,7 +141,7 @@ public class TestConvert {
 		@Override
 		public User user(Name user) {
 			User res = new User(1);
-			res.name = user;
+			res.alias = user;
 			return res;
 		}
 		

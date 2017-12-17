@@ -6,6 +6,7 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	private int version;
 	
 	private transient ID uniqueId;
+	private transient boolean corrupted = false;
 	
 	protected abstract ID computeID();
 	
@@ -30,12 +31,23 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 		return version > initalVersion;
 	}
 	
+	public boolean isCurrupted() {
+		return corrupted;
+	}
+	
 	/**
 	 * This is just visible at all to allow the user to increment its version
 	 * without cloning it.
 	 */
 	final void modified() {
 		version++;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public final void update(Entity<T> other) {
+		if (isMoreRecent((T) other)) {
+			other.version = version;
+		}
 	}
 
 	/**
@@ -92,6 +104,10 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	 */
 	public final boolean sameAs(T other) {
 		return equalTo(other) && version == other.version();
+	}
+	
+	public final boolean isMoreRecent(T other) {
+		return equalTo(other) && version > other.version();
 	}
 	
 	@Override

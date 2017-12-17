@@ -22,8 +22,8 @@ import se.jbee.track.model.Version;
 import se.jbee.track.ui.view.Coloring;
 import se.jbee.track.ui.view.Menu;
 import se.jbee.track.ui.view.View;
-import se.jbee.track.ui.view.Widget;
 import se.jbee.track.ui.view.View.Silo;
+import se.jbee.track.ui.view.Widget;
 
 public class DummyController implements Controller {
 
@@ -40,7 +40,7 @@ public class DummyController implements Controller {
 		Tracker tracker = new Tracker(() -> { now += 70000; return now; }, new NoLimits() );
 		tasks = new Task[5];
 		user = tracker.register(null, as("tester"), email("test@example.com"));
-		user = tracker.authenticate(user, user.token);
+		user = tracker.authenticate(user, user.otp);
 		Product product = tracker.constitute(as("vizio"), user);
 		Area area = tracker.compart(product, as("core"), user);
 		Area ui = tracker.compart(product, as("ui"), user);
@@ -50,8 +50,8 @@ public class DummyController implements Controller {
 		tasks[2] = tracker.reportProposal(product, gist("We should count ..."), user, product.origin);
 		tasks[3] = tracker.reportIntention(product, gist("At some point the tracker should be released"), user, product.origin);
 		tasks[4] = tracker.reportProposal(product, gist("Use bold text for everything important"), user, ui);
-		tasks[1] = tracker.pursue(tasks[1], user);
-		tasks[2] = tracker.engage(tasks[2], user);
+		tasks[1] = tracker.aspire(tasks[1], user);
+		tasks[2] = tracker.participate(tasks[2], user);
 		tasks[0].emphasis = 97;
 		tasks[1].emphasis = 78;
 		tasks[2].emphasis = 56;

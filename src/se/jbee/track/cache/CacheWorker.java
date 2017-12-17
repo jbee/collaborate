@@ -1,33 +1,35 @@
 package se.jbee.track.cache;
 
+import static se.jbee.track.engine.Change.Operation.archive;
 import static se.jbee.track.util.Array.nextPowerOf2;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.BiConsumer;
 
-import se.jbee.track.cache.Criteria.Criterium;
 import se.jbee.track.cache.Criteria.Property;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.DB.TxR;
 import se.jbee.track.engine.Change;
 import se.jbee.track.engine.Changes;
+import se.jbee.track.engine.Change.Operation;
+import se.jbee.track.engine.Changes.Entry;
 import se.jbee.track.engine.DAO;
 import se.jbee.track.engine.Event;
 import se.jbee.track.engine.History;
 import se.jbee.track.engine.Repository;
-import se.jbee.track.engine.Changes.Entry;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
+import se.jbee.track.model.Names;
 import se.jbee.track.model.Poll;
 import se.jbee.track.model.Product;
 import se.jbee.track.model.Purpose;
@@ -36,7 +38,6 @@ import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
-import se.jbee.track.model.ID.Type;
 
 /**
  * Each worker is responsible for a single {@link Product}.
@@ -48,6 +49,7 @@ import se.jbee.track.model.ID.Type;
 final class CacheWorker implements Cache {
 
 	private final Name product;
+	private final Date today;
 	private final ExecutorService es;
 
 	/**
@@ -70,11 +72,13 @@ final class CacheWorker implements Cache {
 	private EnumMap<Motive, TaskSet> byMotive = new EnumMap<>(Motive.class); // fix
 	private EnumMap<Status, TaskSet> byStatus = new EnumMap<>(Status.class); // almost fix
 	
-	//TODO have a list of task ordered by latest changes?
+	// special caches:
+	private TaskSet[] byTemperature = new TaskSet[100]; // not fix, has to be recomputed every day
 	
-	public CacheWorker(Name product, DB db) {
+	public CacheWorker(Name product, DB db, Date today) {
 		super();
 		this.product = product;
+		this.today = today;
 		this.es = Executors.newSingleThreadExecutor(this::factory);
 		this.byIDN = new Task[128]; // initial capacity
 		init(db);
@@ -95,12 +99,12 @@ final class CacheWorker implements Cache {
 	private void init(DB db) {
 		try (TxR tx = db.read()) {
 			try (Repository rep = new DAO(tx)) {
-				rep.tasks(product, (t) -> { index(t); return true; });
+				rep.tasks(product, (t) -> { index(t, TaskSet::init); return true; });
 			}
 		}
 	}
 	
-	private void index(Task t) {
+	private void index(Task t, BiConsumer<TaskSet, IDN> f) {
 		int idn = t.id.num;
 		if (idn >= byIDN.length) {
 			Task[] tmp = new Task[nextPowerOf2(idn)];
@@ -109,22 +113,25 @@ final class CacheWorker implements Cache {
 			usage = idn;
 		}
 		byIDN[idn] = t;
-		for (Name n : t.engagedBy)
-			getOrInit(n, byUser).init(t.id);
-		for (Name n : t.pursuedBy)
-			getOrInit(n, byUser).init(t.id);
-		for (Name n : t.area.maintainers)
-			getOrInit(n, byMaintainer).init(t.id);
-		getOrInit(t.reporter, byReporter).init(t.id);
-		if (t.isSolved())
-			getOrInit(t.solver, bySolver).init(t.id);
-		for (Name n : t.watchedBy)
-			getOrInit(n, byWatcher).init(t.id);
-		getOrInit(t.area.name, byArea).init(t.id);
-		getOrInit(t.base.name, byVersion).init(t.id);
-		getOrInit(t.status, byStatus).init(t.id);
-		getOrInit(t.purpose, byPurpose).init(t.id);
-		getOrInit(t.motive, byMotive).init(t.id);
+		if (!t.archived) {
+			for (Name n : t.participants)
+				f.accept(getOrInit(n, byUser), t.id);
+			for (Name n : t.aspirants)
+				f.accept(getOrInit(n, byUser), t.id);
+			for (Name n : t.area.maintainers)
+				f.accept(getOrInit(n, byMaintainer), t.id);
+			f.accept(getOrInit(t.reporter, byReporter), t.id);
+			if (t.isSolved())
+				f.accept(getOrInit(t.solver, bySolver), t.id);
+			for (Name n : t.watchers)
+				f.accept(getOrInit(n, byWatcher), t.id);
+			f.accept(getOrInit(t.area.name, byArea), t.id);
+			f.accept(getOrInit(t.base.name, byVersion), t.id);
+			f.accept(getOrInit(t.status, byStatus), t.id);
+			f.accept(getOrInit(t.purpose, byPurpose), t.id);
+			f.accept(getOrInit(t.motive, byMotive), t.id);
+			f.accept(getOrInit(t.temperature(today), byTemperature), t.id);
+		}
 	}
 	
 	private static <K> TaskSet getOrInit(K key, Map<K, TaskSet> map) {
@@ -134,6 +141,12 @@ final class CacheWorker implements Cache {
 			map.put(key, set);
 		}
 		return set;
+	}
+	
+	private static TaskSet getOrInit(int idx, TaskSet[] map) {
+		if (map[idx] == null)
+			map[idx] = new TaskSet();
+		return map[idx];
 	}
 
 	@Override
@@ -153,24 +166,24 @@ final class CacheWorker implements Cache {
 	 * expensive. In any case it creates more short lived objects => garbage.
 	 */
 	private Tasks lookup(Criteria criteria) {
-		Criterium selector = criteria.topSelector(EnumSet.of(Property.user, Property.id));
-		if (selector == null) {
-			//TODO :( filter only
-		}
+		// 1. select => Iterable<Task> 
+		// 2. filter => Task[]
+		// 3. sort => Task[]
 		return null;
 	}
 	
 	/**
 	 * Changes to take care of:
 	 * 
-	 * - change to the{@link Product}, {@link Area}s.
+	 * - change to the{@link Product}, {@link Area}s and {@link Poll}s.
 	 * - {@link Task} changes (obviously)
 	 * 
 	 * Changes to ignore:
 	 * 
-	 * - change to {@link User}, {@link Site}, {@link Poll} and {@link Version}
+	 * - change to {@link User}, {@link Site} and {@link Version}
 	 * - new {@link Event}s or {@link History}
 	 */
+	@SuppressWarnings("unchecked")
 	private void update(Changes changes) {
 		for (Changes.Entry<?> e : changes) {
 			switch (e.type()) {
@@ -181,28 +194,163 @@ final class CacheWorker implements Cache {
 			}
 		}
 	}
-	
-	private void updateTask(Entry<Task> e) {
-		// TODO Auto-generated method stub
-		
-		// when task is created we have to make sure to use correct instance of version and areas shared by all with same
-		// if the index is not empty switch the version and area to those used already otherwise have that be the one used.
-	}
 
+	/**
+	 * The updates required to incooperate changes is mostly minimal. This is
+	 * the main idea behind this domains specific caching that takes advantage
+	 * of domain knowledge to minimize the work required to keep the cache up to
+	 * date even for a entity that is modified quite often.
+	 * 
+	 * A classic design of "throw out" and "reload" from DB would basically 
+	 * constantly reload stuff and thereby not be that helpful.
+	 */
+	@SuppressWarnings("null")
+	private void updateTask(Entry<Task> e) {
+		final IDN idn = e.after.id;
+		final Task before = e.before;
+		final Task after = e.after;
+		final Task task = idn.num >= byIDN.length ? before : byIDN[idn.num];
+		if (task != null) {
+			after.update(task);
+			task.changed();
+		}
+		for (Change.Operation op : e.transitions) {
+			switch (op) {
+			case emphasise: // emphasis up/down 
+				if (before.temperature(today) != after.temperature(today)) {
+					byTemperature[before.temperature(today)].remove(idn);
+					getOrInit(after.temperature(today), byTemperature).add(idn);
+				}
+				task.emphasis = after.emphasis;
+				break;
+			case resolve: // solving
+			case absolve:
+			case dissolve:
+				getOrInit(before.status, byStatus).remove(idn);
+				getOrInit(after.status, byStatus).add(idn);
+				getOrInit(after.solver, bySolver).add(idn);
+				removeMissing(before.participants, after.participants, byUser, idn);
+				removeMissing(before.aspirants, after.aspirants, byUser, idn);
+				task.status = after.status;
+				break;
+			case relocate: // change of area
+				getOrInit(before.area.name, byArea).remove(idn);
+				getOrInit(after.area.name, byArea).add(idn);
+				task.area = cacheInstanceOf(after.area);
+				break;
+			case rebase: // change of version
+				getOrInit(before.base.name, byVersion).remove(idn);
+				getOrInit(after.base.name, byVersion).add(idn);
+				task.base = cacheInstanceOf(after.base); 
+				break;
+			case attach: // attach/detach
+				task.attachments = after.attachments; break;
+			case aspire: // become a user 1
+				addMissing(after.aspirants, before.aspirants, byUser, idn);
+				task.aspirants = after.aspirants;
+				task.participants = after.participants;
+				break;
+			case participate: // become a user 2
+				addMissing(after.participants, before.participants, byUser, idn);
+				task.participants = after.participants;
+				task.aspirants = after.aspirants;
+				break;
+			case abandon: // no longer a user
+				removeMissing(before.users(), after.users(), byUser, idn);
+				task.aspirants = after.aspirants;
+				task.participants = after.participants;
+				break;
+			case watch: // become a watcher
+				addMissing(after.watchers, before.watchers, byWatcher, idn);
+				task.watchers = after.watchers;
+				break;
+			case unwatch: // no longer a watcher
+				removeMissing(before.watchers, after.watchers, byWatcher, idn);
+				task.watchers = after.watchers;
+				break;
+			case propose: // new task
+			case indicate:
+			case warn:
+			case request:
+			case fork:
+				Task t = after;
+				t.area = cacheInstanceOf(t.area);
+				t.base = cacheInstanceOf(t.base);
+				t.product = cacheInstanceOf(t.product);
+				index(t, TaskSet::add);
+				break;
+			case archive:
+				// we do not remove it right away from all caches since this will happen on next day anyway when new cache instance is build
+				break;
+			}
+		}
+	}
+	
+	private Version cacheInstanceOf(Version v) {
+		TaskSet set = byVersion.get(v.name);
+		if (set == null)
+			return v;
+		int idx = set.first();
+		return idx < 0 ? v : byIDN[idx].base;
+	}
+	
+	private Area cacheInstanceOf(Area a) {
+		TaskSet set = byArea.get(a.name);
+		if (set == null)
+			return a;
+		int idx = set.first();
+		return idx < 0 ? a : byIDN[idx].area;
+	}
+	
+	private Product cacheInstanceOf(Product p) {
+		return byIDN[1].product;
+	}
+	
+	private static void removeMissing(Names a, Names b, Map<Name, TaskSet> map, IDN idn) {
+		for (Name n : a) {
+			if (!b.contains(n)) { getOrInit(n, map).remove(idn); }
+		}
+	}
+	
+	private static void addMissing(Names a, Names b, Map<Name, TaskSet> map, IDN idn) {
+		for (Name n : a) {
+			if (!b.contains(n)) { getOrInit(n, map).add(idn); }
+		}
+	}
+	
 	private void updateProduct(Entry<Product> e) {
-		// TODO Auto-generated method stub
-		// pick a task, update the product, unless the version in use is higher than the version updating?
-		
-		// cases:
-		// - new product
-		// - integration added
-		// - integration removed
-		// - new task (count inc)
+		Product after = e.after;
+		Product p = cacheInstanceOf(after);
+		if (after.isMoreRecent(p)) { 
+			// just do that no matter what has changed as it is simpler
+			p.integrations = after.integrations;
+			p.tasks = after.tasks;
+			after.update(p);
+		}
 	}
 
 	private void updateArea(Entry<Area> e) {
-		// TODO Auto-generated method stub
-		
+		Area after = e.after;
+		Area a = cacheInstanceOf(after);
+		if (a == after)
+			return;
+		for (Change.Operation op : e.transitions) {
+			switch (op) {
+			case leave:
+			case consent: // poll
+			case dissent:
+				if (after.isMoreRecent(a)) {
+					a.abandoned = after.abandoned;
+					a.exclusive = after.exclusive;
+					a.maintainers = after.maintainers;
+					after.update(a);
+				}				
+				break;
+			}
+		}
+		if (after.tasks > a.tasks) {
+			a.tasks = after.tasks;
+		}
 	}
 	
 	/**
@@ -243,12 +391,16 @@ final class CacheWorker implements Cache {
 		}
 		
 		boolean contains(IDN task) {
+			return indexOf(task) >= 0;
+		}
+		
+		int indexOf(IDN task) {
 			final int num = task.num;
 			for (int i = 0; i <= usage; i++) {
 				if (num == members[i])
-					return true;
+					return i;
 			}
-			return false;
+			return -1;
 		}
 		
 		void add(IDN task) {
@@ -270,13 +422,11 @@ final class CacheWorker implements Cache {
 		}
 		
 		void remove(IDN task) {
-			if (contains(task)) {
-				int num = task.num;
-				int i = 0;
-				while (members[i] != num) i++;
-				members[i] = 0;
+			int idx = indexOf(task);
+			if (idx >= 0) {
+				members[idx] = 0;
 				gaps++;
-				gap0 = i;
+				gap0 = idx;
 			}
 		}
 	}

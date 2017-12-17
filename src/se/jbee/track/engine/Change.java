@@ -2,6 +2,7 @@ package se.jbee.track.engine;
 
 import static se.jbee.track.engine.Change.Operation.abandon;
 import static se.jbee.track.engine.Change.Operation.absolve;
+import static se.jbee.track.engine.Change.Operation.archive;
 import static se.jbee.track.engine.Change.Operation.attach;
 import static se.jbee.track.engine.Change.Operation.authenticate;
 import static se.jbee.track.engine.Change.Operation.compart;
@@ -14,7 +15,7 @@ import static se.jbee.track.engine.Change.Operation.disconnect;
 import static se.jbee.track.engine.Change.Operation.dissent;
 import static se.jbee.track.engine.Change.Operation.dissolve;
 import static se.jbee.track.engine.Change.Operation.emphasise;
-import static se.jbee.track.engine.Change.Operation.engage;
+import static se.jbee.track.engine.Change.Operation.participate;
 import static se.jbee.track.engine.Change.Operation.fork;
 import static se.jbee.track.engine.Change.Operation.indicate;
 import static se.jbee.track.engine.Change.Operation.launch;
@@ -22,7 +23,8 @@ import static se.jbee.track.engine.Change.Operation.leave;
 import static se.jbee.track.engine.Change.Operation.open;
 import static se.jbee.track.engine.Change.Operation.poll;
 import static se.jbee.track.engine.Change.Operation.propose;
-import static se.jbee.track.engine.Change.Operation.pursue;
+import static se.jbee.track.engine.Change.Operation.aspire;
+import static se.jbee.track.engine.Change.Operation.rebase;
 import static se.jbee.track.engine.Change.Operation.register;
 import static se.jbee.track.engine.Change.Operation.relocate;
 import static se.jbee.track.engine.Change.Operation.request;
@@ -44,11 +46,11 @@ import se.jbee.track.model.Mail;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
+import se.jbee.track.model.Poll.Matter;
+import se.jbee.track.model.Product.Integration;
 import se.jbee.track.model.Purpose;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.User;
-import se.jbee.track.model.Poll.Matter;
-import se.jbee.track.model.Product.Integration;
 import se.jbee.track.model.User.Notifications;
 
 /**
@@ -82,25 +84,32 @@ public interface Change {
 		authenticate,
 		name,
 		configure,
+		
 		// sites
 		launch,
 		restructure,
+		
 		// products
 		constitute,
 		connect,
 		disconnect,
+		
 		// areas
 		open, 
 		compart,
 		leave,
+		
 		// versions
 		tag,
+		
 		// polls
 		poll,
 		consent,
 		dissent,		
+		
 		// tasks
 		relocate,
+		rebase,
 		attach, 
 		
 		propose,
@@ -113,11 +122,13 @@ public interface Change {
 		resolve,
 		dissolve,
 		
+		archive,
+		
 		emphasise,
 
-		pursue,
+		aspire,
 		abandon,
-		engage,
+		participate,
 		
 		watch,
 		unwatch;
@@ -131,11 +142,15 @@ public interface Change {
 		void put(Operation op, Entity<?> e);
 	}
 	
-	static Change register(Name user, Email email) {
+	/**
+	 * A new user registers using an alias and and email. 
+	 * If no alias is provided the email is the alias.   
+	 */
+	static Change register(Name alias, Email email) {
 		return (t, tx) -> { 
 			User u = null;
-			try { u = tx.user(user); } catch (Repository.UnknownEntity e) { };
-			tx.put(register, t.register(u, user, email)); 
+			try { u = tx.user(alias); } catch (Repository.UnknownEntity e) { };
+			tx.put(register, t.register(u, alias, email)); 
 		};
 	}
 	
@@ -187,6 +202,10 @@ public interface Change {
 		return (t, tx) -> { tx.put(relocate, t.relocate(tx.task(product, task), tx.area(product, toArea), tx.user(originator))); };
 	}
 	
+	static Change rebase(Name product, IDN task, Name toVersion, Name originator) {
+		return (t, tx) -> { tx.put(rebase, t.rebase(tx.task(product, task), tx.version(product, toVersion), tx.user(originator)));};
+	}
+	
 	static Change tag(Name product, Name version, Name originator) {
 		return (t, tx) -> { tx.put(tag, t.tag(tx.product(product), version, tx.user(originator))); };
 	}
@@ -223,6 +242,10 @@ public interface Change {
 		return (t, tx) -> { tx.put(dissolve, t.dissolve(tx.task(product, task), tx.user(byUser), conclusion)); };
 	}
 	
+	static Change archive(Name product, IDN task, Name byUser) {
+		return (t, tx) -> { tx.put(archive, t.archive(tx.task(product, task), tx.user(byUser))); };
+	}
+	
 	static Change emphasise(Name product, IDN task, Name voter) {
 		return (t, tx) -> { tx.put(emphasise, t.emphasise(tx.task(product, task), tx.user(voter))); };
 	}
@@ -243,16 +266,16 @@ public interface Change {
 		return (t, tx) -> { tx.put(dissent, t.dissent(tx.poll(product, area, serial), tx.user(voter))); };
 	}
 	
-	static Change pursue(Name product, IDN task, Name user) {
-		return (t, tx) -> { tx.put(pursue, t.pursue(tx.task(product, task), tx.user(user))); };
+	static Change aspire(Name product, IDN task, Name user) {
+		return (t, tx) -> { tx.put(aspire, t.aspire(tx.task(product, task), tx.user(user))); };
 	}
 
+	static Change participate(Name product, IDN task, Name user) {
+		return (t, tx) -> { tx.put(participate, t.participate(tx.task(product, task), tx.user(user))); };
+	}
+	
 	static Change abandon(Name product, IDN task, Name user) {
 		return (t, tx) -> { tx.put(abandon, t.abandon(tx.task(product, task), tx.user(user))); };
-	}
-
-	static Change engage(Name product, IDN task, Name user) {
-		return (t, tx) -> { tx.put(engage, t.engage(tx.task(product, task), tx.user(user))); };
 	}
 
 	static Change watch(Name product, IDN task, Name user) {

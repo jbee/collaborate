@@ -1,5 +1,6 @@
 package se.jbee.track.engine;
 
+import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static se.jbee.track.engine.Limit.limit;
 import static se.jbee.track.model.Date.date;
@@ -23,6 +24,7 @@ import se.jbee.track.model.Area;
 import se.jbee.track.model.Attachments;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Email;
+import se.jbee.track.model.Entity;
 import se.jbee.track.model.Gist;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Mail;
@@ -31,17 +33,17 @@ import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
 import se.jbee.track.model.Outcome;
 import se.jbee.track.model.Poll;
+import se.jbee.track.model.Poll.Matter;
 import se.jbee.track.model.Product;
+import se.jbee.track.model.Product.Integration;
 import se.jbee.track.model.Purpose;
 import se.jbee.track.model.Site;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.User;
-import se.jbee.track.model.Version;
-import se.jbee.track.model.Poll.Matter;
-import se.jbee.track.model.Product.Integration;
 import se.jbee.track.model.User.Notifications;
+import se.jbee.track.model.Version;
 import se.jbee.track.util.Array;
 
 /**
@@ -63,31 +65,46 @@ public final class Tracker {
 	/* Users + Accounts */
 
 	/**
-	 * When a user is registered with just an email the name is also the email.  
+	 * When a user is registered with just an email the alias is also the email.
+	 * 
+	 * Users never provide a password. Instead a OTP is set each time the user
+	 * wants to log in. The OTP needs to be {@link #authenticate(User, byte[])}
+	 * d.
+	 * 
+	 * After {@link #register(User, Name, Email)} the user uses
+	 * {@link #confirm(User)} to request a new OTP (that is send to him via
+	 * email).
+	 * 
+	 * This is actually more secure than using passwords. A users password can
+	 * never be stolen or hacked. Each OTP is only usable once. To steal an
+	 * account an attacker has to steal the users email account.
 	 */
-	public User register(User user, Name name, Email email) {
-		if (user != null)
-			denyTransition("User with name "+name+" already exists.");
-		if (!name.isEmail()) { // so emails or regular names are OK
-			expectRegular(name);
+	public User register(User existing, Name alias, Email email) {
+		if (existing != null)
+			denyTransition("User with name "+alias+" already exists.");
+		if (!alias.isEmail()) { // so email or regular names are OK
+			expectRegular(alias);
 		}
 		stressNewUser();
-		user = new User(1);
-		user.name = name;
-		user.email = email;
-		user.notifications=new EnumMap<>(Notifications.class);
-		user.authenticated = 0;
-		user.sites = Names.empty();
-		user.contributesToProducts = Names.empty();
-		user.watches = 0;
-		user.millisLastActive=now(); // cannot use touch as version should stay same
-		confirmOTP(user);
-		return user;
+		existing = new User(1);
+		existing.alias = alias;
+		existing.email = email;
+		existing.notifications=new EnumMap<>(Notifications.class);
+		existing.authenticated = 0;
+		existing.sites = Names.empty();
+		existing.contributesToProducts = Names.empty();
+		existing.watches = 0;
+		existing.millisLastActive=now(); // cannot use touch as version should stay same
+		confirmOTP(existing);
+		return existing;
 	}
 
+	/**
+	 * Used to initialize a "log in" for a registered user. 
+	 */
 	public User confirm(User user) {
 		long now = clock.time();
-		if (now < user.millisTokenExprired && now < user.millisTokenExprired-TOKEN_VALIDITY+60000L) {
+		if (now < user.millisOtpExprires && now < user.millisOtpExprires-TOKEN_VALIDITY+60000L) {
 			// protected against requesting to many tokens
 			denyTransition("Wait a minute before requesting another token.");
 		}
@@ -99,22 +116,27 @@ public final class Tracker {
 
 	private void confirmOTP(User user) {
 		stressDoConfirm();
-		user.token = OTP.next();
-		user.encryptedToken = OTP.encrypt(user.token);
-		user.millisTokenExprired = clock.time() + TOKEN_VALIDITY;
+		user.otp = OTP.next();
+		user.encryptedOtp = OTP.encrypt(user.otp);
+		user.millisOtpExprires = clock.time() + TOKEN_VALIDITY;
 	}
 
+	/**
+	 * Used to confirm the users identity and complete a "log in". 
+	 */
 	public User authenticate(User user, byte[] token) {
-		if (clock.time() > user.millisTokenExprired) {
+		if (clock.time() > user.millisOtpExprires) {
 			denyTransition("Token expired!");
 		}
-		if (!OTP.isToken(token, user.encryptedToken)) {
+		if (!OTP.isToken(token, user.encryptedOtp)) {
 			denyTransition("Incorrect token!");
 		}
 		user = user.clone();
 		user.authenticated++;
-		user.token=null; // invalidate token
-		user.millisTokenExprired=clock.time()-1L;
+		// invalidate token
+		user.otp=null;
+		user.encryptedOtp=null;
+		user.millisOtpExprires=clock.time()-1L;
 		touch(user);
 		return user;
 	}
@@ -123,16 +145,18 @@ public final class Tracker {
 	 * Name a user later on when first just an email was used. 
 	 */
 	public User name(User user, Name name) {
-		expectEmail(user.name);
+		expectAuthenticated(user);
+		expectEmail(user.alias);
 		expectRegular(name);
 		stressDoConfiguration(user);
 		user = user.clone();
-		user.name = name;
+		user.alias = name;
 		touch(user);
 		return user;
 	}
 	
 	public User configure(User user, EnumMap<Notifications, Mail.Delivery> notifications) {
+		expectAuthenticated(user);
 		stressDoConfiguration(user);
 		user = user.clone();
 		user.notifications = notifications == null ? new EnumMap<>(Notifications.class) : notifications;
@@ -232,7 +256,7 @@ public final class Tracker {
 		Area a = new Area(1);
 		a.name = area;
 		a.product = product;
-		a.maintainers=new Names(originator.name);
+		a.maintainers=new Names(originator.alias);
 		a.tasks = 0;
 		a.polls = 0;
 		originator.contributesToProducts = originator.contributesToProducts.add(product);
@@ -252,6 +276,8 @@ public final class Tracker {
 	}
 
 	public Task relocate(Task task, Area to, User originator) {
+		if (task.area.name.equalTo(to.name))
+			return task; //NOOP
 		expectNoBoard(task.area);
 		expectAuthenticated(originator);
 		if (task.area.name.isUnknown()) {
@@ -265,6 +291,18 @@ public final class Tracker {
 		stressDoRelocate(task, to, originator);
 		task = task.clone();
 		task.area = to;
+		touch(originator);
+		return task;
+	}
+	
+	public Task rebase(Task task, Version to, User originator) {
+		if (task.base.name.equalTo(to.name))
+			return task; //NOOP
+		expectAuthenticated(originator);
+		expectMaintainer(task.area, originator);
+		stressDoRebase(task, to, originator);
+		task = task.clone();
+		task.base = to;
 		touch(originator);
 		return task;
 	}
@@ -340,16 +378,16 @@ public final class Tracker {
 			task.area = area;
 		}
 		task.base = version;
-		task.reporter = reporter.name;
+		task.reporter = reporter.alias;
 		task.reported = date(now());
 		task.gist = gist;
 		task.motive = motive;
 		task.purpose = purpose;
 		task.status = Status.unsolved;
 		task.exploitable = exploitable;
-		task.pursuedBy = Names.empty();
-		task.engagedBy = Names.empty();
-		task.watchedBy = new Names(reporter.name);
+		task.aspirants = Names.empty();
+		task.participants = Names.empty();
+		task.watchers = new Names(reporter.alias);
 		task.changeset = Names.empty();
 		task.attachments = Attachments.NONE;
 		reporter.contributesToProducts = reporter.contributesToProducts.add(task.product.name);
@@ -379,17 +417,12 @@ public final class Tracker {
 		int age = today.daysSince(task.reported);
 		if (age <= 0)
 			return 0; // prevent XP mining by adding and resolving tasks using different users
-		int xp = (int) Math.max(base, base * (1f+((age-4f)/age))); // 1-2x base value, more with higher age
-		if (task.exploitable && task.purpose == modification) {
-			xp *= 2;
-		}
-		if (task.purpose != modification) {
-			xp /= 2;
-		}
-		if (task.temperature(today) < 75) {
-			xp /= 2;
-		}
-		return xp;
+		int xp = (int) max(base, base * (1f+((age-4f)/age))); // 1-2x base value, more with higher age
+		xp = (int)max(xp, xp * (1f+ task.emphasis / age / 10f)); // 1-nx, more with higher average emphasis
+		if (task.exploitable && task.purpose == modification) xp *= 2;
+		if (task.purpose != modification) xp /= 2;
+		if (task.temperature(today) < 50) xp /= 2;
+		return max(1, xp);
 	}
 	
 	public Task absolve(Task task, User by, Gist conclusion) {
@@ -410,7 +443,7 @@ public final class Tracker {
 		by.resolved++;
 		if (!task.changeset.isEmpty()) { // publishing is something that is resolved when its done
 			task.base = task.base.clone();
-			task.base.changeset = task.changeset;
+			task.base.changeset = task.changeset; // transfer the released versions 
 		}
 		return task;
 	}
@@ -431,10 +464,22 @@ public final class Tracker {
 		expectUnsolved(task);
 		stressDoSolve(task, by);
 		task = task.clone();
-		task.solver = by.name;
+		task.solver = by.alias;
 		task.resolved = date(now());
 		task.conclusion = conclusion;
+		task.participants = Names.empty();
+		task.aspirants = Names.empty();
 		by.contributesToProducts = by.contributesToProducts.add(task.product.name);
+		touch(by);
+		return task;
+	}
+	
+	public Task archive(Task task, User by) {
+		expectAuthenticated(by);
+		expectMaintainer(task.area, by);
+		expectSolved(task);
+		task = task.clone();
+		task.archived = true;
 		touch(by);
 		return task;
 	}
@@ -443,7 +488,7 @@ public final class Tracker {
 
 	public Task emphasise(Task task, User voter) {
 		long now = now();
-		if (voter.canEmphasise(now) && task.canBeEmphasisedBy(voter.name)) {
+		if (voter.canEmphasise(now) && task.canBeEmphasisedBy(voter.alias)) {
 			voter.emphasised(now);
 			task = task.clone();
 			task.emphasise(date(now));
@@ -464,8 +509,8 @@ public final class Tracker {
 		poll.area.polls++;
 		poll.serial = new IDN(poll.area.polls);
 		poll.matter = matter;
-		poll.initiator = initiator.name;
-		poll.affected = matter == Matter.abandonment ? Name.ORIGIN : affected.name;
+		poll.initiator = initiator.alias;
+		poll.affected = matter == Matter.abandonment ? Name.ORIGIN : affected.alias;
 		poll.start = date(now());
 		poll.outcome = Outcome.unsettled;
 		poll.consenting = Names.empty();
@@ -487,9 +532,9 @@ public final class Tracker {
 	private Poll vote(Poll poll, User voter, boolean consent) {
 		expectRegistered(voter);
 		expectAuthenticated(voter);
-		if (poll.canVote(voter.name) && (
-				consent && !poll.consenting.contains(voter.name)
-			|| !consent && !poll.dissenting.contains(voter.name))) {
+		if (poll.canVote(voter.alias) && (
+				consent && !poll.consenting.contains(voter.alias)
+			|| !consent && !poll.dissenting.contains(voter.alias))) {
 			stressDoVote(poll, voter);
 			poll = poll.clone();
 			if (consent) {
@@ -530,15 +575,15 @@ public final class Tracker {
 
 	/* A user's task queues */
 
-	public Task pursue(Task task, User user) {
+	public Task aspire(Task task, User user) {
 		expectRegistered(user);
 		expectAuthenticated(user);
 		expectCanBeInvolved(user, task);
-		if (task.engagedBy.contains(user) || !task.pursuedBy.contains(user)) {
+		if (task.participants.contains(user) || !task.aspirants.contains(user)) {
 			stressDoList(task, user);
 			task = task.clone();
-			task.engagedBy = task.engagedBy.remove(user);
-			task.pursuedBy = task.pursuedBy.add(user);
+			task.participants = task.participants.remove(user);
+			task.aspirants = task.aspirants.add(user);
 			user.contributesToProducts = user.contributesToProducts.add(task.product.name);
 			touch(user);
 		}
@@ -549,26 +594,28 @@ public final class Tracker {
 		expectRegistered(user);
 		expectAuthenticated(user);
 		expectCanBeInvolved(user, task);
-		if (task.pursuedBy.contains(user) || task.engagedBy.contains(user)) {
+		if (task.aspirants.contains(user) || task.participants.contains(user)) {
 			stressDoList(task, user);
 			task = task.clone();
-			task.pursuedBy = task.pursuedBy.remove(user);
-			task.engagedBy = task.engagedBy.remove(user);
+			task.aspirants = task.aspirants.remove(user);
+			task.participants = task.participants.remove(user);
+			user.abandoned++;
+			if (user.xp > 0) user.xp--;
 			touch(user);
 		}
 		return task;
 	}
 
-	public Task engage(Task task, User user) {
+	public Task participate(Task task, User user) {
 		expectRegistered(user);
 		expectAuthenticated(user);
 		expectCanBeInvolved(user, task);
 		expectMaintainer(task.area, user);
-		if (!task.engagedBy.contains(user) || task.pursuedBy.contains(user)) {
+		if (!task.participants.contains(user) || task.aspirants.contains(user)) {
 			stressDoList(task, user);
 			task = task.clone();
-			task.engagedBy = task.engagedBy.add(user);
-			task.pursuedBy = task.pursuedBy.remove(user);
+			task.participants = task.participants.add(user);
+			task.aspirants = task.aspirants.remove(user);
 			user.contributesToProducts = user.contributesToProducts.add(task.product.name);
 			touch(user);
 		}
@@ -581,10 +628,10 @@ public final class Tracker {
 		expectRegistered(user);
 		expectAuthenticated(user);
 		expectCanWatch(user);
-		if (!task.watchedBy.contains(user)) {
+		if (!task.watchers.contains(user)) {
 			stressDoList(task, user);
 			task = task.clone();
-			task.watchedBy = task.watchedBy.add(user);
+			task.watchers = task.watchers.add(user);
 			user.watches++;
 			user.contributesToProducts = user.contributesToProducts.add(task.product.name);
 			touch(user);
@@ -593,10 +640,10 @@ public final class Tracker {
 	}
 
 	public Task unwatch(Task task, User user) {
-		if (task.watchedBy.contains(user)) {
+		if (task.watchers.contains(user)) {
 			stressDoList(task, user);
 			task = task.clone();
-			task.watchedBy = task.watchedBy.remove(user);
+			task.watchers = task.watchers.remove(user);
 			user.watches--;
 			touch(user);
 		}
@@ -610,7 +657,7 @@ public final class Tracker {
 		expectNoUserSiteYet(site, owner);
 		expectCanHaveMoreSites(owner);
 		stessNewSite(owner);
-		Site s = new Site(1, owner.name, site, template);
+		Site s = new Site(1, owner.alias, site, template);
 		owner.sites = owner.sites.add(site);
 		touch(owner);
 		return s;
@@ -642,18 +689,18 @@ public final class Tracker {
 	}
 
 	private void stressUser(User reporter) {
-		stressLimit(limit("user", reporter.name), "Too many changes by user: "+reporter.name);
+		stressLimit(limit("user", reporter.alias), "Too many changes by user: "+reporter.alias);
 	}
 
 	private void stressNewProduct(User originator) {
-		stressLimit(limit("product@user", originator.name), "Too many recent products by user: "+originator.name);
+		stressLimit(limit("product@user", originator.alias), "Too many recent products by user: "+originator.alias);
 		stressUser(originator);
 		stressLimit(limit("product", ORIGIN), "Too many new products.");
 		stressNewContent();
 	}
 
 	private void stressNewArea(Name product, User originator) {
-		stressLimit(limit("area@user", originator.name), "Too many recent areas by user: "+originator.name);
+		stressLimit(limit("area@user", originator.alias), "Too many recent areas by user: "+originator.alias);
 		stressUser(originator);
 		stressLimit(limit("area@product", product), "Too many new areas for product: "+product);
 		stressLimit(limit("area", ORIGIN), "Too many new areas.");
@@ -661,7 +708,7 @@ public final class Tracker {
 	}
 
 	private void stressNewVersion(Product product, User originator) {
-		stressLimit(limit("version@user", originator.name), "Too many recent versions by user: "+originator.name);
+		stressLimit(limit("version@user", originator.alias), "Too many recent versions by user: "+originator.alias);
 		stressUser(originator);
 		stressLimit(limit("version@product", product.name), "Too many new versions for product: "+product.name);
 		stressLimit(limit("version", ORIGIN), "Too many new versions.");
@@ -669,7 +716,7 @@ public final class Tracker {
 	}
 
 	private void stressNewTask(Product product, User reporter) {
-		stressLimit(limit("task@user", reporter.name), "Too many recent tasks by user: "+reporter.name);
+		stressLimit(limit("task@user", reporter.alias), "Too many recent tasks by user: "+reporter.alias);
 		stressUser(reporter);
 		stressLimit(limit("task@product", product.name), "Too many new task for product: "+product.name);
 		stressLimit(limit("task", ORIGIN), "Too many new tasks.");
@@ -677,7 +724,7 @@ public final class Tracker {
 	}
 
 	private void stressNewPoll(Area area, User initiator) {
-		stressLimit(limit("poll@user", initiator.name), "Too many new polls by user: "+initiator.name);
+		stressLimit(limit("poll@user", initiator.alias), "Too many new polls by user: "+initiator.alias);
 		stressUser(initiator);
 		stressLimit(limit("poll@area", area.name), "Too many new polls in area: "+area.name);
 		stressLimit(limit("poll", ORIGIN), "Too many new polls.");
@@ -685,28 +732,28 @@ public final class Tracker {
 	}
 
 	private void stessNewSite(User owner) {
-		stressLimit(limit("site@user", owner.name), "Too many new sites by user: "+owner.name);
+		stressLimit(limit("site@user", owner.alias), "Too many new sites by user: "+owner.alias);
 		stressUser(owner);
 		stressLimit(limit("site", ORIGIN), "Too many new sites.");
 		stressNewContent();
 	}
 	
 	private void stressDoConfiguration(User user) {
-		stressLimit(limit("configure@user", user.name), "Too many recent configuration changes by user: "+user.name);
+		stressLimit(limit("configure@user", user.alias), "Too many recent configuration changes by user: "+user.alias);
 		stressUser(user);
 		stressLimit(limit("configure", ORIGIN), "Too many recent configuration changes.");
 		stressAction();
 	}
 	
 	private void stressDoConnect(Product product, User originator) {
-		stressLimit(limit("connect@user", originator.name), "Too many recent connections by user: "+originator.name);
+		stressLimit(limit("connect@user", originator.alias), "Too many recent connections by user: "+originator.alias);
 		stressUser(originator);
 		stressLimit(limit("connect", ORIGIN), "Too many recent connections.");
 		stressNewContent();
 	}
 	
 	private void stressDoUpdate(Site site, User owner) {
-		stressLimit(limit("update@user", owner.name), "Too many recent site updates by user: "+owner.name);
+		stressLimit(limit("update@user", owner.alias), "Too many recent site updates by user: "+owner.alias);
 		stressUser(owner);
 		stressLimit(limit("update", site.name), "Too many site updates for site: "+site.name);
 		stressLimit(limit("update", ORIGIN), "Too many site updates recently.");
@@ -714,24 +761,33 @@ public final class Tracker {
 	}
 
 	private void stressDoRelocate(Task task, Area to, User originator) {
-		stressLimit(limit("move@user", originator.name), "Too many recent relocations by user: "+originator.name);
+		stressLimit(limit("move@user", originator.alias), "Too many recent relocations by user: "+originator.alias);
 		stressUser(originator);
 		stressLimit(limit("move@area", to.name), "Too many relocations for area: "+to.name);
 		stressLimit(limit("move@task", task.id.asName()), "Too many queue activities for task: "+task.id);
 		stressLimit(limit("move", ORIGIN), "Too many relocations recently.");
 		stressAction();
 	}
+	
+	private void stressDoRebase(Task task, Version to, User originator) {
+		stressLimit(limit("base@user", originator.alias), "Too many recent rebase actions by user: "+originator.alias);
+		stressUser(originator);
+		stressLimit(limit("base@version", to.name), "Too many rebase actions for version: "+to.name);
+		stressLimit(limit("base@task", task.id.asName()), "Too many queue activities for task: "+task.id);
+		stressLimit(limit("base", ORIGIN), "Too many rebase actions recently.");
+		stressAction();
+	}
 
 	private void stressDoVote(Poll poll, User voter) {
-		stressLimit(limit("vote@user", voter.name), "Too many recent votes by user: "+voter.name);
+		stressLimit(limit("vote@user", voter.alias), "Too many recent votes by user: "+voter.alias);
 		stressUser(voter);
-		stressLimit(limit("vote@poll", voter.name), "Too many recent votes in poll: "+poll.matter+" "+poll.affected);
+		stressLimit(limit("vote@poll", voter.alias), "Too many recent votes in poll: "+poll.matter+" "+poll.affected);
 		stressLimit(limit("vote", ORIGIN), "Too many votes recently.");
 		stressAction();
 	}
 
 	private void stressDoList(Task task, User user) {
-		stressLimit(limit("list@user", user.name), "Too many queue activities by user: "+user.name);
+		stressLimit(limit("list@user", user.alias), "Too many queue activities by user: "+user.alias);
 		stressUser(user);
 		stressLimit(limit("list@task", task.id.asName()), "Too many queue activities for task: "+task.id);
 		stressLimit(limit("list", ORIGIN), "Too many queue activities recently.");
@@ -739,7 +795,7 @@ public final class Tracker {
 	}
 	
 	private void stressDoSolve(Task task, User by) {
-		stressLimit(limit("solve@user", by.name), "Too many solution activities by user: "+by.name);
+		stressLimit(limit("solve@user", by.alias), "Too many solution activities by user: "+by.alias);
 		stressUser(by);
 		stressLimit(limit("solve@task", task.id.asName()), "Too many solution activities for task: "+task.id);
 		stressLimit(limit("solve", ORIGIN), "Too many solution activities recently.");
@@ -747,7 +803,7 @@ public final class Tracker {
 	}
 	
 	private void stressDoAttach(Task task, User by) {
-		stressLimit(limit("attach@user", by.name), "Too many recent attachments by user: "+by.name);
+		stressLimit(limit("attach@user", by.alias), "Too many recent attachments by user: "+by.alias);
 		stressUser(by);
 		stressLimit(limit("attach@task", task.id.asName()), "Too many recent attachments for task: "+task.id);
 		stressLimit(limit("attach", ORIGIN), "Too many recent attachments.");
@@ -792,7 +848,7 @@ public final class Tracker {
 	}
 
 	private static void expectOwner(Site site, User initiator) {
-		if (!site.owner.equalTo(initiator.name)) {
+		if (!site.owner.equalTo(initiator.alias)) {
 			denyTransition("Only a site's owner can update it!");
 		}
 	}
@@ -804,7 +860,7 @@ public final class Tracker {
 	}
 
 	private static void expectOriginMaintainer(Product product, User user) {
-		if (!product.origin.maintainers.contains(user.name)) {
+		if (!product.origin.maintainers.contains(user.alias)) {
 			denyTransition("Only maintainers of area '*' can initiate new areas and versions.");
 		}
 	}
@@ -822,7 +878,7 @@ public final class Tracker {
 	}
 
 	private static void expectCanBeInvolved(User user, Task task) {
-		if (task.participants() >= 5 && !task.pursuedBy.contains(user) && !task.engagedBy.contains(user)) {
+		if (task.participants() >= 5 && !task.aspirants.contains(user) && !task.participants.contains(user)) {
 			denyTransition("There are already to much users involved with the task: "+task);
 		}
 	}
@@ -836,6 +892,12 @@ public final class Tracker {
 	private static void expectUnsolved(Task task) {
 		if (task.status != unsolved) {
 			denyTransition("Cannot change the outcome of a task once it is concluded!");
+		}
+	}
+	
+	private static void expectSolved(Task task) {
+		if (task.status == unsolved) {
+			denyTransition("Cannot archive an inconclusive task. Use dissolve to solve it without any action.");
 		}
 	}
 

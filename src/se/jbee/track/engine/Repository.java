@@ -1,7 +1,6 @@
 package se.jbee.track.engine;
 
 import java.util.NoSuchElementException;
-import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
 import se.jbee.track.model.Area;

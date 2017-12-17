@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * 
  * When stored the token is encrypted using MD5. This is just an additional step
  * to secure the token integrity. So having access to the DB does not allow to
- * read a users plain token. This will only exit in memory when created and send
+ * read a users plain token. This will only exist in memory when created and send
  * as email as well as when confirmed and compared again.
  */
 public final class OTP {
