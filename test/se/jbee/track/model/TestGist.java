@@ -4,7 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static se.jbee.track.model.Gist.gist;
 
-import org.junit.Assert;
 import org.junit.Test;
 
 public class TestGist {

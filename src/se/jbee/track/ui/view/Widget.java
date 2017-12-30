@@ -3,6 +3,7 @@ package se.jbee.track.ui.view;
 import java.util.regex.Pattern;
 
 import se.jbee.track.cache.Criteria;
+import se.jbee.track.cache.Criteria.Coloring;
 import se.jbee.track.cache.Criteria.Property;
 
 public class Widget {

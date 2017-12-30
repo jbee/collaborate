@@ -24,6 +24,10 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 		super();
 		this.names = names;
 	}
+	
+	public Name first() {
+		return names[0];
+	}
 
 	public int count() {
 		return names.length;

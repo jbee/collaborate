@@ -122,7 +122,7 @@ public class TestLMDB {
 			Name user = as("abc");
 			Name site = as("def");
 			Clock realTime = () -> System.currentTimeMillis();
-			LinearTimeLimits limits = new LinearTimeLimits(5);
+			LinearLimits limits = new LinearLimits(5);
 
 			Change change = register(user, email("test@example.com"));
 			Changes changed = Transaction.run(change, db , realTime, limits);

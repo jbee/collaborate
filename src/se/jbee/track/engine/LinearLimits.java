@@ -8,16 +8,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Keeps track of {@link Limit}s.
  * 
- * A limit can be {@link #stress(Limit)}ed or exclusively {@link #alloc(Limit)}ated.
- * When allocated any further attempt to stress or allocate will cause a {@link ConcurrentUsage}
- * till the allocated {@link Limit} is {@link #free(Limit)}ed again. 
+ * A limit can be {@link #stress(Limit)}ed or exclusively
+ * {@link #occupy(Limit, Clock)}ed. When allocated any further attempt to stress
+ * or occupy will cause a {@link ConcurrentUsage} till the occupied
+ * {@link Limit} is {@link #free(Limit)}ed again.
  * 
- * This way {@link Limits} can act as concurrent modification detection.
- * The caller has to keep track of allocated limits. 
- * Reallocation (even in same thread) is  illegal. 
- * Free should be called at the end of a modification, successful or not.
+ * This way {@link Limits} can act as concurrent modification detection. The
+ * caller has to keep track of occupied limits. Double-occupation (even in same
+ * thread) is illegal. Free should be called at the end of a modification,
+ * successful or not.
  */
-public final class LinearTimeLimits implements Limits {
+public final class LinearLimits implements Limits {
 	
 	private static final int ONE_HOUR = 1000*60*60;
 	private static final int ONE_DAY = 1000*60*60*24;
@@ -26,7 +27,7 @@ public final class LinearTimeLimits implements Limits {
 	private final ConcurrentHashMap<Limit, LimitsPerPeriod> stats = new ConcurrentHashMap<>();
 	private long nextCleanup;
 	
-	public LinearTimeLimits(int base) {
+	public LinearLimits(int base) {
 		super();
 		this.base = base;
 		this.nextCleanup = Long.MIN_VALUE;
@@ -38,7 +39,7 @@ public final class LinearTimeLimits implements Limits {
 	}
 
 	@Override
-	public boolean alloc(Limit l, Clock clock) throws ConcurrentUsage {
+	public boolean occupy(Limit l, Clock clock) throws ConcurrentUsage {
 		LimitsPerPeriod limits = periodLimits(l, clock);
 		if (!limits.allocated.compareAndSet(false, true)) {
 			throw new ConcurrentUsage(l);
@@ -49,7 +50,7 @@ public final class LinearTimeLimits implements Limits {
 	@Override
 	public void free(Limit l) {
 		if (!periodLimits(l, null).allocated.compareAndSet(true, false)) {
-			System.err.println("Tried to free non allocated limit: "+l);
+			throw new ConcurrentUsage(l);
 		}
 	}
 

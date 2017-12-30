@@ -32,7 +32,7 @@ import se.jbee.track.model.Template;
 import se.jbee.track.model.URL;
 import se.jbee.track.model.UseCode;
 import se.jbee.track.model.User;
-import se.jbee.track.model.User.Notifications;
+import se.jbee.track.model.User.Notification;
 import se.jbee.track.model.Version;
 
 @FunctionalInterface
@@ -58,7 +58,7 @@ public interface Convert<I,O> {
 	Matter[] matters = Matter.values();
 	Mail.Delivery[] deliveries = Mail.Delivery.values();
 	Change.Operation[] operations = Change.Operation.values();
-	Notifications[] notifications = Notifications.values();
+	Notification[] notifications = Notification.values();
 	
 	/**
 	 * Entity Version Numbers (EVN) are used to indicate the format of an
@@ -79,7 +79,7 @@ public interface Convert<I,O> {
 		User u = new User(from.getInt());
 		u.alias = bin2name(from);
 		u.email = Email.fromBytes(getShortBytes(from));
-		u.notifications = bin2enumMap(notifications, deliveries, from);
+		u.notificationSettings = bin2enumMap(notifications, deliveries, from);
 		u.authenticated = from.getInt();
 		u.encryptedOtp = getShortBytes(from);
 		u.millisOtpExprires = from.getLong();
@@ -102,7 +102,7 @@ public interface Convert<I,O> {
 		to.putInt(u.version());
 		name2bin(u.alias, to);
 		putShortBytes(u.email, to);
-		enumMap2bin(u.notifications, to);
+		enumMap2bin(u.notificationSettings, to);
 		to.putInt(u.authenticated);
 		putShortBytes(u.encryptedOtp, to);
 		to.putLong(u.millisOtpExprires);
@@ -250,7 +250,7 @@ public interface Convert<I,O> {
 	Convert<Repository, Poll> bin2poll = (tx,from) -> { 
 		byte evn = from.get(); // ignore so far
 		Poll p = new Poll(from.getInt());
-		p.serial = new IDN(from.getInt());
+		p.serial = IDN.idn(from.getInt());
 		p.area = tx.area(bin2name(from), bin2name(from));
 		p.matter = bin2enum(matters, from);
 		p.affected = bin2name(from);
@@ -457,7 +457,7 @@ public interface Convert<I,O> {
 
 	static IDN bin2IDN(ByteBuffer from) {
 		int num = from.getInt();
-		return num < 0 ? null : new IDN(num);
+		return num < 0 ? null : IDN.idn(num);
 	}
 
 	static void gist2bin(Gist g, ByteBuffer to) {

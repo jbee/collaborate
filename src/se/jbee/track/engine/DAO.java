@@ -138,4 +138,11 @@ public class DAO implements Repository {
 			return consumer.test(Convert.bin2task.convert(this, v)); 
 		});
 	}
+	
+	@Override
+	public void products(Predicate<Product> consumer) {
+		txr.range(ID.productId(Name.as("0")), (k,v) -> {
+			return consumer.test(Convert.bin2product.convert(this, v)); 
+		});
+	}
 }

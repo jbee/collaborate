@@ -8,7 +8,7 @@ public class Task extends Entity<Task> {
 	// creating a task
 	public Product product; // needs to be a object since it changes when new task is created
 	public IDN id;
-	public IDN serial; // within an board
+	public IDN serial = IDN.ZERO; // within an board
 	// opening record
 	public Name reporter;
 	public Date reported;
@@ -21,8 +21,8 @@ public class Task extends Entity<Task> {
 	public boolean exploitable;
 	
 	// working with a task (data that might change)
-	public IDN basis; // direct predecessor
-	public IDN origin; // initial "impulse" that lead to this task
+	public IDN basis = IDN.ZERO; // direct predecessor
+	public IDN origin = IDN.ZERO; // initial "impulse" that lead to this task
 	public int emphasis;
 	public Area area;
 	public Attachments attachments;

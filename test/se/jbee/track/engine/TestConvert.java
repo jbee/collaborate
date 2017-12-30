@@ -204,6 +204,12 @@ public class TestConvert {
 			// TODO Auto-generated method stub
 			
 		}
+		
+		@Override
+		public void products(Predicate<Product> consumer) {
+			// TODO Auto-generated method stub
+			
+		}
 
 		@Override
 		public void close() {

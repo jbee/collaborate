@@ -100,19 +100,19 @@ public class HttpTrackerAdapter implements HttpAdapter {
 					siteAtIndex(4, segments, ctx);
 				} else if (isDigit(segments[2].charAt(0))) {
 					ctx.type=Task;
-					ctx.task=new IDN(parseInt(segments[2]));
+					ctx.task=IDN.idn(parseInt(segments[2]));
 					siteAtIndex(3, segments, ctx);
 				} else {
 					ctx.type=Area;
 					String area = segments[2];
 					if (area.matches("^.*?-[0-9]+$")) {
 						ctx.area=as(area.substring(0, area.lastIndexOf('-')));
-						ctx.serial=new IDN(parseInt(area.substring(area.lastIndexOf('-')+1)));
+						ctx.serial=IDN.idn(parseInt(area.substring(area.lastIndexOf('-')+1)));
 						siteAtIndex(3, segments, ctx);
 					} else {
 						ctx.area=as(area);
 						if (segments.length > 3) {
-							ctx.serial=new IDN(parseInt(segments[3]));
+							ctx.serial=IDN.idn(parseInt(segments[3]));
 						}
 						siteAtIndex(4, segments, ctx);
 					}
@@ -127,7 +127,7 @@ public class HttpTrackerAdapter implements HttpAdapter {
 		case abandon:
 			ctx.type=Task;
 			ctx.product=as(segments[1]);
-			ctx.task=new IDN(parseInt(segments[2]));
+			ctx.task=IDN.idn(parseInt(segments[2]));
 			break;
 		case peek: // the semantics are just different later on in the substitution of :me
 		case user:

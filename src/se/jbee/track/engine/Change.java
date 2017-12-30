@@ -3,6 +3,7 @@ package se.jbee.track.engine;
 import static se.jbee.track.engine.Change.Operation.abandon;
 import static se.jbee.track.engine.Change.Operation.absolve;
 import static se.jbee.track.engine.Change.Operation.archive;
+import static se.jbee.track.engine.Change.Operation.aspire;
 import static se.jbee.track.engine.Change.Operation.attach;
 import static se.jbee.track.engine.Change.Operation.authenticate;
 import static se.jbee.track.engine.Change.Operation.compart;
@@ -15,15 +16,14 @@ import static se.jbee.track.engine.Change.Operation.disconnect;
 import static se.jbee.track.engine.Change.Operation.dissent;
 import static se.jbee.track.engine.Change.Operation.dissolve;
 import static se.jbee.track.engine.Change.Operation.emphasise;
-import static se.jbee.track.engine.Change.Operation.participate;
 import static se.jbee.track.engine.Change.Operation.fork;
 import static se.jbee.track.engine.Change.Operation.indicate;
 import static se.jbee.track.engine.Change.Operation.launch;
 import static se.jbee.track.engine.Change.Operation.leave;
 import static se.jbee.track.engine.Change.Operation.open;
+import static se.jbee.track.engine.Change.Operation.participate;
 import static se.jbee.track.engine.Change.Operation.poll;
 import static se.jbee.track.engine.Change.Operation.propose;
-import static se.jbee.track.engine.Change.Operation.aspire;
 import static se.jbee.track.engine.Change.Operation.rebase;
 import static se.jbee.track.engine.Change.Operation.register;
 import static se.jbee.track.engine.Change.Operation.relocate;
@@ -51,7 +51,7 @@ import se.jbee.track.model.Product.Integration;
 import se.jbee.track.model.Purpose;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.User;
-import se.jbee.track.model.User.Notifications;
+import se.jbee.track.model.User.Notification;
 
 /**
  * All the possible changes wrapped as lazy 'action'.
@@ -158,15 +158,15 @@ public interface Change {
 		return (t, tx) -> { tx.put(confirm, t.confirm(tx.user(user))); };
 	}
 	
-	static Change authenticate(Name user, byte[] token) {
-		return (t, tx) -> { tx.put(authenticate, t.authenticate(tx.user(user), token)); };
+	static Change authenticate(Name user, byte[] otp) {
+		return (t, tx) -> { tx.put(authenticate, t.authenticate(tx.user(user), otp)); };
 	}
 	
 	static Change name(Name email, Name name) {
 		return (t, tx) -> { tx.put(Operation.name, t.name(tx.user(email), name)); };
 	}
 	
-	static Change configure(Name user, EnumMap<Notifications, Mail.Delivery> notifications) {
+	static Change configure(Name user, EnumMap<Notification, Mail.Delivery> notifications) {
 		return (t, tx) -> { tx.put(configure, t.configure(tx.user(user), notifications)); };
 	}
 	

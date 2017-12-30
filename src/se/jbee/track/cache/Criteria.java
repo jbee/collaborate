@@ -1,5 +1,6 @@
 package se.jbee.track.cache;
 
+import static java.lang.Integer.signum;
 import static java.util.Arrays.asList;
 import static se.jbee.track.cache.Criteria.Operator.asc;
 import static se.jbee.track.cache.Criteria.Operator.desc;
@@ -33,13 +34,13 @@ import java.util.regex.Pattern;
 import se.jbee.track.model.Bytes;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Gist;
+import se.jbee.track.model.Heat;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
 import se.jbee.track.model.Purpose;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
-import se.jbee.track.model.User;
 
 /**
  * A data structure to describe what {@link Task}s to select and how to present
@@ -92,11 +93,23 @@ import se.jbee.track.model.User;
  */
 public final class Criteria implements Iterable<Criteria.Criterium> {
 
+	/**
+	 * To trigger indexing of a specific product in a cache we build a request
+	 * that only filters on the product and on nothing else. 
+	 */
+	public static Criteria index(Name product) {
+		return new Criteria(new Criterium(Property.product, eq, product));
+	}
+	
 	private final Criterium[] criteria;
 	
 	public Criteria(Criterium... criteria) {
 		super();
 		this.criteria = criteria;
+	}
+	
+	public boolean isIndexRequest() {
+		return criteria.length == 1 && criteria[0].prop == Property.product && criteria[0].op == eq;
 	}
 
 	public int count() {
@@ -122,15 +135,20 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	}
 	
 	public int indexOf(Property p) {
-		for (int i = 0; i < criteria.length; i++)
+		return indexOf(p, 0);
+	}
+	
+	public int indexOf(Property p, int start) {
+		for (int i = start; i < criteria.length; i++)
 			if (criteria[i].prop == p)
 				return i;
 		return -1;
 	}
 	
-	public Task[] filter(Iterable<Task> tasks, Date today) {
+	public Task[] filter(Iterator<Task> tasks, Date today) {
 		List<Task> res = new ArrayList<>();
-		for (Task t : tasks) {
+		while (tasks.hasNext()) {
+			Task t = tasks.next();
 			if (matches(t, today))
 				res.add(t);
 		}
@@ -142,21 +160,6 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			if (!c.matches(t, today))
 				return false;
 		return true;
-	}
-	
-	public Criterium topSelector(EnumSet<Property> properties) {
-		int res = -1;
-		int max = 0;
-		for (int i = 0; i < criteria.length; i++) {
-			Criterium criterium = criteria[i];
-			if (       properties.contains(criterium.prop) 
-					&& criterium.op.isSelector 
-					&& criterium.prop.selectivity > max) {
-				res = i;
-				max = criterium.prop.selectivity;
-			}
-		}
-		return res < 0 ? null : get(res);
 	}
 	
 	public Criteria without(Property p, Property...more) {
@@ -222,7 +225,9 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 				res.add(criterium(prop, op, val));
 			}
 		}
-		return new Criteria(res.toArray(new Criterium[0]));
+		Criterium[] arr = res.toArray(new Criterium[0]);
+		Arrays.sort(arr);
+		return new Criteria(arr);
 	}
 
 	private static void parseDate(Property prop, Operator op, String[] val, List<Criterium> res) {
@@ -314,7 +319,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		return new String[] { value };
 	}
 	
-	public static final class Criterium {
+	public static final class Criterium implements Comparable<Criterium> {
 
 		public Property prop;
 		public Operator op;
@@ -325,6 +330,10 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			this.prop = prop;
 			this.op = op;
 			this.values = values;
+		}
+		
+		public int intValue(int def) {
+			return prop.type != number ? def : ((Number)values[0]).intValue();
 		}
 
 		public boolean matches(Task t, Date today) {
@@ -397,6 +406,21 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			return "["+prop.name()+" "+op+" "+val+"]";
 		}
 		
+		@Override
+		public int compareTo(Criterium other) {
+			if (prop.isResultProperty() != other.prop.isResultProperty())
+				return prop.isResultProperty() ? 1 : -1;
+			int res = op.compareTo(other.op);
+			if (res != 0)
+				return res;
+			return signum(other.prop.selectivity - prop.selectivity);
+		}
+		
+	}
+	
+	public static enum Coloring {
+
+		heat, status, goal, motive,
 	}
 	
 	/**
@@ -404,15 +428,15 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	 */
 	public static enum Property {
 		// result properties
-		first(number, 0, eq, ge, le, gt, lt),
-		last(number, 0, eq, ge, le, gt, lt),
+		offset(number, 0, eq, ge, le, gt, lt),
 		length(number, 0, eq, le, lt),
 		order(property, 0, Property.class, asc, desc),
-		color(name, 0, eq),
+		color(property, 0, Coloring.class, eq),
 		
 		// task properties
 		emphasis(number, 10, eq, ge, le, gt, lt),
-		heat(number, 10, eq, ge, le, gt, lt),
+		temperature(number, 10, eq, ge, le, gt, lt),
+		heat(property, 6, Heat.class, eq, neq, in, nin, lt, gt, ge, le),
 		status(property, 5, Status.class, eq, neq, in, nin),
 		purpose(property, 4, Purpose.class, eq, neq, in, nin),
 		motive(property, 3, Motive.class, eq, neq, in, nin),
@@ -567,32 +591,32 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	}
 
 	public static enum Operator {
-		eq("=", true, true), 
-		neq("!=", true, false), 
-		gt(">", false, false), 
-		lt("<", false, false), 
-		ge(">=", false, false), 
-		le("<=", false, false), 
+		eq("=", true), 
 		/**
 		 * Is the value one of a set of alternatives?
 		 */
-		in("~", true, true), 
+		in("~", true), 
+		gt(">", false), 
+		lt("<", false), 
+		ge(">=", false), 
+		le("<=", false), 
+		neq("!=", true), 
 		/**
 		 * Is the value not one of a set of alternatives?
 		 */
-		nin("!~", true, false), 
-		asc(">>", true, false),
-		desc("<<", true, false)
+		nin("!~", true),
+		
+		asc(">>", true),
+		desc("<<", true)
 		;
+		//OPEN should there be an operator "not exits" to check e.g. for tasks without a origin, or task where solver is not yet defined
 
 		public final String symbol;
 		public final boolean allowsMultipleArguments;
-		public final boolean isSelector;
 
-		private Operator(String symbol, boolean multi, boolean selector) {
+		private Operator(String symbol, boolean multi) {
 			this.symbol = symbol;
 			this.allowsMultipleArguments = multi;
-			this.isSelector = selector;
 		}
 
 		public static Operator forSymbol(String symbol) {
@@ -604,9 +628,13 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		}
 		
 		public boolean isFilter() {
-			return !isSelector;
+			return !isSelector() && ordinal() <= nin.ordinal();
 		}
 		
+		public boolean isSelector() {
+			return ordinal() <= in.ordinal() ;
+		}
+
 		@Override
 		public String toString() {
 			return symbol;

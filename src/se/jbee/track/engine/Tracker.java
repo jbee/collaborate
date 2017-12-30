@@ -24,7 +24,6 @@ import se.jbee.track.model.Area;
 import se.jbee.track.model.Attachments;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Email;
-import se.jbee.track.model.Entity;
 import se.jbee.track.model.Gist;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Mail;
@@ -42,7 +41,7 @@ import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.User;
-import se.jbee.track.model.User.Notifications;
+import se.jbee.track.model.User.Notification;
 import se.jbee.track.model.Version;
 import se.jbee.track.util.Array;
 
@@ -89,7 +88,7 @@ public final class Tracker {
 		existing = new User(1);
 		existing.alias = alias;
 		existing.email = email;
-		existing.notifications=new EnumMap<>(Notifications.class);
+		existing.notificationSettings=new EnumMap<>(Notification.class);
 		existing.authenticated = 0;
 		existing.sites = Names.empty();
 		existing.contributesToProducts = Names.empty();
@@ -155,11 +154,11 @@ public final class Tracker {
 		return user;
 	}
 	
-	public User configure(User user, EnumMap<Notifications, Mail.Delivery> notifications) {
+	public User configure(User user, EnumMap<Notification, Mail.Delivery> notifications) {
 		expectAuthenticated(user);
 		stressDoConfiguration(user);
 		user = user.clone();
-		user.notifications = notifications == null ? new EnumMap<>(Notifications.class) : notifications;
+		user.notificationSettings = notifications == null ? new EnumMap<>(Notification.class) : notifications;
 		touch(user);
 		return user;
 	}
@@ -351,7 +350,7 @@ public final class Tracker {
 		Area area = cause.area.board ? cause.product.somewhere : cause.area;
 		Task task = report(cause.product, cause.motive, purpose, gist, reporter, area, cause.base, cause.exploitable);
 		task.basis = cause.id;
-		task.origin = cause.origin != null ? cause.origin : cause.id;
+		task.origin = !cause.origin.isZero() ? cause.origin : cause.id;
 		if (changeset != null && !changeset.isEmpty()) {
 			expectNotYetPublished(task.base);
 			task.changeset = changeset;
@@ -369,11 +368,11 @@ public final class Tracker {
 		Task task = new Task(1);
 		task.product = product.clone();
 		task.product.tasks++;
-		task.id = new IDN(task.product.tasks);
+		task.id = IDN.idn(task.product.tasks);
 		if (area.board) {
 			task.area = area.clone();
 			task.area.tasks++;
-			task.serial=new IDN(task.area.tasks);
+			task.serial=IDN.idn(task.area.tasks);
 		} else {
 			task.area = area;
 		}
@@ -507,7 +506,7 @@ public final class Tracker {
 		Poll poll = new Poll(1);
 		poll.area = area.clone();
 		poll.area.polls++;
-		poll.serial = new IDN(poll.area.polls);
+		poll.serial = IDN.idn(poll.area.polls);
 		poll.matter = matter;
 		poll.initiator = initiator.alias;
 		poll.affected = matter == Matter.abandonment ? Name.ORIGIN : affected.alias;

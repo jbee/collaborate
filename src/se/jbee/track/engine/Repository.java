@@ -23,6 +23,7 @@ public interface Repository extends AutoCloseable {
 	Task task(Name product, IDN id) throws UnknownEntity;
 	
 	void tasks(Name product, Predicate<Task> consumer);
+	void products(Predicate<Product> consumer);
 
 	Site site(Name user, Name site) throws UnknownEntity;
 	Poll poll(Name product, Name area, IDN serial) throws UnknownEntity;

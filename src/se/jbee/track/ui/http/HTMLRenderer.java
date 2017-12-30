@@ -4,6 +4,7 @@ import static se.jbee.track.model.Date.date;
 
 import java.io.PrintWriter;
 
+import se.jbee.track.cache.Criteria.Coloring;
 import se.jbee.track.model.Heat;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
@@ -14,7 +15,6 @@ import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 import se.jbee.track.ui.ctrl.Action;
-import se.jbee.track.ui.view.Coloring;
 import se.jbee.track.ui.view.Menu;
 import se.jbee.track.ui.view.Page;
 import se.jbee.track.ui.view.View;

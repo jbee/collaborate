@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 import se.jbee.track.cache.Criteria;
+import se.jbee.track.cache.Criteria.Coloring;
 import se.jbee.track.engine.NoLimits;
 import se.jbee.track.engine.Tracker;
 import se.jbee.track.model.Area;
@@ -19,7 +20,6 @@ import se.jbee.track.model.Task;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
-import se.jbee.track.ui.view.Coloring;
 import se.jbee.track.ui.view.Menu;
 import se.jbee.track.ui.view.View;
 import se.jbee.track.ui.view.View.Silo;

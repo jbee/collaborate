@@ -11,7 +11,14 @@ public final class IDN implements Comparable<IDN> {
 	
 	public final int num;
 
-	public IDN(int num) {
+
+	public static IDN idn(int num) {
+		if (num < 0)
+			throw new IllegalArgumentException("A IDN must be a positive number!");
+		return num == 0 ? ZERO : new IDN(num);
+	}
+	
+	private IDN(int num) {
 		super();
 		this.num = num;
 	}
@@ -43,4 +50,9 @@ public final class IDN implements Comparable<IDN> {
 	public int hashCode() {
 		return num;
 	}
+
+	public boolean isZero() {
+		return num <= 0;
+	}
+
 }

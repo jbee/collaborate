@@ -70,7 +70,7 @@ public class TestUseCode {
 	
 	@Test
 	public void notificationsHaveUniqueCode() {
-		assertUniqueCode(User.Notifications.class);
+		assertUniqueCode(User.Notification.class);
 	}
 	
 	private static <E extends Enum<E>> void assertUniqueCode(Class<E> type) {

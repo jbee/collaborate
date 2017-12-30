@@ -59,7 +59,7 @@ public final class Transaction extends DAO implements Tx, Limits {
 				set.apply(new Tracker(fixedNow, tx), tx);
 				return tx.commit();
 			} finally {
-				tx.freeAllocatedLimits();
+				tx.freeOccupiedLimits();
 			}
 		}
 	}
@@ -74,7 +74,7 @@ public final class Transaction extends DAO implements Tx, Limits {
 	private final LinkedHashMap<ID, Entity<?>> changed = new LinkedHashMap<>();
 	private final HashMap<ID, ArrayList<Change.Operation>> changeTypes = new HashMap<>();
 	private final HashMap<ID, User> loadedUsers = new HashMap<>();
-	private final Set<Limit> allocated = new HashSet<>();
+	private final Set<Limit> occupied = new HashSet<>();
 	
 	private final Clock clock;
 	private final Limits limits;
@@ -229,11 +229,11 @@ public final class Transaction extends DAO implements Tx, Limits {
 		buf.clear();
 	}
 	
-	private void freeAllocatedLimits() {
-		for (Limit l : allocated) {
+	private void freeOccupiedLimits() {
+		for (Limit l : occupied) {
 			limits.free(l);
 		}
-		allocated.clear();
+		occupied.clear();
 	}
 	
 	@Override
@@ -241,15 +241,15 @@ public final class Transaction extends DAO implements Tx, Limits {
 		if (!limit.isSpecific()) {
 			return limits.stress(limit, clock);
 		}
-		return alloc(limit, clock);
+		return occupy(limit, clock);
 	}
 
 	@Override
-	public boolean alloc(Limit limit, Clock clock) throws ConcurrentUsage {
-		if (allocated.contains(limit))
+	public boolean occupy(Limit limit, Clock clock) throws ConcurrentUsage {
+		if (occupied.contains(limit))
 			return true;
-		if (limits.alloc(limit, clock)) {
-			allocated.add(limit);
+		if (limits.occupy(limit, clock)) {
+			occupied.add(limit);
 			return true;
 		}
 		return false;
@@ -257,6 +257,8 @@ public final class Transaction extends DAO implements Tx, Limits {
 	
 	@Override
 	public void free(Limit l) {
-		throw new UnsupportedOperationException("`free` should not be called directly on the TX!");
+		if (!occupied.contains(l)) {
+			throw new ConcurrentUsage(l);
+		}
 	}
 }

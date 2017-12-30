@@ -17,7 +17,9 @@ public final class User extends Entity<User> {
 	 * is mostly a way to trigger notifications for task one isn't involved in.
 	 */
 	@UseCode
-	public static enum Notifications {
+	public static enum Notification {
+		// user
+		authenticated(Mail.Delivery.never), // a login occurred
 		// product
 		constituted(Mail.Delivery.daily),
 		// area
@@ -27,18 +29,18 @@ public final class User extends Entity<User> {
 		tagged(Mail.Delivery.daily),    // for user that are origin maintainers
 		// poll
 		polled(Mail.Delivery.hourly),   // in an area the user is maintainer (can vote)
-		vote(Mail.Delivery.hourly),     // for a poll where user can vote (is maintainer)
+		voted(Mail.Delivery.hourly),     // for a poll where user can vote (is maintainer)
 		// task
 		reported(Mail.Delivery.hourly), // new tasks (in maintained area)
 		forked(Mail.Delivery.daily),    // derived (from an task the user is involved)
 		moved(Mail.Delivery.daily),     // where user is involved
 		solved(Mail.Delivery.hourly),   // where user is involved
-		attached(Mail.Delivery.hourly)  // where user is involved
+		extended(Mail.Delivery.hourly)  // where user is involved
 		;
 		
 		public final Mail.Delivery def;
 		
-		Notifications(Mail.Delivery def) {
+		Notification(Mail.Delivery def) {
 			this.def = def;
 		}
 	}
@@ -56,7 +58,7 @@ public final class User extends Entity<User> {
 	// user data
 	public Names sites;
 	public int watches; // n tasks
-	public EnumMap<Notifications,Mail.Delivery> notifications;
+	public EnumMap<Notification,Mail.Delivery> notificationSettings;
 	//TODO preferred page size?
 	
 	// change log

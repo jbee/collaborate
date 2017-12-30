@@ -15,7 +15,7 @@ public class NoLimits implements Limits {
 	}
 
 	@Override
-	public boolean alloc(Limit l, Clock clock) throws ConcurrentUsage {
+	public boolean occupy(Limit l, Clock clock) throws ConcurrentUsage {
 		return true;
 	}
 

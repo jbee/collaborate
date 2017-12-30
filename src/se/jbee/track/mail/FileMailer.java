@@ -20,7 +20,7 @@ import se.jbee.track.model.Mail.Delivery;
 
 public class FileMailer implements Mailer {
 
-	private static final Set<File> runningMainers = new ConcurrentHashSet<>();
+	private static final Set<File> runningMailers = new ConcurrentHashSet<>();
 	
 	private final Mailer delegate;
 	private final ArrayBlockingQueue<Mail> confirmations = new ArrayBlockingQueue<>(20);
@@ -34,7 +34,7 @@ public class FileMailer implements Mailer {
 	public FileMailer(File dataDir, Mailer delegate) {
 		super();
 		checkDir(dataDir);
-		runningMainers.add(dataDir);
+		runningMailers.add(dataDir);
 		this.delegate = delegate;
 		this.mailDir = new File(dataDir, "mail");
 		this.ageDir  = new File(dataDir, "age");
@@ -48,9 +48,9 @@ public class FileMailer implements Mailer {
 	}
 
 	private static void checkDir(File dataDir) {
-		if (runningMainers.contains(dataDir))
+		if (runningMailers.contains(dataDir))
 			throw new IllegalStateException("Mailer already running for directory "+dataDir);
-		for (File dir : runningMainers) {
+		for (File dir : runningMailers) {
 			if (dir.getAbsolutePath().startsWith(dataDir.getAbsolutePath()))
 				throw new IllegalStateException("Cannot start a mailer in a subdirectory of another mailer");
 		}
@@ -59,7 +59,7 @@ public class FileMailer implements Mailer {
 	@Override
 	protected void finalize() {
 		run.set(false);
-		runningMainers.remove(mailDir.getParentFile());
+		runningMailers.remove(mailDir.getParentFile());
 	}
 
 	private static void mkdir(File dir) {
@@ -77,7 +77,7 @@ public class FileMailer implements Mailer {
 	/**
 	 * Step 1: add files to input queues.
 	 * 
-	 *  (This will be called by worker threads that process requests)
+	 * (This will be called by worker threads that process requests)
 	 */
 	@Override
 	public boolean deliver(Mail mail) {
@@ -114,7 +114,7 @@ public class FileMailer implements Mailer {
 		}
 	}
 	
-	private boolean tryToLock(File lock) {
+	private static boolean tryToLock(File lock) {
 		try {
 			return lock.createNewFile();
 		} catch (IOException e) {
@@ -122,7 +122,7 @@ public class FileMailer implements Mailer {
 		}
 	}
 
-	private boolean unlock(File lock) {
+	private static boolean unlock(File lock) {
 		return lock.delete();
 	}
 	

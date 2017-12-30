@@ -1,24 +1,31 @@
 package se.jbee.track.cache;
 
-import static se.jbee.track.engine.Change.Operation.archive;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+import static java.util.Arrays.asList;
+import static java.util.Arrays.copyOfRange;
+import static se.jbee.track.cache.Criteria.Operator.eq;
+import static se.jbee.track.cache.Criteria.Property.length;
 import static se.jbee.track.util.Array.nextPowerOf2;
 
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 
+import se.jbee.track.cache.Criteria.Criterium;
+import se.jbee.track.cache.Criteria.Operator;
 import se.jbee.track.cache.Criteria.Property;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.DB.TxR;
 import se.jbee.track.engine.Change;
 import se.jbee.track.engine.Changes;
-import se.jbee.track.engine.Change.Operation;
 import se.jbee.track.engine.Changes.Entry;
 import se.jbee.track.engine.DAO;
 import se.jbee.track.engine.Event;
@@ -68,6 +75,10 @@ final class CacheWorker implements Cache {
 	private Map<Name, TaskSet> byArea = new HashMap<>(); // almost fix
 	private Map<Name, TaskSet> byVersion = new HashMap<>(); // almost fix
 	
+	private Map<IDN, TaskSet> byBasis = new HashMap<>(); // fix
+	private Map<IDN, TaskSet> byOrigin = new HashMap<>(); // fix
+	private Map<IDN, TaskSet> bySerial = new HashMap<>(); // fix
+	
 	private EnumMap<Purpose, TaskSet> byPurpose = new EnumMap<>(Purpose.class); // fix
 	private EnumMap<Motive, TaskSet> byMotive = new EnumMap<>(Motive.class); // fix
 	private EnumMap<Status, TaskSet> byStatus = new EnumMap<>(Status.class); // almost fix
@@ -79,9 +90,14 @@ final class CacheWorker implements Cache {
 		super();
 		this.product = product;
 		this.today = today;
-		this.es = Executors.newSingleThreadExecutor(this::factory);
 		this.byIDN = new Task[128]; // initial capacity
+		this.es = Executors.newSingleThreadExecutor(this::factory);
 		init(db);
+	}
+	
+	@Override
+	public void shutdown() {
+		es.shutdown();
 	}
 
 	private Thread factory(Runnable target) {
@@ -131,6 +147,9 @@ final class CacheWorker implements Cache {
 			f.accept(getOrInit(t.purpose, byPurpose), t.id);
 			f.accept(getOrInit(t.motive, byMotive), t.id);
 			f.accept(getOrInit(t.temperature(today), byTemperature), t.id);
+			getOrInit(t.serial, bySerial).init(t.id);
+			getOrInit(t.basis, byBasis).init(t.basis);
+			getOrInit(t.origin, byOrigin).init(t.origin);
 		}
 	}
 	
@@ -150,7 +169,7 @@ final class CacheWorker implements Cache {
 	}
 
 	@Override
-	public Future<Tasks> tasks(Criteria criteria) {
+	public Future<Matches> matchesFor(User inquirer, Criteria criteria) {
 		return es.submit(() -> lookup(criteria));
 	}
 	
@@ -165,11 +184,140 @@ final class CacheWorker implements Cache {
 	 * matches. Merging different sets of potential matches is most likely more
 	 * expensive. In any case it creates more short lived objects => garbage.
 	 */
-	private Tasks lookup(Criteria criteria) {
-		// 1. select => Iterable<Task> 
-		// 2. filter => Task[]
-		// 3. sort => Task[]
-		return null;
+	private Matches lookup(Criteria criteria) {
+		// 0. if there is not a single criteria return all
+		if (criteria.count() == 0) {
+			return new Matches(copyOfRange(byIDN, 1, usage+1), usage+1);
+		}
+		// 1. find the "eq" selector that yields the smallest set
+		Criterium c = criteria.get(0);
+		TaskSet candidates = null;
+		Criterium selector = null;
+		int i = 1;
+		while (c.op == eq) {
+			Map<?,TaskSet> table = select(c.prop);
+			if (table != null) {
+				TaskSet index = table.get(c.values[0]);
+				if (index == null)
+					return Matches.none(); // there are no matches for this selector - we are done
+				if (candidates == null || index.size() < candidates.size()) {
+					selector = c;
+					candidates = index;
+				}
+			}
+			c = criteria.get(i++);
+		}
+		if (selector != null) {
+			return orderAndSlice(filter(candidates, criteria), criteria, today);
+		}
+		// 2. or (if no eq available) use the first "in" clause
+		
+		// 3. or use a range (serial, heat, temperature) 
+		
+		// 4. or just plain filter every known task ;(
+		return orderAndSlice(filter(byIDN, usage+1, criteria), criteria, today);
+	}
+	
+	static Matches orderAndSlice(Task[] matches, Criteria criteria, Date today) {
+		int len = 50;
+		int offset = 0;
+		if (criteria.contains(length)) {
+			len = criteria.get(criteria.indexOf(length)).intValue(len);
+		}
+		if (criteria.contains(Property.offset)) {
+			offset = criteria.get(criteria.indexOf(Property.offset)).intValue(offset);
+		}
+		int total = matches.length;
+		if (offset + len > total) {
+			matches = new Task[0];
+		} else {
+			if (criteria.contains(Property.order)) {
+				order(matches, criteria, today);
+			}
+			if (offset > 0 || offset+total > len) {
+				matches = copyOfRange(matches, offset, min(total, offset+len));  
+			}
+		}
+		return new Matches(matches, total);
+	}
+	
+
+	static void order(Task[] matches, Criteria criteria, Date today) {
+		int len = 0;
+		int i = criteria.indexOf(Property.order);
+		while (i >= 0) {
+			len += criteria.get(i).values.length;
+			i = criteria.indexOf(Property.order, i+1);
+		}
+		final Property[] props = new Property[len];
+		final int[] factors = new int[len];
+		i = criteria.indexOf(Property.order);
+		int s = 0;
+		while (i >= 0) {
+			Criterium criterium = criteria.get(i);
+			Object[] orders = criterium.values;
+			System.arraycopy(orders, 0, props, s, orders.length);
+			Arrays.fill(factors, criterium.op == Operator.asc ? 1 : -1, s, s+orders.length);
+			s+=orders.length;
+			i = criteria.indexOf(Property.order, i+1);
+		}
+		Arrays.sort(matches, (a,b) -> {
+			for (int k = 0; k < props.length; k++) {
+				Property p = props[k];
+				int res = cmp(p.access(a, today), p.access(b, today));
+				if (res != 0)
+					return factors[k] * res;
+			}
+			return 0;
+		});
+	}
+
+	@SuppressWarnings("unchecked")
+	static <T extends Comparable<T>> int cmp(Comparable<?> a, Comparable<?> b) {
+		return ((T)a).compareTo((T)b);
+	}
+	
+	private Task[] filter(TaskSet set, Criteria criteria) {
+		final int size = set.size();
+		return criteria.filter(new Iterator<Task>() {
+			
+			int i = 0;
+			@Override
+			public Task next() {
+				while (set.members[i] == 0) i++; // skip gaps
+				return byIDN[set.members[i++]];
+			}
+			
+			@Override
+			public boolean hasNext() {
+				return i < size-1;
+			}
+		}, today);
+	}
+	
+	private Task[] filter(Task[] set, int size, Criteria criteria) {
+		return criteria.filter(asList(set).subList(0, size).iterator(), today);
+	}
+	
+	private Map<?,TaskSet> select(Property prop) {
+		switch (prop) {
+		case aspirant: 
+		case participant: 
+		case user: return byUser;
+		case reporter: return byReporter;
+		case solver: return bySolver;
+		case watcher: return byWatcher;
+		case maintainer: return byMaintainer;
+		case area: return byArea;
+		case version: return byVersion;
+		case purpose: return byPurpose;
+		case motive: return byMotive;
+		case status: return byStatus;
+		case serial: return bySerial;
+		case origin: return byOrigin;
+		case basis: return byBasis;
+		default: return null;
+		}
 	}
 	
 	/**
@@ -362,11 +510,14 @@ final class CacheWorker implements Cache {
 	 * The set grows by power of 2 when set if full.
 	 * 
 	 * The set is designed for high write thoughput and low memory footprint.
+	 * 
+	 * It supports sets of up to 32,766 items.
 	 */
 	static class TaskSet {
-		// could have multiple impls. for "a set of tasks" mostly because we can refer to them by their ID and IDs are 1..n - for smaller n's short[] is sufficient
 		private short[] members = new short[8];
 		private int usage = -1;
+		private int size = 0; // how many members are actually defined
+		private int maxIDN = 0;
 		private int gaps = 0;
 		private int gap0 = -1; // last known gap index (if not reused already) this speeds up remove/add cycles
 		
@@ -381,7 +532,10 @@ final class CacheWorker implements Cache {
 				System.arraycopy(members, 0, tmp, 0, members.length);
 				members = tmp;
 			}
-			members[++usage] = (short) task.num;
+			int idn = task.num;
+			members[++usage] = (short) idn;
+			size++;
+			maxIDN = max(maxIDN, idn);
 		}
 		
 		int first() {
@@ -394,27 +548,59 @@ final class CacheWorker implements Cache {
 			return indexOf(task) >= 0;
 		}
 		
+		public int size() {
+			return size;
+		}
+		
 		int indexOf(IDN task) {
-			final int num = task.num;
+			final int idn = task.num;
+			if (usage > 16) { // try binary search
+				int res = indexOf(idn, usage/2, usage/2);
+				if (res >= 0)
+					return res;
+			}
 			for (int i = 0; i <= usage; i++) {
-				if (num == members[i])
+				if (idn == members[i])
 					return i;
 			}
 			return -1;
 		}
 		
+		/**
+		 * This is a modified binary search that is being optimistic about the
+		 * items in the set being sorted in ascending order. Due to gap filling
+		 * with numbers out of order the tried index m might jump out of bounds
+		 * so we have to check for that. The idea is to just do the steps until
+		 * we have tried all the way down to a delta of 1. If index is not found
+		 * by then we got messed up by zeros or filled gaps.
+		 */
+		private int indexOf(int idn, int m, int d) {
+			while (m <= usage && m >= 0 && members[m] != idn) {
+				if (d == 1)
+					return -1;
+				d = d/2;
+				m += members[m] > idn ? -d : d;
+			}
+			return m <= usage && m >= 0 ? m : -1;
+		}
+		
 		void add(IDN task) {
-			if (!contains(task)) {
+			int idn = task.num;
+			if (idn > maxIDN) {
+				init(task);
+			} else if (!contains(task)) {
 				if (gaps > 0) {
 					if (gap0 >= 0) {
-						members[gap0] = (short) task.num;
+						members[gap0] = (short) idn;
 						gap0 = -1;
 					} else {
 						int i = 0;
 						while (members[i] != 0) i++;
-						members[i] = (short) task.num;
+						members[i] = (short) idn;
 					}
 					gaps--;
+					size++;
+					maxIDN = max(maxIDN, idn);
 				} else {
 					init(task);
 				}
@@ -427,8 +613,10 @@ final class CacheWorker implements Cache {
 				members[idx] = 0;
 				gaps++;
 				gap0 = idx;
+				size--;
 			}
 		}
+
 	}
 	
 	private static void sort(Task[] tasks, final Property[] orders, final Date today) {
