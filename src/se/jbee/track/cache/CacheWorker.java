@@ -195,9 +195,9 @@ final class CacheWorker implements Cache {
 		Criterium selector = null;
 		int i = 1;
 		while (c.op == eq) {
-			Map<?,TaskSet> table = select(c.prop);
+			Map<?,TaskSet> table = select(c.left);
 			if (table != null) {
-				TaskSet index = table.get(c.values[0]);
+				TaskSet index = table.get(c.rvalues[0]);
 				if (index == null)
 					return Matches.none(); // there are no matches for this selector - we are done
 				if (candidates == null || index.size() < candidates.size()) {
@@ -246,7 +246,7 @@ final class CacheWorker implements Cache {
 		int len = 0;
 		int i = criteria.indexOf(Property.order);
 		while (i >= 0) {
-			len += criteria.get(i).values.length;
+			len += criteria.get(i).rvalues.length;
 			i = criteria.indexOf(Property.order, i+1);
 		}
 		final Property[] props = new Property[len];
@@ -255,7 +255,7 @@ final class CacheWorker implements Cache {
 		int s = 0;
 		while (i >= 0) {
 			Criterium criterium = criteria.get(i);
-			Object[] orders = criterium.values;
+			Object[] orders = criterium.rvalues;
 			System.arraycopy(orders, 0, props, s, orders.length);
 			Arrays.fill(factors, criterium.op == Operator.asc ? 1 : -1, s, s+orders.length);
 			s+=orders.length;
@@ -420,7 +420,7 @@ final class CacheWorker implements Cache {
 			case indicate:
 			case warn:
 			case request:
-			case fork:
+			case segment:
 				Task t = after;
 				t.area = cacheInstanceOf(t.area);
 				t.base = cacheInstanceOf(t.base);

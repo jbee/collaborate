@@ -22,13 +22,14 @@ public interface Repository extends AutoCloseable {
 	Version version(Name product, Name version) throws UnknownEntity;
 	Task task(Name product, IDN id) throws UnknownEntity;
 	
-	void tasks(Name product, Predicate<Task> consumer);
-	void products(Predicate<Product> consumer);
-
-	Site site(Name user, Name site) throws UnknownEntity;
+	Site site(Name product, Name user, Name site) throws UnknownEntity;
 	Poll poll(Name product, Name area, IDN serial) throws UnknownEntity;
 	Event event(long timestamp) throws UnknownEntity;
 	History history(ID entity) throws UnknownEntity;
+
+	void tasks(Name product, Predicate<Task> consumer);
+	Product[] products();
+	Site[] sites(Name product, Name menu);
 	
 	/**
 	 * No {@link Exception} here!

@@ -69,15 +69,11 @@ public class TestLMDB {
 	public void putGetAdapterAPI() throws IOException {
 		Tracker tracker = new Tracker(() -> System.currentTimeMillis(), new NoLimits());
 		final File path = tmp.newFolder();
-		try (Env<ByteBuffer> env = Env.create()
-				.setMapSize(1014*1024*10)
-				.setMaxDbs(10)
-				.open(path)) {
-			DB db = new LMDB(env);
-			User u1 = tracker.register(null, as("user1"), email("pass1"));
+		try (DB db = new LMDB(Env.create().setMapSize(1014*1024*10), path)) {
+			User u1 = tracker.register(null, as("user1"), email("pass1@ex.de"));
 			u1 = tracker.authenticate(u1, u1.otp);
-			Site s1 = tracker.launch(as("def"), template("ghi"), u1);
-			Site s2 = tracker.launch(as("mno"), template("pqr"), u1);
+			Site s1 = tracker.launch(u1, as("def"), template("ghi"));
+			Site s2 = tracker.launch(u1, as("mno"), template("pqr"));
 			try (TxRW tx = db.write()) {
 				ByteBuffer buf = ByteBuffer.allocateDirect(1024);
 				Convert.site2bin.convert(s1, buf);
@@ -114,11 +110,7 @@ public class TestLMDB {
 	@Test
 	public void putGetTranactionAPI() throws IOException {
 		final File path = tmp.newFolder();
-		try (Env<ByteBuffer> env = Env.create()
-				.setMapSize(1014*1024*10)
-				.setMaxDbs(10)
-				.open(path)) {
-			DB db = new LMDB(env);
+		try (DB db = new LMDB(Env.create().setMapSize(1014*1024*10), path)) {
 			Name user = as("abc");
 			Name site = as("def");
 			Clock realTime = () -> System.currentTimeMillis();

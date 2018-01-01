@@ -40,6 +40,7 @@ import se.jbee.track.model.Site;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Template;
+import se.jbee.track.model.URL;
 import se.jbee.track.model.User;
 import se.jbee.track.model.User.Notification;
 import se.jbee.track.model.Version;
@@ -90,7 +91,6 @@ public final class Tracker {
 		existing.email = email;
 		existing.notificationSettings=new EnumMap<>(Notification.class);
 		existing.authenticated = 0;
-		existing.sites = Names.empty();
 		existing.contributesToProducts = Names.empty();
 		existing.watches = 0;
 		existing.millisLastActive=now(); // cannot use touch as version should stay same
@@ -232,13 +232,16 @@ public final class Tracker {
 
 	public Area compart(Product product, Name area, User originator) {
 		expectOriginMaintainer(product, originator);
-		return compart(product.name, area, originator);
+		Area a = compart(product.name, area, originator);
+		a.safeguarded = product.origin.safeguarded;
+		return a;
 	}
 
 	public Area compart(Area basis, Name partition, User originator, boolean subarea) {
 		expectMaintainer(basis, originator);
 		Area area = compart(basis.product, partition, originator);
 		area.basis=basis.name;
+		area.safeguarded=basis.safeguarded;
 		if (subarea) {
 			area.maintainers = basis.maintainers;
 		}
@@ -258,6 +261,7 @@ public final class Tracker {
 		a.maintainers=new Names(originator.alias);
 		a.tasks = 0;
 		a.polls = 0;
+		a.safeguarded = true;
 		originator.contributesToProducts = originator.contributesToProducts.add(product);
 		touch(originator);
 		return a;
@@ -279,6 +283,7 @@ public final class Tracker {
 			return task; //NOOP
 		expectNoBoard(task.area);
 		expectAuthenticated(originator);
+		expectUnsolved(task);
 		if (task.area.name.isUnknown()) {
 			expectMaintainer(to, originator); // pull from ~
 		} else {
@@ -299,6 +304,7 @@ public final class Tracker {
 			return task; //NOOP
 		expectAuthenticated(originator);
 		expectMaintainer(task.area, originator);
+		expectUnsolved(task);
 		stressDoRebase(task, to, originator);
 		task = task.clone();
 		task.base = to;
@@ -346,11 +352,11 @@ public final class Tracker {
 		return report(product, board.motive, board.purpose, gist, reporter, board, product.somewhen, false);
 	}
 
-	public Task reportFork(Task cause, Purpose purpose, Gist gist, User reporter, Names changeset) {
-		Area area = cause.area.board ? cause.product.somewhere : cause.area;
-		Task task = report(cause.product, cause.motive, purpose, gist, reporter, area, cause.base, cause.exploitable);
-		task.basis = cause.id;
-		task.origin = !cause.origin.isZero() ? cause.origin : cause.id;
+	public Task reportSegment(Task basis, Purpose why, Gist gist, User reporter, Names changeset) {
+		Area area = basis.area.board ? basis.product.somewhere : basis.area;
+		Task task = report(basis.product, basis.motive, why, gist, reporter, area, basis.base, basis.exploitable);
+		task.basis = basis.id;
+		task.origin = !basis.origin.isZero() ? basis.origin : basis.id;
 		if (changeset != null && !changeset.isEmpty()) {
 			expectNotYetPublished(task.base);
 			task.changeset = changeset;
@@ -394,14 +400,30 @@ public final class Tracker {
 		return task;
 	}
 	
-	public Task attach(Task task, User initiator, Attachments attachments) {
+	public Task attach(Task task, User initiator, URL attachment) {
+		expectAuthenticated(initiator);
 		if (!task.area.isOpen()) {
-			expectAuthenticated(initiator);
 			expectMaintainer(task.area, initiator);
 		}
+		expectUnsolved(task);
+		expectConform(task, attachment);
 		stressDoAttach(task, initiator);
 		task = task.clone();
-		task.attachments = attachments;
+		if (!attachment.isIntegrated()) {
+			attachment = task.product.integrate(attachment);
+		}
+		task.attachments = task.attachments.add(attachment); 
+		initiator.contributesToProducts = initiator.contributesToProducts.add(task.product.name);
+		touch(initiator);
+		return task;
+	}
+	
+	public Task detach(Task task, User initiator, URL attachment) {
+		expectAuthenticated(initiator);
+		expectMaintainer(task.area, initiator);
+		stressDoAttach(task, initiator);
+		task = task.clone();
+		task.attachments = task.attachments.remove(attachment); 
 		initiator.contributesToProducts = initiator.contributesToProducts.add(task.product.name);
 		touch(initiator);
 		return task;
@@ -496,7 +518,7 @@ public final class Tracker {
 		return task;
 	}
 
-	public Poll poll(Matter matter, Area area, User initiator, User affected) {
+	public Poll poll(Matter matter, Gist motivation, Area area, User initiator, User affected) {
 		expectRegistered(initiator);
 		expectAuthenticated(initiator);
 		if (matter != participation) {
@@ -508,8 +530,9 @@ public final class Tracker {
 		poll.area.polls++;
 		poll.serial = IDN.idn(poll.area.polls);
 		poll.matter = matter;
+		poll.motivation = motivation;
 		poll.initiator = initiator.alias;
-		poll.affected = matter == Matter.abandonment ? Name.ORIGIN : affected.alias;
+		poll.affected = !matter.isUserRelated() ? Name.ORIGIN : affected.alias;
 		poll.start = date(now());
 		poll.outcome = Outcome.unsettled;
 		poll.consenting = Names.empty();
@@ -557,19 +580,24 @@ public final class Tracker {
 		poll.outcome = accepted ? consent : dissent;
 		if (!accepted)
 			return;
-		poll.area = poll.area.clone();
+		Area area = poll.area.clone();
 		switch (poll.matter) {
 		case abandonment:
-			poll.area.abandoned=accepted; break;
+			area.abandoned=true; break;
 		case inclusion:
-			poll.area.exclusive=false; break;
+			area.exclusive=false; break;
 		case exclusion:
-			poll.area.exclusive=true; break;
+			area.exclusive=true; break;
 		case resignation:
-			poll.area.maintainers = poll.area.maintainers.remove(poll.affected); break;
+			area.maintainers = area.maintainers.remove(poll.affected); break;
 		case participation:
-			poll.area.maintainers = poll.area.maintainers.add(poll.affected);
+			area.maintainers = area.maintainers.add(poll.affected); break;
+		case safeguarding:
+			area.safeguarded=true; break;
+		case unblocking:
+			area.safeguarded=false; break;
 		}
+		poll.area = area;
 	}
 
 	/* A user's task queues */
@@ -651,25 +679,40 @@ public final class Tracker {
 
 	/* A user's sites */
 
-	public Site launch(Name site, Template template, User owner) {
-		expectAuthenticated(owner);
-		expectNoUserSiteYet(site, owner);
-		expectCanHaveMoreSites(owner);
-		stessNewSite(owner);
-		Site s = new Site(1, owner.alias, site, template);
-		owner.sites = owner.sites.add(site);
-		touch(owner);
+	public Site launch(User owner, Name site, Template template, Site...inSameMenu) {
+		return launch(null, site, template, owner, inSameMenu);
+	}
+	
+	public Site launch(Area area, Name site, Template template, User originator, Site...inSameMenu) {
+		expectAuthenticated(originator);
+		expectNoMenuSiteYet(site, inSameMenu);
+		expectCanHaveMoreSites(inSameMenu);
+		if (area != null) {
+			expectMaintainer(area, originator);
+		}
+		stessNewSite(originator);
+		Site s = area == null
+				? new Site(1, Name.ORIGIN, originator.alias, site, template)
+				: new Site(1, area.product, area.name, site, template);
+		touch(originator);
 		return s;
 	}
 
 	public Site restructure(Site site, Template template, User owner) {
-		expectRegistered(owner);
-		expectAuthenticated(owner);
-		expectOwner(site, owner);
-		stressDoUpdate(site, owner);
+		return restructure(site, null, template, owner);
+	}
+	public Site restructure(Site site, Area area, Template template, User originator) {
+		expectRegistered(originator);
+		expectAuthenticated(originator);
+		if (site.isUserSite()) {
+			expectOwner(site, originator);
+		} else {
+			expectMaintainer(area, originator);
+		}
+		stressDoUpdate(site, originator);
 		site = site.clone();
 		site.template = template;
-		touch(owner);
+		touch(originator);
 		return site;
 	}
 
@@ -840,22 +883,22 @@ public final class Tracker {
 		}
 	}
 
-	private static void expectCanHaveMoreSites(User owner) {
-		if (owner.sites.count() >= 10) {
-			denyTransition("Currently each user can only have 10 sites!");
+	private static void expectCanHaveMoreSites(Site[] inSameMenu) {
+		if (inSameMenu.length >= 10) {
+			denyTransition("Currently each user or area can only have 10 sites!");
 		}
 	}
 
 	private static void expectOwner(Site site, User initiator) {
-		if (!site.owner.equalTo(initiator.alias)) {
+		if (!site.menu.equalTo(initiator.alias)) {
 			denyTransition("Only a site's owner can update it!");
 		}
 	}
 
-	private static void expectNoUserSiteYet(Name site, User owner) {
-		if (owner.hasSite(site)) {
-			denyTransition("Site already exists!");
-		}
+	private static void expectNoMenuSiteYet(Name site, Site[] inSameMenu) {
+		for (Site s : inSameMenu)
+			if (s.name.equalTo(site))
+				denyTransition("Site already exists!");
 	}
 
 	private static void expectOriginMaintainer(Product product, User user) {
@@ -897,6 +940,12 @@ public final class Tracker {
 	private static void expectSolved(Task task) {
 		if (task.status == unsolved) {
 			denyTransition("Cannot archive an inconclusive task. Use dissolve to solve it without any action.");
+		}
+	}
+	
+	private static void expectConform(Task task, URL url) {
+		if (!task.product.isIntegrated(url) && task.area.safeguarded) {
+			denyTransition("In the tasks area URLs may only refer to configured integrations.");
 		}
 	}
 

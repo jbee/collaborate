@@ -58,8 +58,18 @@ public final class ID extends Identifier<ID> {
 		return id(ID.Type.poll, product, area, serial.asName());
 	}
 
-	public static ID siteId(Name owner, Name name) {
-		return id(ID.Type.Site, owner, name);
+	/**
+	 * A user site ID 
+	 */
+	public static ID siteId(Name user, Name name) {
+		return siteId(Name.ORIGIN, user, name);
+	}
+	
+	/**
+	 * A area site ID 
+	 */
+	public static ID siteId(Name product, Name area, Name name) {
+		return id(ID.Type.Site, product, area, name);
 	}
 
 	public static ID userId(Name name) {

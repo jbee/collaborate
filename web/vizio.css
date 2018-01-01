@@ -19,11 +19,12 @@ h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 
 .list { width: 100%; border-spacing: 1px; border-padding: 0; margin-bottom: 20px; }
 .list td { padding: 5px; vertical-align: top; }
-.list td:first-child { width: 15%; }
+.list td:first-child { width: 10%; text-align: center; vertical-align: middle; }
+.list td:first-child:hover { border: 5px outset rgba(200,200,200,.35); cursor: pointer; color: white; }
 .list td:nth-child(3) { width: 20%; }
 .list td a { text-decoration: none; }
 .list td:first-child a { font-weight: 600; }
-.list td:nth-child(2) { text-align: right; }
+.list td:nth-child(2) { padding-left: 40px; }
 .list h5 { margin: 0; padding: 0; font-weight: normal; text-align: left; font-size: 100%; }
 
 .list .exploitable h5 { font-weight: 600; }
@@ -34,9 +35,10 @@ h3 { margin: 1em 0 3px 0; font-weight: 600; display: inline; }
 .form.list select { width: 100%; } 
 
 a.btn { border-radius: 8px; display: inline-block; line-height: 16px; height: 16px; width: 16px; text-align: center;  }
-a.btn:hover { background-color: white; color: red; }
-a.idn { float: right; }
+a.btnxxx:hover { background-color: white; color: red; }
+a.idn { position: absolute; margin-left: -35px; }
 a.stress { clear: right; }
+a.vn { float: right; }
 
 /* We do this ob two levels to be able to render all actual propeties an chose by the scheme what is used */
 .scheme-heat .heat-cold          td { background-color: #eeeeff; } 

@@ -109,7 +109,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	}
 	
 	public boolean isIndexRequest() {
-		return criteria.length == 1 && criteria[0].prop == Property.product && criteria[0].op == eq;
+		return criteria.length == 1 && criteria[0].left == Property.product && criteria[0].op == eq;
 	}
 
 	public int count() {
@@ -140,7 +140,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	
 	public int indexOf(Property p, int start) {
 		for (int i = start; i < criteria.length; i++)
-			if (criteria[i].prop == p)
+			if (criteria[i].left == p)
 				return i;
 		return -1;
 	}
@@ -167,7 +167,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		Criterium[] res = new Criterium[criteria.length];
 		int i = 0;
 		for (int j = 0; j < criteria.length; j++) {
-			if (!excluded.contains(criteria[j].prop))
+			if (!excluded.contains(criteria[j].left))
 				res[i++] = criteria[j];
 		}
 		return new Criteria(Arrays.copyOf(res, i));
@@ -177,8 +177,8 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		EnumSet<Operator> included = EnumSet.of(ops[0], ops);
 		T res = v0;
 		for (Criterium ct : criteria) {
-			if (ct.prop == p && included.contains(ct.op))
-				for (Object v : ct.values)
+			if (ct.left == p && included.contains(ct.op))
+				for (Object v : ct.rvalues)
 					res = merge.apply(res, elemType.cast(v));
 		}
 		return res;
@@ -205,10 +205,12 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			String[] val = parseValue(v);
 			if (val.length == 1) {
 				// just to get rid of those special cases right away
-				if (op == in)
-					op = eq;
-				if (op == nin)
-					op = neq;
+				if (!prop.isSetValue()) {
+					if (op == in)
+						op = eq; 
+					if (op == nin)
+						op = neq;
+				}
 				// @ can be used to refer the name for that property given by the context (useful for all properties of type name)
 				if (prop.type == name && "@".equals(val[0])) {
 					if (!context.containsKey(prop))
@@ -298,6 +300,9 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	}
 	
 	private static Object typed(Property p, String val) {
+		if (val.startsWith("@")) {
+			return Property.valueOf(val.toLowerCase().substring(1));
+		}
 		switch (p.type) {
 		case number   : return Integer.valueOf(val);
 		case date     : return Date.parse(val);
@@ -321,74 +326,130 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	
 	public static final class Criterium implements Comparable<Criterium> {
 
-		public Property prop;
-		public Operator op;
-		public Object[] values;
+		public final Property left;
+		public final Operator op;
+		public final Object[] rvalues;
+		public final Property right;
 
 		public Criterium(Property prop, Operator op, Object... values) {
 			super();
-			this.prop = prop;
+			this.left = prop;
 			this.op = op;
-			this.values = values;
+			this.rvalues = values;
+			this.right = prop != Property.order && values.length > 0 && values[0] instanceof Property ? (Property)values[0] : null;
 		}
 		
 		public int intValue(int def) {
-			return prop.type != number ? def : ((Number)values[0]).intValue();
+			return left.type != number ? def : ((Number)rvalues[0]).intValue();
+		}
+		
+		public boolean isPropertyComparison() {
+			return right != null;
 		}
 
 		public boolean matches(Task t, Date today) {
-			if (prop.isResultProperty())
+			if (left.isResultProperty())
 				return true; // basically we ignore these as filter
-			Comparable<?> val = prop.access(t, today);
+			Comparable<?> val = left.access(t, today);
+			if (isPropertyComparison()) {
+				Comparable<?> val2 = right.access(t, today);
+				switch (op) {
+				case in:  return contains(val, val2);
+				case eq:  return equals(val, val2);
+				case nin: return !contains(val, val2);
+				case neq: return !equals(val, val2);
+				case lt:  return cmp(val, val2) <  0;
+				case le:  return cmp(val, val2) <= 0;
+				case gt:  return cmp(val, val2) >  0;
+				case ge:  return cmp(val, val2) >= 0;
+				default:  return false;
+				}
+			}
 			switch (op) {
 			// set comparisons
-			case eq:  return isSameSet(val);
-			case in:  return isMember(val);
-			case neq: return !isSameSet(val);
-			case nin: return !isMember(val);
+			case eq:  return equals(val, rvalues);
+			case in:  return contains1(val, rvalues);
+			case neq: return !equals(val, rvalues);
+			case nin: return !contains1(val, rvalues);
 			// non set comparisons
-			case lt:  return cmp(val, values[0]) <  0;
-			case le:  return cmp(val, values[0]) <= 0;
-			case gt:  return cmp(val, values[0]) >  0;
-			case ge:  return cmp(val, values[0]) >= 0;
+			case lt:  return cmp(val, rvalues[0]) <  0;
+			case le:  return cmp(val, rvalues[0]) <= 0;
+			case gt:  return cmp(val, rvalues[0]) >  0;
+			case ge:  return cmp(val, rvalues[0]) >= 0;
 			default:  return false;
 			}
 		}
 		
-		public boolean isSameSet(Comparable<?> entityValue) {
-			if (prop.type == name && entityValue instanceof Names) {
-				Names set = (Names) entityValue;
-				if (set.count() != values.length)
+		private boolean equals(Comparable<?> lv, Comparable<?> rv) {
+			if (left.type == name) {
+				boolean leftIsSet = left.isSetValue();
+				boolean rightIsSet = right.isSetValue();
+				if (leftIsSet != rightIsSet) {
+					return leftIsSet 
+							? ((Names) lv).contains((Name)rv)
+							: ((Names) rv).contains((Name)lv);
+				}
+			}
+			return lv.equals(rv);
+		}
+		
+		private boolean contains(Comparable<?> lv, Comparable<?> rv) {
+			if (left.type == name) {
+				if (right.type == text) {
+					Gist text = (Gist) rv;
+					return text.contains(Gist.gist(lv.toString()));
+				}
+				boolean leftIsSet = left.isSetValue();
+				boolean rightIsSet = right.isSetValue();
+				if (leftIsSet != rightIsSet) {
+					return leftIsSet 
+							? ((Names) lv).contains((Name)rv)
+							: ((Names) rv).contains((Name)lv);
+				}
+				if (leftIsSet && rightIsSet) {
+					for (Name n : (Names)lv)
+						if (((Names)rv).contains(n))
+							return true;
 					return false;
-				for (int i = 0; i< values.length; i++) {
-					if (!set.contains((Name)values[i]))
+				}
+			}
+			return lv.equals(rv);
+		}
+		
+		private boolean equals(Comparable<?> lv, Object[] rvs) {
+			if (left.type == name && left.isSetValue()) {
+				Names set = (Names) lv;
+				if (set.count() != rvs.length)
+					return false;
+				for (int i = 0; i< rvs.length; i++) {
+					if (!set.contains((Name)rvs[i]))
 						return false;
 				}
 				return true;
 			}
-			return values.length == 1 && values[0].equals(entityValue);
+			return rvs.length == 1 && rvs[0].equals(lv);
 		}
 		
-		public boolean isMember(Comparable<?> entityValue) {
-			if (prop.type == name && entityValue instanceof Names) {
-				Names set = (Names) entityValue;
-				for (int i = 0; i< values.length; i++) {
-					if (set.contains((Name)values[i]))
+		private boolean contains1(Comparable<?> val, Object[] anyOf) {
+			if (left.type == name && left.isSetValue()) {
+				Names set = (Names) val;
+				for (int i = 0; i< anyOf.length; i++) {
+					if (set.contains((Name)anyOf[i]))
 						return true;
 				}
 				return false;
 			}
-			if (prop.type == text) {
-				Gist g = (Gist) entityValue;
-				for (int i = 0; i < values.length; i++)
-					if (g.contains((Gist)values[i]))
+			if (left.type == text) {
+				Gist g = (Gist) val;
+				for (int i = 0; i < anyOf.length; i++)
+					if (g.contains((Gist)anyOf[i]))
 						return true;
 				return false;
 			}
-			if (values.length == 1)
-				return values[0].equals(entityValue);
-			for (int i = 0; i < values.length; i++)
-				if (values[i].equals(entityValue))
+			if (anyOf.length == 1)
+				return anyOf[0].equals(val);
+			for (int i = 0; i < anyOf.length; i++)
+				if (anyOf[i].equals(val))
 					return true;
 			return false;
 		}
@@ -402,18 +463,18 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 
 		@Override
 		public String toString() {
-			String val = values.length == 1 ? values[0].toString() : "{"+join(values, ", ")+"}";
-			return "["+prop.name()+" "+op+" "+val+"]";
+			String val = rvalues.length == 1 ? rvalues[0].toString() : "{"+join(rvalues, ", ")+"}";
+			return "["+left.name()+" "+op+" "+(isPropertyComparison()? "@": "")+val+"]";
 		}
 		
 		@Override
 		public int compareTo(Criterium other) {
-			if (prop.isResultProperty() != other.prop.isResultProperty())
-				return prop.isResultProperty() ? 1 : -1;
+			if (left.isResultProperty() != other.left.isResultProperty())
+				return left.isResultProperty() ? 1 : -1;
 			int res = op.compareTo(other.op);
 			if (res != 0)
 				return res;
-			return signum(other.prop.selectivity - prop.selectivity);
+			return signum(other.left.selectivity - left.selectivity);
 		}
 		
 	}
@@ -497,6 +558,10 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		
 		public boolean isResultProperty() {
 			return ordinal() <= color.ordinal();
+		}
+		
+		public boolean isSetValue() {
+			return ordinal() >= user.ordinal() && ordinal() <= participant.ordinal();
 		}
 		
 		public Enum<?> value(String name) {

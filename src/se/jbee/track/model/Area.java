@@ -14,6 +14,7 @@ public final class Area extends Entity<Area> {
 	 */
 	public Name basis;
 	public Names maintainers;
+	
 	/**
 	 * Do only maintainers get to stress?
 	 */
@@ -24,23 +25,29 @@ public final class Area extends Entity<Area> {
 	public boolean abandoned;
 
 	/**
+	 * Only allow links to integrations.
+	 */
+	public boolean safeguarded;
+	
+	/**
 	 * {@link Poll}s have a {@link Poll#serial} that is unique within the affected {@link Area}.
 	 */
 	public int polls;
 
-	// entrance areas:
+	// board areas:
+	/**
+	 * A per area counter that is used in case of {@link #board} areas.
+	 */
+	public int tasks;
+	
 	/**
 	 * Any registered user may add tasks.
 	 * However, no task created with this area can be moved to other areas.
 	 * Instead a sequel would be created if necessary.
 	 */
 	public boolean board;
-	public Motive motive;
+	public Motive motive; // fix motive and purpose for the board
 	public Purpose purpose;
-	/**
-	 * A per area counter that is used in case of {@link #board} areas.
-	 */
-	public int tasks;
 
 	public Area(int version) {
 		super(version);

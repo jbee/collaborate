@@ -56,7 +56,6 @@ public final class User extends Entity<User> {
 	public long millisOtpExprires;
 	
 	// user data
-	public Names sites;
 	public int watches; // n tasks
 	public EnumMap<Notification,Mail.Delivery> notificationSettings;
 	//TODO preferred page size?
@@ -128,10 +127,6 @@ public final class User extends Entity<User> {
 			emphasisedToday++;
 		}
 		millisEmphasised = now;
-	}
-
-	public boolean hasSite(Name name) {
-		return sites.contains(name);
 	}
 
 	public boolean canWatch() {

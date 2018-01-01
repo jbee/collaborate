@@ -1,5 +1,6 @@
 package se.jbee.track.db;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.function.BiPredicate;
 
@@ -9,6 +10,7 @@ import org.lmdbjava.CursorIterator.KeyVal;
 import org.lmdbjava.Dbi;
 import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
+import org.lmdbjava.Env.Builder;
 import org.lmdbjava.Txn;
 
 import se.jbee.track.model.ID;
@@ -19,12 +21,17 @@ public final class LMDB implements DB {
 	@SuppressWarnings("unchecked")
 	private final Dbi<ByteBuffer>[] tables = new Dbi[ID.Type.values().length]; 
 
-	public LMDB(Env<ByteBuffer> env) {
+	public LMDB(Builder<ByteBuffer> envBuilder, File path) {
 		super();
-		this.env = env;
+		this.env = envBuilder.setMaxDbs(10).open(path);
 		for (ID.Type t : ID.Type.values()) {
 			tables[t.ordinal()] = env.openDbi(t.name(), DbiFlags.MDB_CREATE);
 		}
+	}
+	
+	@Override
+	public void close() {
+		env.close();
 	}
 	
 	@Override
@@ -64,10 +71,13 @@ public final class LMDB implements DB {
 		@Override
 		public void range(ID first, BiPredicate<ID, ByteBuffer> consumer) {
 			try (CursorIterator<ByteBuffer> it = iterator(first)) {
-				KeyVal<ByteBuffer> e = it.next();
-				byte[] k = new byte[e.key().remaining()];
-				e.key().get(k);
-				while (it.hasNext() && consumer.test(ID.fromBytes(k), e.val()));
+				while (it.hasNext()) {
+					KeyVal<ByteBuffer> e = it.next();
+					byte[] k = new byte[e.key().remaining()];
+					e.key().get(k);
+					if (!consumer.test(ID.fromBytes(k), e.val()))
+						return;
+				}
 			}
 		}
 		

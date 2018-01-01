@@ -32,9 +32,9 @@ public class TestCriteria {
 		Criteria criteria = Criteria.parse("[color=heat][length=20][user~{foo,bar}]");
 		assertEquals(3, criteria.count());
 		assertEquals("[user ~ {foo, bar}][color = heat][length = 20]", criteria.toString());
-		assertSame(Name.class, criteria.get(0).values[0].getClass());
-		assertSame(Coloring.class, criteria.get(1).values[0].getClass());
-		assertSame(Integer.class, criteria.get(2).values[0].getClass());
+		assertSame(Name.class, criteria.get(0).rvalues[0].getClass());
+		assertSame(Coloring.class, criteria.get(1).rvalues[0].getClass());
+		assertSame(Integer.class, criteria.get(2).rvalues[0].getClass());
 	}
 	
 	@Test
@@ -47,7 +47,7 @@ public class TestCriteria {
 	public void valuesCanBeEnumConstants() {
 		Criteria criteria = Criteria.parse("[order>>heat]");
 		assertEquals(1, criteria.count());
-		assertSame(Property.heat, criteria.get(0).values[0]);
+		assertSame(Property.heat, criteria.get(0).rvalues[0]);
 	}
 	
 	@Test
@@ -55,20 +55,20 @@ public class TestCriteria {
 		Criteria criteria = Criteria.parse("[reported=2016]");
 		assertEquals(2, criteria.count());
 		assertEquals(Operator.ge, criteria.get(0).op);
-		assertEquals(Date.parse("2016-01-01"), criteria.get(0).values[0]);
+		assertEquals(Date.parse("2016-01-01"), criteria.get(0).rvalues[0]);
 		assertEquals(Operator.le, criteria.get(1).op);
-		assertEquals(Date.parse("2016-12-31"), criteria.get(1).values[0]);
+		assertEquals(Date.parse("2016-12-31"), criteria.get(1).rvalues[0]);
 	}
 	
 	@Test
 	public void parsingOrdersListOfCriteriumByItsImportanceForLookup() {
 		Criteria criteria = Criteria.parse("[length=5][user~{Tom,Frank}][reporter=Tom][age<10][solver=Max]");
 		assertEquals(5, criteria.count());
-		assertEquals(Property.solver, criteria.get(0).prop);
-		assertEquals(Property.reporter, criteria.get(1).prop);
-		assertEquals(Property.user, criteria.get(2).prop);
-		assertEquals(Property.age, criteria.get(3).prop);
-		assertEquals(Property.length, criteria.get(4).prop);
+		assertEquals(Property.solver, criteria.get(0).left);
+		assertEquals(Property.reporter, criteria.get(1).left);
+		assertEquals(Property.user, criteria.get(2).left);
+		assertEquals(Property.age, criteria.get(3).left);
+		assertEquals(Property.length, criteria.get(4).left);
 	}
 	
 	@Test
@@ -90,6 +90,12 @@ public class TestCriteria {
 		context.put(Property.reporter, as("bar"));
 		Criteria criteria = Criteria.parse("[user=@][reporter=@]", context);
 		assertEquals("[reporter = bar][user = foo]", criteria.toString());
+	}
+	
+	@Test
+	public void propertyCanBeUsedAsRightOperand() {
+		Criteria criteria = Criteria.parse("[reporter~@user][user~@reporter]");
+		assertEquals("[reporter = @user][user ~ @reporter]", criteria.toString());
 	}
 
 }

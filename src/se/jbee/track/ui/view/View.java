@@ -3,8 +3,34 @@ package se.jbee.track.ui.view;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class View {
 
+	//TODO make this less formal. A template can contain any text. We do a simple markup there. If a line starts with [ it is considered part of a query
+	
+	/* so one can write
+	 * 
+	 * *** My Title ***
+	 * 
+	 * Some text here.
+	 * In multiple lines.
+	 * 
+	 * My oldies
+	 * [user=@]
+	 * [age>20]
+	 * 
+	 * Hot just now
+	 * [product=@][temperature > 90]
+	 * 
+	 * *** Next Silo ***
+	 * ...
+	 */
+	
+	// also there could be simple markups for a 
+	// * search form => ???
+	// * current users polls => !!!
+	// * 
+	
 	public static class Silo {
 
 		public final String title;

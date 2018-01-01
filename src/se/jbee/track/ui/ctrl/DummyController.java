@@ -10,6 +10,7 @@ import java.util.Random;
 
 import se.jbee.track.cache.Criteria;
 import se.jbee.track.cache.Criteria.Coloring;
+import se.jbee.track.cache.Matches;
 import se.jbee.track.engine.NoLimits;
 import se.jbee.track.engine.Tracker;
 import se.jbee.track.model.Area;
@@ -46,6 +47,7 @@ public class DummyController implements Controller {
 		Area ui = tracker.compart(product, as("ui"), user);
 		Version v0_1 = tracker.tag(product, as("0.1"), user);
 		tasks[0] = tracker.reportDefect(product, gist("Something is wrong with..."), user, area, product.somewhen, false);
+		product = tasks[0].product;
 		tasks[1] = tracker.reportDefect(product, gist("Regression for 0.1 showed bug..."), user, area, v0_1, true);
 		tasks[2] = tracker.reportProposal(product, gist("We should count ..."), user, product.origin);
 		tasks[3] = tracker.reportIntention(product, gist("At some point the tracker should be released"), user, product.origin);
@@ -60,8 +62,9 @@ public class DummyController implements Controller {
 	}
 
 	@Override
-	public Task[] tasks(Criteria selection, Context ctx) {
-		return Arrays.copyOf(tasks, new Random().nextInt(tasks.length)+1) ;
+	public Matches tasks(Criteria criteria, Context ctx) {
+		Task[] list = Arrays.copyOf(tasks, new Random().nextInt(tasks.length)+1);
+		return new Matches(list, tasks.length);
 	}
 
 	@Override
@@ -72,11 +75,11 @@ public class DummyController implements Controller {
 	@Override
 	public Menu[] menus(Context ctx) {
 		return new Menu[] {
-				new Menu(as("jan"), Action.user,
-						new Site(1, as("jan"), Name.as("@home"), Template.BLANK_PAGE),
-						new Site(1, as("jan"), Name.as("special"), Template.BLANK_PAGE)
+				new Menu(as("jan"), Action.view,
+						new Site(1, Name.ORIGIN, as("jan"), Name.as("@home"), Template.BLANK_PAGE),
+						new Site(1, Name.ORIGIN, as("jan"), Name.as("special"), Template.BLANK_PAGE)
 						),
-				new Menu(Name.MY, Action.my, new Site(1, Name.MY, Name.as("dashboard"), Template.BLANK_PAGE)),
+				new Menu(Name.MY, Action.view, new Site(1, Name.ORIGIN, Name.MY, Name.as("dashboard"), Template.BLANK_PAGE)),
 				};
 	}
 

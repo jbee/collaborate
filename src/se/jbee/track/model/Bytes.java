@@ -4,11 +4,33 @@ import java.util.regex.Pattern;
 
 public abstract class Bytes {
 
-	public static final String FULL_TEXT_REGEX = "[-+*/a-zA-Z0-9\\s\\\\_\\$\\^:,;.?!#<>=%&`\"'~\\pL\\pN\\(\\)\\[\\]\\{\\}]+";
-	public static final Pattern FULL_TEXT_ONLY = Pattern.compile("^"+FULL_TEXT_REGEX+"$");
+	private static final String TEXT_REGEX = "(?:[-+*a-zA-Z0-9@_\\s\\\\\\$\\^:,;.?!#>=%&`\"'~\\pL\\pN\\(\\)\\[\\]\\{\\}]+|<[^a-zA-Z/]|/[^>])+[</]?";
+	private static final Pattern TEXT_ONLY = Pattern.compile("^"+TEXT_REGEX+"$");
 	
-	public static final String BASIC_TEXT_REGEX = "[-+*/a-zA-Z0-9\\s_:,;.?!#<>=%&`\"'~\\pL\\pN\\(\\)]+";
-	public static final Pattern BASIC_TEXT_ONLY = Pattern.compile("^"+BASIC_TEXT_REGEX+"$");
+	public static final String BASIC_TEXT_REGEX = "(?:[-+*a-zA-Z0-9@_\\s:,;.?!#>=%&`\"'~\\pL\\pN\\(\\)]+|<[^a-zA-Z/]|/[^>])+[</]?";
+	private static final Pattern BASIC_TEXT_ONLY = Pattern.compile("^"+BASIC_TEXT_REGEX+"$");
+
+	private static final String URL_REGEX = "[0-9a-zA-Z$-_.+!*'(),;/?:@=&#%]+";
+	private static final Pattern URL = Pattern.compile("^"+URL_REGEX+"$");
+
+	private static final String EMAIL_REGEX = "[0-9a-zA-Z$-_.+!*'(),;/?:=&#%]+";
+	private static final Pattern EMAIL = Pattern.compile("^"+EMAIL_REGEX+"@"+EMAIL_REGEX+"$");
+	
+	public static boolean isText(String s) {
+		return TEXT_ONLY.matcher(s).matches();
+	}
+	
+	public static boolean isBasicText(String s) {
+		return BASIC_TEXT_ONLY.matcher(s).matches();
+	}
+	
+	public static boolean isURL(String s) {
+		return URL.matcher(s).matches();
+	}
+	
+	public static boolean isEmail(String s) {
+		return EMAIL.matcher(s).matches();
+	}
 	
 	public abstract byte[] bytes();
 	
@@ -68,4 +90,5 @@ public abstract class Bytes {
 	    }
 	    return result;
 	}	
+	
 }

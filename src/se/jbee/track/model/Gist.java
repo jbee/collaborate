@@ -7,21 +7,18 @@ public final class Gist extends Bytes implements Comparable<Gist> {
 	private final byte[] text;
 
 	public static Gist gist(String gist) {
-		if (gist.length() >= 256) {
+		if (gist.length() >= 256)
 			throw new IllegalArgumentException("Gist is too long, maximal 256 characters: "+gist);
-		}
-		if (!BASIC_TEXT_ONLY.matcher(gist).matches()) {
+		if (!isBasicText(gist))
 			throw new IllegalArgumentException("Gist can only use letters, digits, space and common punctuation marks: "+gist);
-		}
 		return new Gist(gist.getBytes(UTF_16BE));
 	}
 	
 	public static Gist fromBytes(byte[] utf16Symbols) {
 		if (utf16Symbols == null)
 			return null;
-		if (utf16Symbols.length >= 512) {
+		if (utf16Symbols.length >= 512)
 			throw new IllegalArgumentException("Gist is too long, maximal 256 characters: "+utf16Symbols);
-		}
 		return new Gist(utf16Symbols);
 	}
 	

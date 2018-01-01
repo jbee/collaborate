@@ -5,7 +5,6 @@ import static java.lang.Integer.parseInt;
 import static se.jbee.track.model.ID.Type.Area;
 import static se.jbee.track.model.ID.Type.Product;
 import static se.jbee.track.model.ID.Type.Task;
-import static se.jbee.track.model.ID.Type.User;
 import static se.jbee.track.model.ID.Type.Version;
 import static se.jbee.track.model.Name.as;
 import static se.jbee.track.ui.ctrl.Action.view;
@@ -44,8 +43,6 @@ public class HttpTrackerAdapter implements HttpAdapter {
 	public int respond(String path, Map<String, String> params, PrintWriter out) {
 		Context ctx = map(path, params);
 		switch(ctx.action) {
-		case my:
-		case user:
 		case view: return view(ctx, out);
 		default:
 			return HttpURLConnection.HTTP_NOT_FOUND;
@@ -66,7 +63,7 @@ public class HttpTrackerAdapter implements HttpAdapter {
 			Widget[] widgets = view.silos[i].widgets;
 			data[i] = new Task[widgets.length][];
 			for (int j = 0; j < widgets.length; j++) {
-				data[i][j] = ctrl.tasks(widgets[j].query, ctx);
+				data[i][j] = ctrl.tasks(widgets[j].query, ctx).tasks;
 			}
 		}
 		return data;
@@ -128,19 +125,6 @@ public class HttpTrackerAdapter implements HttpAdapter {
 			ctx.type=Task;
 			ctx.product=as(segments[1]);
 			ctx.task=IDN.idn(parseInt(segments[2]));
-			break;
-		case peek: // the semantics are just different later on in the substitution of :me
-		case user:
-			ctx.type=User;
-			if (segments.length > 1) {
-				ctx.user=as(segments[1]);
-				siteAtIndex(2, segments, ctx);
-			}
-			break;
-		case my: // this is just a shortcut to the sites of the logged in user (or @anonymous sites)
-			ctx.type=User;
-			ctx.user=ctx.currentUser;
-			siteAtIndex(1, segments, ctx);
 			break;
 		}
 		return ctx;

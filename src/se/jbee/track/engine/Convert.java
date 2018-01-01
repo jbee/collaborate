@@ -83,7 +83,6 @@ public interface Convert<I,O> {
 		u.authenticated = from.getInt();
 		u.encryptedOtp = getShortBytes(from);
 		u.millisOtpExprires = from.getLong();
-		u.sites = bin2names(from);
 		u.watches = from.getInt();
 		u.millisLastActive = from.getLong();
 		u.xp = from.getInt();
@@ -106,7 +105,6 @@ public interface Convert<I,O> {
 		to.putInt(u.authenticated);
 		putShortBytes(u.encryptedOtp, to);
 		to.putLong(u.millisOtpExprires);
-		names2bin(u.sites, to);
 		to.putInt(u.watches);
 		to.putLong(u.millisLastActive);
 		to.putInt(u.xp);
@@ -201,16 +199,18 @@ public interface Convert<I,O> {
 	Convert<Repository, Site> bin2site = (tx,from) -> { 
 		byte evn = from.get(); // ignore so far
 		int version = from.getInt();
-		Name owner = bin2name(from);
+		Name product = bin2name(from);
+		Name menu = bin2name(from);
 		Name name = bin2name(from);
 		Template template = Template.fromBytes(getIntBytes(from));
-		return new Site(version, owner, name, template);
+		return new Site(version, product, menu, name, template);
 	};
 
 	Convert<Site,ByteBuffer> site2bin = (site,to) -> { 
 		to.put(SITE_EVN);
 		to.putInt(site.version());
-		name2bin(site.owner, to);
+		name2bin(site.product, to);
+		name2bin(site.menu, to);
 		name2bin(site.name, to);
 		putIntBytes(site.template, to);
 		return to;
@@ -253,6 +253,7 @@ public interface Convert<I,O> {
 		p.serial = IDN.idn(from.getInt());
 		p.area = tx.area(bin2name(from), bin2name(from));
 		p.matter = bin2enum(matters, from);
+		p.motivation = bin2gist(from);
 		p.affected = bin2name(from);
 		p.initiator = bin2name(from);
 		p.start = bin2date(from);
@@ -271,6 +272,7 @@ public interface Convert<I,O> {
 		name2bin(p.area.product, to);
 		name2bin(p.area.name, to);
 		enum2bin(p.matter, to);
+		gist2bin(p.motivation, to);
 		name2bin(p.affected, to);
 		name2bin(p.initiator, to);
 		date2bin(p.start, to);

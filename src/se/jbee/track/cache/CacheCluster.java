@@ -92,7 +92,7 @@ public class CacheCluster implements Cache {
 		}
 		// might be a indexing request
 		if (criteria.isIndexRequest()) {
-			Name product = (Name) criteria.get(0).values[0];
+			Name product = (Name) criteria.get(0).rvalues[0];
 			if (productCaches.containsKey(product)) {
 				return readyFuture(Matches.none());
 			}
@@ -104,6 +104,7 @@ public class CacheCluster implements Cache {
 		// lookup request
 		Names products = criteria.collect(Names.empty(), Name.class, Names::add, product, eq, in);
 		if (products.isEmpty()) {
+			//TODO what about user bound queries that do not refer to actual user?
 			products = inquirer.contributesToProducts;
 			Names ignore = criteria.collect(Names.empty(), Name.class, Names::add, product, neq, nin);
 			if (!ignore.isEmpty()) {

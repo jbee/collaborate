@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import se.jbee.track.engine.Event.Transition;
 import se.jbee.track.model.Area;
+import se.jbee.track.model.Gist;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Name;
@@ -61,7 +62,7 @@ public class TestConvert {
 	@Test
 	public void siteConversion() {
 		User user1 = newTestUser();
-		Site site1 = tracker.launch(as("my-tasks"), template("foobar"), user1);
+		Site site1 = tracker.launch(user1, as("my-tasks"), template("foobar"));
 		assertConsistentConversion(bin2site, site2bin, site1);
 	}
 
@@ -93,7 +94,7 @@ public class TestConvert {
 		User user1 = newTestUser();
 		Product prod1 = tracker.constitute(as("p1"), user1);
 		User user2 = tracker.register(null, as("user2"), email("user2@example.com"));
-		Poll poll1 = tracker.poll(Matter.inclusion, prod1.origin, user1, user2);
+		Poll poll1 = tracker.poll(Matter.inclusion, Gist.gist("foo"), prod1.origin, user1, user2);
 		assertConsistentConversion(bin2poll, poll2bin, poll1);
 	}
 
@@ -146,8 +147,8 @@ public class TestConvert {
 		}
 		
 		@Override
-		public Site site(Name user, Name site) {
-			return new Site(1, user, site, Template.BLANK_PAGE);
+		public Site site(Name product, Name user, Name site) {
+			return new Site(1, product, user, site, Template.BLANK_PAGE);
 		}
 
 		@Override
@@ -204,11 +205,17 @@ public class TestConvert {
 			// TODO Auto-generated method stub
 			
 		}
+
+		@Override
+		public Product[] products() {
+			// TODO Auto-generated method stub
+			return null;
+		}
 		
 		@Override
-		public void products(Predicate<Product> consumer) {
+		public Site[] sites(Name product, Name menu) {
 			// TODO Auto-generated method stub
-			
+			return null;
 		}
 
 		@Override

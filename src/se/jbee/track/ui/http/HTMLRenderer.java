@@ -78,11 +78,9 @@ public class HTMLRenderer {
 		for (Site site : menu.entries) {
 			out.append("<li>");
 			switch (menu.action) {
-			case my: out.append("<a href='/my/").append(site.name).append("/'>").append(site.name.display()).append("</a>"); break;
 			default:
-			case user:
 			case view:
-				out.append("<a href='/").append(menu.action.name()).append("/").append(site.owner).append("/");
+				out.append("<a href='/").append(menu.action.name()).append("/").append(site.menu).append("/");
 				if (!site.name.equalTo(Name.as("@home"))) {
 					out.append(site.name).append("/");
 				}
@@ -127,19 +125,31 @@ public class HTMLRenderer {
 		renderDataAttributes(task);
 		out.append(">");
 		out.append("<td>");
-		renderTaskLink(task);
 		if (viewer.canEmphasise(now) && task.canBeEmphasisedBy(viewer.alias)) {
 			renderStressLink(task);
 		}
 		out.append("</td>");
-		out.append("<td><h5>");
+		out.append("<td>");
+		out.append("<h5>");
+		renderTaskLink(task);
+		out.append(" ");
 		if (task.isVisibleTo(viewer.alias)) {
 			out.append(task.gist.toString());
 		} else {
 			out.append("<i>(protected)</i>");
 		}
 		out.append("</h5>");
-		renderUsersList(task);
+		if (task.area != null) {
+			renderAreaLink(task);
+			if (false) {
+				out.append("<span title='").append(task.area.maintainers.toString()).append("'>'").append(String.valueOf(task.area.maintainers.count())).append("</span>");
+			}
+		}
+		out.append("&emsp;");
+		if (task.base != null) {
+			renderVersionLink(task);
+		}		
+		out.append("</td><td>");
 		if (viewer.isAuthenticated()) {
 			if (task.aspirants.contains(viewer) || task.participants.contains(viewer)) {
 				renderTaskActionLink(task, "btn", Action.abandon, "&minus;");
@@ -147,16 +157,7 @@ public class HTMLRenderer {
 				renderTaskActionLink(task, "btn", Action.enlist, "&plus;");
 			}
 		}
-		out.append("</td><td>");
-		if (task.area != null) {
-			renderAreaLink(task);
-			out.append("<span title='").append(task.area.maintainers.toString()).append("'>'").append(String.valueOf(task.area.maintainers.count())).append("</span>");
-		}
-		if (task.base != null) {
-			out.append("<div>");
-			renderVersionLink(task);
-			out.append("</div>");
-		}
+		renderUsersList(task);
 		out.append("</td>");
 		out.append("</tr>");
 	}
@@ -191,7 +192,7 @@ public class HTMLRenderer {
 	}
 
 	private void renderVersionLink(Task task) {
-		out.append("<a href='/view/").append(task.product.name).append("/v/").append(task.base.name).append("/'>").append(task.base.name).append("</a>");
+		out.append("<a class='vn' href='/view/").append(task.product.name).append("/v/").append(task.base.name).append("/'>").append(task.base.name).append("</a>");
 	}
 
 	private void renderUserLink(Name user) {

@@ -12,11 +12,11 @@ import static se.jbee.track.engine.Change.Operation.confirm;
 import static se.jbee.track.engine.Change.Operation.connect;
 import static se.jbee.track.engine.Change.Operation.consent;
 import static se.jbee.track.engine.Change.Operation.constitute;
+import static se.jbee.track.engine.Change.Operation.detach;
 import static se.jbee.track.engine.Change.Operation.disconnect;
 import static se.jbee.track.engine.Change.Operation.dissent;
 import static se.jbee.track.engine.Change.Operation.dissolve;
 import static se.jbee.track.engine.Change.Operation.emphasise;
-import static se.jbee.track.engine.Change.Operation.fork;
 import static se.jbee.track.engine.Change.Operation.indicate;
 import static se.jbee.track.engine.Change.Operation.launch;
 import static se.jbee.track.engine.Change.Operation.leave;
@@ -30,6 +30,7 @@ import static se.jbee.track.engine.Change.Operation.relocate;
 import static se.jbee.track.engine.Change.Operation.request;
 import static se.jbee.track.engine.Change.Operation.resolve;
 import static se.jbee.track.engine.Change.Operation.restructure;
+import static se.jbee.track.engine.Change.Operation.segment;
 import static se.jbee.track.engine.Change.Operation.tag;
 import static se.jbee.track.engine.Change.Operation.unwatch;
 import static se.jbee.track.engine.Change.Operation.warn;
@@ -37,7 +38,6 @@ import static se.jbee.track.engine.Change.Operation.watch;
 
 import java.util.EnumMap;
 
-import se.jbee.track.model.Attachments;
 import se.jbee.track.model.Email;
 import se.jbee.track.model.Entity;
 import se.jbee.track.model.Gist;
@@ -50,6 +50,7 @@ import se.jbee.track.model.Poll.Matter;
 import se.jbee.track.model.Product.Integration;
 import se.jbee.track.model.Purpose;
 import se.jbee.track.model.Template;
+import se.jbee.track.model.URL;
 import se.jbee.track.model.User;
 import se.jbee.track.model.User.Notification;
 
@@ -110,13 +111,14 @@ public interface Change {
 		// tasks
 		relocate,
 		rebase,
-		attach, 
+		attach,
+		detach,
 		
 		propose,
 		indicate,
 		warn,
 		request,
-		fork,
+		segment,
 		
 		absolve,
 		resolve,
@@ -226,8 +228,8 @@ public interface Change {
 		return (t, tx) -> { tx.put(request, t.reportRequest(tx.product(product), gist, tx.user(reporter), tx.area(product, board))); };
 	}
 	
-	static Change fork(Name product, IDN basis, Purpose purpose, Gist gist, Name reporter, Names changeset) {
-		return (t, tx) -> { tx.put(fork, t.reportFork(tx.task(product, basis), purpose, gist, tx.user(reporter), changeset)); };
+	static Change segment(Name product, IDN basis, Purpose purpose, Gist gist, Name reporter, Names changeset) {
+		return (t, tx) -> { tx.put(segment, t.reportSegment(tx.task(product, basis), purpose, gist, tx.user(reporter), changeset)); };
 	}
 	
 	static Change absolve(Name product, IDN task, Name byUser, Gist conclusion) {
@@ -250,12 +252,16 @@ public interface Change {
 		return (t, tx) -> { tx.put(emphasise, t.emphasise(tx.task(product, task), tx.user(voter))); };
 	}
 	
-	static Change attach(Name product, IDN task, Name byUser, Attachments attachments) {
-		return (t, tx) -> { tx.put(attach, t.attach(tx.task(product, task), tx.user(byUser), attachments)); };
+	static Change attach(Name product, IDN task, Name byUser, URL attachment) {
+		return (t, tx) -> { tx.put(attach, t.attach(tx.task(product, task), tx.user(byUser), attachment)); };
 	}
 	
-	static Change poll(Matter matter, Name product, Name area, Name initiator, Name affected) {
-		return (t, tx) -> { tx.put(poll, t.poll(matter, tx.area(product, area), tx.user(initiator), tx.user(affected))); };
+	static Change detach(Name product, IDN task, Name byUser, URL attachment) {
+		return (t, tx) -> { tx.put(detach, t.detach(tx.task(product, task), tx.user(byUser), attachment)); };
+	}
+	
+	static Change poll(Matter matter, Gist motivation, Name product, Name area, Name initiator, Name affected) {
+		return (t, tx) -> { tx.put(poll, t.poll(matter, motivation, tx.area(product, area), tx.user(initiator), tx.user(affected))); };
 	}
 	
 	static Change consent(Name product, Name area, IDN serial, Name voter) {
@@ -286,12 +292,19 @@ public interface Change {
 		return (t, tx) -> { tx.put(unwatch, t.unwatch(tx.task(product, task), tx.user(user))); };
 	}
 	
-	static Change launch(Name owner, Name site, Template template) {
-		return (t, tx) -> { tx.put(launch, t.launch(site, template, tx.user(owner))); };
+	static Change launch(Name user, Name site, Template template) {
+		return (t, tx) -> { tx.put(launch, t.launch(tx.user(user), site, template, tx.sites(Name.ORIGIN, user))); };
 	}
 	
-	static Change restructure(Name owner, Name site, Template template) {
-		return (t, tx) -> { tx.put(restructure, t.restructure(tx.site(owner, site), template, tx.user(owner))); };
+	static Change launch(Name product, Name area, Name site, Template template, Name user) {
+		return (t, tx) -> { tx.put(launch, t.launch(tx.area(product, area), site, template, tx.user(user), tx.sites(product, area))); };
 	}
 	
+	static Change restructure(Name user, Name site, Template template) {
+		return (t, tx) -> { tx.put(restructure, t.restructure(tx.site(Name.ORIGIN, user, site), template, tx.user(user))); };
+	}
+	
+	static Change restructure(Name product, Name area, Name site, Template template, Name user) {
+		return (t, tx) -> { tx.put(restructure, t.restructure(tx.site(product, area, site), tx.area(product, area), template, tx.user(user))); };
+	}
 }

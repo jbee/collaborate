@@ -16,7 +16,9 @@ import static se.jbee.track.model.ID.userId;
 import static se.jbee.track.model.ID.versionId;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.function.Predicate;
 
 import se.jbee.track.db.DB;
@@ -78,8 +80,8 @@ public class DAO implements Repository {
 	}
 	
 	@Override
-	public Site site(Name user, Name site) {
-		return load(siteId(user, site), bin2site);
+	public Site site(Name product, Name user, Name site) {
+		return load(siteId(product, user, site), bin2site);
 	}
 
 	@Override
@@ -140,9 +142,26 @@ public class DAO implements Repository {
 	}
 	
 	@Override
-	public void products(Predicate<Product> consumer) {
+	public Product[] products() {
+		List<Product> res = new ArrayList<>();
 		txr.range(ID.productId(Name.as("0")), (k,v) -> {
-			return consumer.test(Convert.bin2product.convert(this, v)); 
+			res.add(Convert.bin2product.convert(this, v));
+			return true; 
 		});
+		return res.toArray(new Product[0]);
+	}
+	
+	@Override
+	public Site[] sites(Name product, Name menu) {
+		List<Site> res = new ArrayList<>();
+		txr.range(ID.siteId(product, menu, Name.as("0")), (k,v) -> {
+			Site s = Convert.bin2site.convert(this, v);
+			if (s.menu.equalTo(menu)) {
+				res.add(s);
+				return true;
+			}
+			return false;
+		});
+		return res.toArray(new Site[0]);
 	}
 }

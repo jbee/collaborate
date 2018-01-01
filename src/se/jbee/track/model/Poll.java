@@ -9,12 +9,19 @@ public final class Poll extends Entity<Poll> {
 		// attitude towards anonymous participation
 		inclusion, exclusion,
 		// towards the area (non user related)
-		abandonment
+		abandonment,
+		// non integration URLs or not?
+		safeguarding, unblocking;
+		
+		public boolean isUserRelated() {
+			return ordinal() < abandonment.ordinal();
+		}
 	}
 
 	public IDN serial;
 	public Area area;
 	public Matter matter;
+	public Gist motivation;
 	public Name affected;
 	public Name initiator;
 	public Date start;

@@ -3,6 +3,7 @@ package se.jbee.track.ui.http;
 import java.io.PrintWriter;
 import java.util.Map;
 
+@FunctionalInterface
 public interface HttpAdapter {
 
 	String KEY_SESSION_USER = "SESSION_USER";
