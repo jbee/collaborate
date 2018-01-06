@@ -318,7 +318,7 @@ public final class Tracker {
 		expectRegistered(originator);
 		expectAuthenticated(originator);
 		if (version.isEditable()) {
-			expectRegular(version);
+			expectVersion(version);
 		}
 		expectOriginMaintainer(product, originator);
 		stressNewVersion(product, originator);
@@ -949,6 +949,12 @@ public final class Tracker {
 		}
 	}
 
+	private static void expectVersion(Name name) {
+		if (!(name.isVersion() || name.isRegular())) {
+			denyTransition("A version's name must not use '@' and be shorter than 17 characters! but was: "+name);
+		}
+	}
+	
 	private static void expectRegular(Name name) {
 		if (!name.isRegular()) {
 			denyTransition("A registered user's name must not use '@' and be shorter than 17 characters! but was: "+name);

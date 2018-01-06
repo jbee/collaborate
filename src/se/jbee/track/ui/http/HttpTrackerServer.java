@@ -5,8 +5,6 @@ import static java.lang.Math.min;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -23,8 +21,9 @@ import org.lmdbjava.Env;
 
 import se.jbee.track.db.DB;
 import se.jbee.track.db.LMDB;
-import se.jbee.track.ui.ctrl.Controller;
-import se.jbee.track.ui.ctrl.DummyController;
+import se.jbee.track.ui.ctrl.Ctrl;
+import se.jbee.track.ui.ctrl.DBController;
+import se.jbee.track.ui.ctrl.Params;
 
 public class HttpTrackerServer extends AbstractHandler {
 
@@ -41,8 +40,8 @@ public class HttpTrackerServer extends AbstractHandler {
 		ContextHandler contextHandler = new ContextHandler("/static");
 		contextHandler.setHandler(resource_handler);
 		handlers.addHandler(contextHandler);
-		// new DBController(createDB(args))
-		handlers.addHandler(new HttpTrackerServer(new DummyController()));
+		DB db = createDB(args);
+		handlers.addHandler(new HttpTrackerServer(new DBController(db, null, null, null)));
 		server.setHandler(handlers);
 		server.start();
 		server.join();
@@ -66,7 +65,7 @@ public class HttpTrackerServer extends AbstractHandler {
 	
 	private final HttpAdapter adapter;
 	
-	public HttpTrackerServer(Controller crtl) {
+	public HttpTrackerServer(Ctrl crtl) {
 		super();
 		this.adapter = new HttpTrackerAdapter(crtl);
 	}
@@ -79,10 +78,9 @@ public class HttpTrackerServer extends AbstractHandler {
 		} else {
 			response.setContentType("text/html; charset=utf-8");
 			response.setStatus(HttpServletResponse.SC_OK);
-			Map<String, String> params = new HashMap<>();
-			Cookie[] cookies = request.getCookies();
-			params.put("product", value(cookies, "TRACKER_CUR_PRODUCT"));
-			adapter.respond(target, params, response.getWriter());
+			//Cookie[] cookies = request.getCookies();
+			//TODO use session to fill data
+			adapter.respond(Params.fromPath(target), response.getWriter());
 		}
 
 		baseRequest.setHandled(true);
@@ -98,5 +96,5 @@ public class HttpTrackerServer extends AbstractHandler {
 		}
 		return null;
 	}
-
+	
 }

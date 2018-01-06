@@ -3,6 +3,7 @@ package se.jbee.track.cache;
 import java.util.concurrent.Future;
 
 import se.jbee.track.engine.Changes;
+import se.jbee.track.model.Criteria;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 

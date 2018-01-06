@@ -34,11 +34,9 @@ public final class Name extends Identifier<Name> {
 	}
 
 	private static final Pattern VALID_NON_EDITABLE = Pattern.compile("(?:[@.][-a-zA-Z0-9_]+)+(?:[.][*~])?");
-	private static final Pattern VALID_EDITABLE = Pattern.compile("(?:\\d+(?:[.]\\d+)*)?(?:[-_a-zA-Z0-9]+)?");
+	private static final Pattern VALID_EDITABLE = Pattern.compile("(?:\\d+(?:[.]\\d+)*)?(?:[a-zA-Z][-_a-zA-Z0-9]+)?");
 
 	public static final Name ANONYMOUS = as("@anonymous");
-	public static final Name MY = as("@my");
-	public static final Name MASTER = as("@master");
 
 	public static final Name ORIGIN = new Name(new byte[] {'*'});
 	public static final Name UNKNOWN = new Name(new byte[] {'~'});
@@ -82,7 +80,7 @@ public final class Name extends Identifier<Name> {
 	}
 
 	public boolean isRegular() {
-		return isEditable() && !isEmail();
+		return isEditable() && !isEmail() && !isVersion();
 	}
 
 	public boolean isUnknown() {
@@ -91,6 +89,10 @@ public final class Name extends Identifier<Name> {
 
 	public boolean isOrigin() {
 		return charAt(0) == '*';
+	}
+	
+	public boolean isVersion() {
+		return charAt(0) >= '0' && charAt(0) <= '9'; 
 	}
 
 	/**

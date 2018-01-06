@@ -1,43 +1,31 @@
 package se.jbee.track.ui.ctrl;
 
-import se.jbee.track.cache.Criteria;
-import se.jbee.track.cache.Matches;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import se.jbee.track.cache.Cache;
 import se.jbee.track.db.DB;
+import se.jbee.track.engine.Clock;
+import se.jbee.track.engine.Limits;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.User;
-import se.jbee.track.ui.view.Menu;
-import se.jbee.track.ui.view.View;
 
-public class DBController implements Controller {
+public class DBController implements Ctrl {
 
 	private final DB db;
+	private final Cache cache;
+	private final Map<Name, User> sessions = new ConcurrentHashMap<>(); 
 
-	public DBController(DB db) {
+	public DBController(DB db, Cache cache, Clock clock, Limits limits) {
 		this.db = db;
+		this.cache = cache;
 	}
 
 	@Override
-	public Matches tasks(Criteria criteria, Context ctx) {
+	public DynamicPage query(Params params) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	@Override
-	public User user(Name user) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Menu[] menus(Context ctx) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public View view(Context ctx) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+	
 }

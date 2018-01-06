@@ -1,23 +1,23 @@
-package se.jbee.track.cache;
+package se.jbee.track.model;
 
 import static java.lang.Integer.signum;
 import static java.util.Arrays.asList;
-import static se.jbee.track.cache.Criteria.Operator.asc;
-import static se.jbee.track.cache.Criteria.Operator.desc;
-import static se.jbee.track.cache.Criteria.Operator.eq;
-import static se.jbee.track.cache.Criteria.Operator.ge;
-import static se.jbee.track.cache.Criteria.Operator.gt;
-import static se.jbee.track.cache.Criteria.Operator.in;
-import static se.jbee.track.cache.Criteria.Operator.le;
-import static se.jbee.track.cache.Criteria.Operator.lt;
-import static se.jbee.track.cache.Criteria.Operator.neq;
-import static se.jbee.track.cache.Criteria.Operator.nin;
-import static se.jbee.track.cache.Criteria.ValueType.date;
-import static se.jbee.track.cache.Criteria.ValueType.flag;
-import static se.jbee.track.cache.Criteria.ValueType.name;
-import static se.jbee.track.cache.Criteria.ValueType.number;
-import static se.jbee.track.cache.Criteria.ValueType.property;
-import static se.jbee.track.cache.Criteria.ValueType.text;
+import static se.jbee.track.model.Criteria.Operator.asc;
+import static se.jbee.track.model.Criteria.Operator.desc;
+import static se.jbee.track.model.Criteria.Operator.eq;
+import static se.jbee.track.model.Criteria.Operator.ge;
+import static se.jbee.track.model.Criteria.Operator.gt;
+import static se.jbee.track.model.Criteria.Operator.in;
+import static se.jbee.track.model.Criteria.Operator.le;
+import static se.jbee.track.model.Criteria.Operator.lt;
+import static se.jbee.track.model.Criteria.Operator.neq;
+import static se.jbee.track.model.Criteria.Operator.nin;
+import static se.jbee.track.model.Criteria.ValueType.date;
+import static se.jbee.track.model.Criteria.ValueType.flag;
+import static se.jbee.track.model.Criteria.ValueType.name;
+import static se.jbee.track.model.Criteria.ValueType.number;
+import static se.jbee.track.model.Criteria.ValueType.property;
+import static se.jbee.track.model.Criteria.ValueType.text;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -30,17 +30,6 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import se.jbee.track.model.Bytes;
-import se.jbee.track.model.Date;
-import se.jbee.track.model.Gist;
-import se.jbee.track.model.Heat;
-import se.jbee.track.model.Motive;
-import se.jbee.track.model.Name;
-import se.jbee.track.model.Names;
-import se.jbee.track.model.Purpose;
-import se.jbee.track.model.Status;
-import se.jbee.track.model.Task;
 
 /**
  * A data structure to describe what {@link Task}s to select and how to present

@@ -4,8 +4,8 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.copyOfRange;
-import static se.jbee.track.cache.Criteria.Operator.eq;
-import static se.jbee.track.cache.Criteria.Property.length;
+import static se.jbee.track.model.Criteria.Operator.eq;
+import static se.jbee.track.model.Criteria.Property.length;
 import static se.jbee.track.util.Array.nextPowerOf2;
 
 import java.util.Arrays;
@@ -19,9 +19,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 
-import se.jbee.track.cache.Criteria.Criterium;
-import se.jbee.track.cache.Criteria.Operator;
-import se.jbee.track.cache.Criteria.Property;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.DB.TxR;
 import se.jbee.track.engine.Change;
@@ -32,6 +29,7 @@ import se.jbee.track.engine.Event;
 import se.jbee.track.engine.History;
 import se.jbee.track.engine.Repository;
 import se.jbee.track.model.Area;
+import se.jbee.track.model.Criteria;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Motive;
@@ -45,6 +43,9 @@ import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
+import se.jbee.track.model.Criteria.Criterium;
+import se.jbee.track.model.Criteria.Operator;
+import se.jbee.track.model.Criteria.Property;
 
 /**
  * Each worker is responsible for a single {@link Product}.

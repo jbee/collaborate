@@ -1,10 +1,10 @@
 package se.jbee.track.cache;
 
-import static se.jbee.track.cache.Criteria.Operator.eq;
-import static se.jbee.track.cache.Criteria.Operator.in;
-import static se.jbee.track.cache.Criteria.Operator.neq;
-import static se.jbee.track.cache.Criteria.Operator.nin;
-import static se.jbee.track.cache.Criteria.Property.product;
+import static se.jbee.track.model.Criteria.Operator.eq;
+import static se.jbee.track.model.Criteria.Operator.in;
+import static se.jbee.track.model.Criteria.Operator.neq;
+import static se.jbee.track.model.Criteria.Operator.nin;
+import static se.jbee.track.model.Criteria.Property.product;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -17,17 +17,18 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
-import se.jbee.track.cache.Criteria.Property;
 import se.jbee.track.db.DB;
 import se.jbee.track.engine.Changes;
 import se.jbee.track.engine.Changes.Entry;
 import se.jbee.track.engine.Clock;
+import se.jbee.track.model.Criteria;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
 import se.jbee.track.model.Product;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
+import se.jbee.track.model.Criteria.Property;
 
 /**
  * A {@link CacheCluster} is a fully functional multi-{@link Product}

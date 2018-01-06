@@ -1,25 +1,25 @@
-package se.jbee.track.cache;
+package se.jbee.track.model;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static se.jbee.track.cache.Criteria.Operator.eq;
-import static se.jbee.track.cache.Criteria.Operator.ge;
-import static se.jbee.track.cache.Criteria.Operator.gt;
-import static se.jbee.track.cache.Criteria.Operator.in;
-import static se.jbee.track.cache.Criteria.Operator.le;
-import static se.jbee.track.cache.Criteria.Operator.lt;
-import static se.jbee.track.cache.Criteria.Operator.nin;
-import static se.jbee.track.cache.Criteria.Property.reported;
+import static se.jbee.track.model.Criteria.Operator.eq;
+import static se.jbee.track.model.Criteria.Operator.ge;
+import static se.jbee.track.model.Criteria.Operator.gt;
+import static se.jbee.track.model.Criteria.Operator.in;
+import static se.jbee.track.model.Criteria.Operator.le;
+import static se.jbee.track.model.Criteria.Operator.lt;
+import static se.jbee.track.model.Criteria.Operator.nin;
+import static se.jbee.track.model.Criteria.Property.reported;
 import static se.jbee.track.model.Name.as;
 
 import org.junit.Before;
 import org.junit.Test;
 
-import se.jbee.track.cache.Criteria.Criterium;
-import se.jbee.track.cache.Criteria.Property;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Product;
 import se.jbee.track.model.Task;
+import se.jbee.track.model.Criteria.Criterium;
+import se.jbee.track.model.Criteria.Property;
 
 public class TestCriterium {
 

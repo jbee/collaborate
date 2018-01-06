@@ -1,21 +1,22 @@
-package se.jbee.track.cache;
+package se.jbee.track.model;
 
 import static java.util.Collections.singletonMap;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static se.jbee.track.cache.Criteria.ValueType.text;
+import static se.jbee.track.model.Criteria.ValueType.text;
 import static se.jbee.track.model.Name.as;
 
 import java.util.EnumMap;
 
 import org.junit.Test;
 
-import se.jbee.track.cache.Criteria.Coloring;
-import se.jbee.track.cache.Criteria.Operator;
-import se.jbee.track.cache.Criteria.Property;
+import se.jbee.track.model.Criteria;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Name;
+import se.jbee.track.model.Criteria.Coloring;
+import se.jbee.track.model.Criteria.Operator;
+import se.jbee.track.model.Criteria.Property;
 
 public class TestCriteria {
 
