@@ -29,6 +29,7 @@ import static se.jbee.track.engine.Change.Operation.rebase;
 import static se.jbee.track.engine.Change.Operation.recompose;
 import static se.jbee.track.engine.Change.Operation.register;
 import static se.jbee.track.engine.Change.Operation.relocate;
+import static se.jbee.track.engine.Change.Operation.remind;
 import static se.jbee.track.engine.Change.Operation.request;
 import static se.jbee.track.engine.Change.Operation.resolve;
 import static se.jbee.track.engine.Change.Operation.segment;
@@ -120,6 +121,7 @@ public interface Change {
 		indicate,
 		warn,
 		request,
+		remind,
 		segment,
 		
 		absolve,
@@ -220,7 +222,11 @@ public interface Change {
 	}
 	
 	static Change indicate(Name product, Gist gist, Name reporter, Name area) {
-		return (t, tx) -> { tx.put(indicate, t.reportIntention(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
+		return (t, tx) -> { tx.put(indicate, t.reportNecessity(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
+	}
+	
+	static Change remind(Name product, Gist gist, Name reporter, Name area) {
+		return (t, tx) -> { tx.put(remind, t.reportThought(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
 	}
 	
 	static Change warn(Name product, Gist gist, Name reporter, Name area, Name version, boolean exploitable) {

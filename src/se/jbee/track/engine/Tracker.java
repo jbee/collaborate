@@ -5,8 +5,9 @@ import static java.lang.Math.min;
 import static se.jbee.track.engine.Limit.limit;
 import static se.jbee.track.model.Date.date;
 import static se.jbee.track.model.Motive.defect;
-import static se.jbee.track.model.Motive.intention;
+import static se.jbee.track.model.Motive.necessity;
 import static se.jbee.track.model.Motive.proposal;
+import static se.jbee.track.model.Motive.reminder;
 import static se.jbee.track.model.Name.ORIGIN;
 import static se.jbee.track.model.Outcome.consent;
 import static se.jbee.track.model.Outcome.dissent;
@@ -342,9 +343,14 @@ public final class Tracker {
 		return report(product, proposal, clarification, gist, reporter, area, product.somewhen, false);
 	}
 
-	public Task reportIntention(Product product, Gist gist, User reporter, Area area) {
+	public Task reportNecessity(Product product, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
-		return report(product, intention, clarification, gist, reporter, area, product.somewhen, false);
+		return report(product, necessity, clarification, gist, reporter, area, product.somewhen, false);
+	}
+	
+	public Task reportThought(Product product, Gist gist, User reporter, Area area) {
+		expectNoBoard(area);
+		return report(product, reminder, clarification, gist, reporter, area, product.somewhen, false);
 	}
 
 	public Task reportDefect(Product product, Gist gist, User reporter, Area area, Version version, boolean exploitable) {

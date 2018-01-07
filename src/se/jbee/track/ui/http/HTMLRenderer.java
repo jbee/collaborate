@@ -41,9 +41,9 @@ public class HTMLRenderer {
 		renderList(page.page, page.results);
 
 		out.append("<div class='footer'><div class='column'>");
-		renderTable(Coloring.motive, Motive.class);
-		renderTable(Coloring.goal, Purpose.class);
 		renderTable(Coloring.status, Status.class);
+		renderTable(Coloring.goal, Purpose.class);
+		renderTable(Coloring.motive, Motive.class);
 		renderTable(Coloring.heat, Heat.class);
 		out.append("</div></div>");
 		out.append("</body>");

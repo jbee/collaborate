@@ -481,8 +481,9 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		offset(number, 0, eq, ge, le, gt, lt),
 		length(number, 0, eq, le, lt),
 		order(property, 0, Property.class, asc, desc),
-		//TODO trees can equally queried by a criteria just that there should be a basis or origin filter to make sense 
-		// 'tree' or 'list' itself is a set of showing the results
+		//TODO trees can equally queried by a criteria just that there should be a basis or origin filter to make sense
+		// a board is splitting the results in silos by a property (in order of that property - should be a enum or numeric one; version, area or user would work too; user gives the classic "unassigned", "planed", "in progress", "done")
+		// 'tree' or 'list' or 'board' itself is a set of showing the results
 		color(property, 0, Coloring.class, eq),
 		
 		// task properties
