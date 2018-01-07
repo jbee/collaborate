@@ -128,5 +128,16 @@ public class TestURLToParams {
 		assertEquals(params.get(Param.serial), "146");
 		assertEquals(params.get(Param.command), Action.details.name());
 	}
+	
+	@Test
+	public void productNameAreaDashSerial() {
+		Params params = Params.fromPath("/product/foo/RFC-146");
+		
+		assertEquals(4, params.size());
+		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.area), "RFC");
+		assertEquals(params.get(Param.serial), "146");
+		assertEquals(params.get(Param.command), Action.details.name());
+	}
 
 }

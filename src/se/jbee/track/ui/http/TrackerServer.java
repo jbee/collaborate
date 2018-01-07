@@ -42,6 +42,7 @@ public class TrackerServer extends AbstractHandler {
 		resource_handler.setDirectoriesListed(true);
 		resource_handler.setResourceBase("web");
 		HandlerList handlers = new HandlerList();
+		
 		ContextHandler contextHandler = new ContextHandler("/static");
 		contextHandler.setHandler(resource_handler);
 		handlers.addHandler(contextHandler);

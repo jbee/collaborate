@@ -73,9 +73,15 @@ public final class Params extends EnumMap<Param, String> {
 								params.set(command, Action.list.name());
 								params.set(Param.site, s3);
 							}
-						 } else {
+						} else {
+							if (s2.matches("^.+-\\d+$")) {
+								params.set(command, Action.details.name());
+								params.set(Param.area, s2.substring(0, s2.lastIndexOf('-')));
+								params.set(Param.serial, s2.substring(s2.lastIndexOf('-')+1));
+							} else {
 								params.set(command, Action.list.name());
-						 }
+							}
+						}
 					} 
 				} else {
 					params.set(Param.command, Action.list.name());
