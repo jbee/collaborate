@@ -4,7 +4,9 @@ package se.jbee.track.ui.ctrl;
 public enum Action {
 
 	//GETS
-	view, 
+	list, 
+	details, 
+	version,
 	
 	
 	// PUTS/POSTS

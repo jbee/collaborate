@@ -339,7 +339,7 @@ public interface Convert<I,O> {
 	Convert<Event, ByteBuffer> event2bin = (e,to) -> {
 		to.put(EVENT_EVN);
 		to.putLong(e.timestamp);
-		id2bin(e.originator, to);
+		id2bin(e.actor, to);
 		to.putShort((short) e.cardinality());
 		for (Event.Transition t : e) {
 			id2bin(t.entity, to);

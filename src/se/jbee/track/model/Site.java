@@ -25,7 +25,7 @@ package se.jbee.track.model;
  * 
  * @author jan
  */
-public final class Site extends Entity<Site> {
+public final class Site extends Entity<Site> implements Transitory {
 
 	/**
 	 * {@link User} sites use {@link Name#ORIGIN}
@@ -59,5 +59,10 @@ public final class Site extends Entity<Site> {
 	
 	public boolean isAreaSite() {
 		return !isUserSite();
+	}
+	
+	@Override
+	public boolean obsolete() {
+		return template.isEmpty();
 	}
 }

@@ -3,7 +3,11 @@ package se.jbee.track.ui.ctrl;
 public enum Param {
 
 	command, //WHAT: view a user/area site, version, task or do something
-	actor, // who you are (auth/session info)
+	
+	/**
+	 * The acting (authenticated) user (this may be set to session ID)
+	 */
+	actor,
 	viewed, // user (whose site do we use)
 	role, // as user X (who is @)
 	site, // name of the site

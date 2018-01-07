@@ -7,6 +7,7 @@ import static se.jbee.track.engine.Change.Operation.aspire;
 import static se.jbee.track.engine.Change.Operation.attach;
 import static se.jbee.track.engine.Change.Operation.authenticate;
 import static se.jbee.track.engine.Change.Operation.compart;
+import static se.jbee.track.engine.Change.Operation.compose;
 import static se.jbee.track.engine.Change.Operation.configure;
 import static se.jbee.track.engine.Change.Operation.confirm;
 import static se.jbee.track.engine.Change.Operation.connect;
@@ -17,19 +18,19 @@ import static se.jbee.track.engine.Change.Operation.disconnect;
 import static se.jbee.track.engine.Change.Operation.dissent;
 import static se.jbee.track.engine.Change.Operation.dissolve;
 import static se.jbee.track.engine.Change.Operation.emphasise;
+import static se.jbee.track.engine.Change.Operation.erase;
 import static se.jbee.track.engine.Change.Operation.indicate;
-import static se.jbee.track.engine.Change.Operation.launch;
 import static se.jbee.track.engine.Change.Operation.leave;
 import static se.jbee.track.engine.Change.Operation.open;
 import static se.jbee.track.engine.Change.Operation.participate;
 import static se.jbee.track.engine.Change.Operation.poll;
 import static se.jbee.track.engine.Change.Operation.propose;
 import static se.jbee.track.engine.Change.Operation.rebase;
+import static se.jbee.track.engine.Change.Operation.recompose;
 import static se.jbee.track.engine.Change.Operation.register;
 import static se.jbee.track.engine.Change.Operation.relocate;
 import static se.jbee.track.engine.Change.Operation.request;
 import static se.jbee.track.engine.Change.Operation.resolve;
-import static se.jbee.track.engine.Change.Operation.restructure;
 import static se.jbee.track.engine.Change.Operation.segment;
 import static se.jbee.track.engine.Change.Operation.tag;
 import static se.jbee.track.engine.Change.Operation.unwatch;
@@ -87,8 +88,9 @@ public interface Change {
 		configure,
 		
 		// sites
-		launch,
-		restructure,
+		compose,
+		recompose,
+		erase,
 		
 		// products
 		constitute,
@@ -142,6 +144,7 @@ public interface Change {
 	interface Tx extends Repository {
 
 		void put(Operation op, Entity<?> e);
+		
 	}
 	
 	/**
@@ -172,44 +175,44 @@ public interface Change {
 		return (t, tx) -> { tx.put(configure, t.configure(tx.user(user), notifications)); };
 	}
 	
-	static Change constitute(Name product, Name originator) {
-		return (t, tx) -> { tx.put(constitute, t.constitute(product, tx.user(originator))); };
+	static Change constitute(Name product, Name actor) {
+		return (t, tx) -> { tx.put(constitute, t.constitute(product, tx.user(actor))); };
 	}
 	
-	static Change connect(Name product, Integration endpoint, Name originator) {
-		return (t, tx) -> { tx.put(connect, t.connect(tx.product(product), endpoint, tx.user(originator))); };
+	static Change connect(Name product, Integration endpoint, Name actor) {
+		return (t, tx) -> { tx.put(connect, t.connect(tx.product(product), endpoint, tx.user(actor))); };
 	}
 
-	static Change disconnect(Name product, Name integration, Name originator) {
-		return (t, tx) -> { tx.put(disconnect, t.disconnect(tx.product(product), integration, tx.user(originator))); };
+	static Change disconnect(Name product, Name integration, Name actor) {
+		return (t, tx) -> { tx.put(disconnect, t.disconnect(tx.product(product), integration, tx.user(actor))); };
 	}
 
-	static Change open(Name product, Name board, Name originator, Motive motive, Purpose purpose) {
-		return (t, tx) -> { tx.put(open, t.open(tx.product(product), board, tx.user(originator), motive, purpose)); };
+	static Change open(Name product, Name board, Name actor, Motive motive, Purpose purpose) {
+		return (t, tx) -> { tx.put(open, t.open(tx.product(product), board, tx.user(actor), motive, purpose)); };
 	}
 	
-	static Change compart(Name product, Name area, Name originator) {
-		return (t, tx) -> { tx.put(compart, t.compart(tx.product(product), area, tx.user(originator))); };
+	static Change compart(Name product, Name area, Name actor) {
+		return (t, tx) -> { tx.put(compart, t.compart(tx.product(product), area, tx.user(actor))); };
 	}
 	
-	static Change compart(Name product, Name basis, Name partition, Name originator, boolean subarea) {
-		return (t, tx) -> { tx.put(compart, t.compart(tx.area(product, basis), partition, tx.user(originator), subarea)); };
+	static Change compart(Name product, Name basis, Name partition, Name actor, boolean subarea) {
+		return (t, tx) -> { tx.put(compart, t.compart(tx.area(product, basis), partition, tx.user(actor), subarea)); };
 	}
 	
 	static Change leave(Name product, Name area, Name maintainer) {
 		return (t, tx) -> { tx.put(leave, t.leave(tx.area(product, area), tx.user(maintainer))); };
 	}
 	
-	static Change relocate(Name product, IDN task, Name toArea, Name originator) {
-		return (t, tx) -> { tx.put(relocate, t.relocate(tx.task(product, task), tx.area(product, toArea), tx.user(originator))); };
+	static Change relocate(Name product, IDN task, Name toArea, Name actor) {
+		return (t, tx) -> { tx.put(relocate, t.relocate(tx.task(product, task), tx.area(product, toArea), tx.user(actor))); };
 	}
 	
-	static Change rebase(Name product, IDN task, Name toVersion, Name originator) {
-		return (t, tx) -> { tx.put(rebase, t.rebase(tx.task(product, task), tx.version(product, toVersion), tx.user(originator)));};
+	static Change rebase(Name product, IDN task, Name toVersion, Name actor) {
+		return (t, tx) -> { tx.put(rebase, t.rebase(tx.task(product, task), tx.version(product, toVersion), tx.user(actor)));};
 	}
 	
-	static Change tag(Name product, Name version, Name originator) {
-		return (t, tx) -> { tx.put(tag, t.tag(tx.product(product), version, tx.user(originator))); };
+	static Change tag(Name product, Name version, Name actor) {
+		return (t, tx) -> { tx.put(tag, t.tag(tx.product(product), version, tx.user(actor))); };
 	}
 	
 	static Change propose(Name product, Gist gist, Name reporter, Name area) {
@@ -260,8 +263,8 @@ public interface Change {
 		return (t, tx) -> { tx.put(detach, t.detach(tx.task(product, task), tx.user(byUser), attachment)); };
 	}
 	
-	static Change poll(Matter matter, Gist motivation, Name product, Name area, Name initiator, Name affected) {
-		return (t, tx) -> { tx.put(poll, t.poll(matter, motivation, tx.area(product, area), tx.user(initiator), tx.user(affected))); };
+	static Change poll(Matter matter, Gist motivation, Name product, Name area, Name actor, Name affected) {
+		return (t, tx) -> { tx.put(poll, t.poll(matter, motivation, tx.area(product, area), tx.user(actor), tx.user(affected))); };
 	}
 	
 	static Change consent(Name product, Name area, IDN serial, Name voter) {
@@ -292,19 +295,27 @@ public interface Change {
 		return (t, tx) -> { tx.put(unwatch, t.unwatch(tx.task(product, task), tx.user(user))); };
 	}
 	
-	static Change launch(Name user, Name site, Template template) {
-		return (t, tx) -> { tx.put(launch, t.launch(tx.user(user), site, template, tx.sites(Name.ORIGIN, user))); };
+	static Change compose(Name user, Name site, Template template) {
+		return (t, tx) -> { tx.put(compose, t.compose(tx.user(user), site, template, tx.sites(Name.ORIGIN, user))); };
 	}
 	
-	static Change launch(Name product, Name area, Name site, Template template, Name user) {
-		return (t, tx) -> { tx.put(launch, t.launch(tx.area(product, area), site, template, tx.user(user), tx.sites(product, area))); };
+	static Change compose(Name product, Name area, Name site, Template template, Name user) {
+		return (t, tx) -> { tx.put(compose, t.compose(tx.area(product, area), site, template, tx.user(user), tx.sites(product, area))); };
 	}
 	
-	static Change restructure(Name user, Name site, Template template) {
-		return (t, tx) -> { tx.put(restructure, t.restructure(tx.site(Name.ORIGIN, user, site), template, tx.user(user))); };
+	static Change recompose(Name user, Name site, Template template) {
+		return (t, tx) -> { tx.put(recompose, t.recompose(tx.site(Name.ORIGIN, user, site), template, tx.user(user))); };
 	}
 	
-	static Change restructure(Name product, Name area, Name site, Template template, Name user) {
-		return (t, tx) -> { tx.put(restructure, t.restructure(tx.site(product, area, site), tx.area(product, area), template, tx.user(user))); };
+	static Change recompose(Name product, Name area, Name site, Template template, Name user) {
+		return (t, tx) -> { tx.put(recompose, t.recompose(tx.site(product, area, site), tx.area(product, area), template, tx.user(user))); };
+	}
+	
+	static Change erase(Name user, Name site) {
+		return (t, tx) -> { tx.put(erase, t.erase(tx.site(Name.ORIGIN, user, site), tx.user(user))); };
+	}
+	
+	static Change erase(Name product, Name area, Name site, Name user) {
+		return (t, tx) -> { tx.put(erase, t.erase(tx.site(product, area, site), tx.area(product, area), tx.user(user))); };
 	}
 }

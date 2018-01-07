@@ -20,6 +20,7 @@ import static se.jbee.track.model.Status.unsolved;
 
 import java.util.EnumMap;
 
+import se.jbee.track.engine.TransitionDenied.Error;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.Attachments;
 import se.jbee.track.model.Date;
@@ -51,8 +52,11 @@ import se.jbee.track.util.Array;
  */
 public final class Tracker {
 
+	/**
+	 * A minute.
+	 */
 	private static final long TOKEN_VALIDITY = 600000L;
-	
+
 	private final Clock clock;
 	private final Limits limits;
 
@@ -81,9 +85,10 @@ public final class Tracker {
 	 */
 	public User register(User existing, Name alias, Email email) {
 		if (existing != null)
-			denyTransition("User with name "+alias+" already exists.");
+			denyTransition(Error.E24_USER_EXISTS, alias);
 		if (!alias.isEmail()) { // so email or regular names are OK
 			expectRegular(alias);
+			//TODO should we check that an email is only used for a single user?
 		}
 		stressNewUser();
 		existing = new User(1);
@@ -105,7 +110,7 @@ public final class Tracker {
 		long now = clock.time();
 		if (now < user.millisOtpExprires && now < user.millisOtpExprires-TOKEN_VALIDITY+60000L) {
 			// protected against requesting to many tokens
-			denyTransition("Wait a minute before requesting another token.");
+			denyTransition(Error.E21_TOKEN_ON_COOLDOWN);
 		}
 		user = user.clone();
 		confirmOTP(user);
@@ -125,10 +130,10 @@ public final class Tracker {
 	 */
 	public User authenticate(User user, byte[] token) {
 		if (clock.time() > user.millisOtpExprires) {
-			denyTransition("Token expired!");
+			denyTransition(Error.E22_TOKEN_EXPIRED);
 		}
 		if (!OTP.isToken(token, user.encryptedOtp)) {
-			denyTransition("Incorrect token!");
+			denyTransition(Error.E23_TOKEN_INVALID);
 		}
 		user = user.clone();
 		user.authenticated++;
@@ -169,29 +174,29 @@ public final class Tracker {
 
 	/* Products */
 
-	public Product constitute(Name product, User originator) {
-		expectRegistered(originator);
-		expectAuthenticated(originator);
+	public Product constitute(Name product, User actor) {
+		expectRegistered(actor);
+		expectAuthenticated(actor);
 		expectRegular(product);
-		stressNewProduct(originator);
+		stressNewProduct(actor);
 		Product p = new Product(1);
 		p.name = product;
 		p.tasks = 0;
 		p.integrations = new Product.Integration[0];
-		p.origin = compart(p.name, Name.ORIGIN, originator);
-		p.somewhere = compart(p.name, Name.UNKNOWN, originator);
-		p.somewhen = tag(p, Name.UNKNOWN, originator);
-		originator.contributesToProducts = originator.contributesToProducts.add(product);
-		touch(originator);
+		p.origin = compart(p.name, Name.ORIGIN, actor);
+		p.somewhere = compart(p.name, Name.UNKNOWN, actor);
+		p.somewhen = tag(p, Name.UNKNOWN, actor);
+		actor.contributesToProducts = actor.contributesToProducts.add(product);
+		touch(actor);
 		return p;
 	}
 	
-	public Product connect(Product product, Integration endpoint, User originator) {
-		expectRegistered(originator);
-		expectAuthenticated(originator);
-		expectOriginMaintainer(product, originator);
+	public Product connect(Product product, Integration endpoint, User actor) {
+		expectRegistered(actor);
+		expectAuthenticated(actor);
+		expectOriginMaintainer(product, actor);
 		expectCanConnect(product);
-		stressDoConnect(product, originator);
+		stressDoConnect(product, actor);
 		int c = Array.indexOf(product.integrations, endpoint, Integration::equalTo);
 		Integration[] source = product.integrations;
 		if (c >= 0) {
@@ -201,45 +206,45 @@ public final class Tracker {
 		}
 		product = product.clone();
 		product.integrations = Array.add(source, endpoint, Integration::equalTo);
-		touch(originator);
+		touch(actor);
 		return product;
 	}
 	
-	public Product disconnect(Product product, Name integration, User originator) {
-		expectRegistered(originator);
-		expectAuthenticated(originator);
-		expectOriginMaintainer(product, originator);
-		stressDoConnect(product, originator);
+	public Product disconnect(Product product, Name integration, User actor) {
+		expectRegistered(actor);
+		expectAuthenticated(actor);
+		expectOriginMaintainer(product, actor);
+		stressDoConnect(product, actor);
 		Integration endpoint = new Integration(integration, null);
 		int c = Array.indexOf(product.integrations, endpoint, Integration::equalTo);
 		if (c < 0)
 			return product;
 		product = product.clone();
 		product.integrations = Array.remove(product.integrations, endpoint, Integration::equalTo);
-		touch(originator);
+		touch(actor);
 		return product;
 	}
 
 	/* Areas */
 
-	public Area open(Product product, Name boardArea, User originator, Motive motive, Purpose purpose) {
-		Area area = compart(product, boardArea, originator);
+	public Area open(Product product, Name boardArea, User actor, Motive motive, Purpose purpose) {
+		Area area = compart(product, boardArea, actor);
 		area.board=true;
 		area.motive=motive;
 		area.purpose=purpose;
 		return area;
 	}
 
-	public Area compart(Product product, Name area, User originator) {
-		expectOriginMaintainer(product, originator);
-		Area a = compart(product.name, area, originator);
+	public Area compart(Product product, Name area, User actor) {
+		expectOriginMaintainer(product, actor);
+		Area a = compart(product.name, area, actor);
 		a.safeguarded = product.origin.safeguarded;
 		return a;
 	}
 
-	public Area compart(Area basis, Name partition, User originator, boolean subarea) {
-		expectMaintainer(basis, originator);
-		Area area = compart(basis.product, partition, originator);
+	public Area compart(Area basis, Name partition, User actor, boolean subarea) {
+		expectMaintainer(basis, actor);
+		Area area = compart(basis.product, partition, actor);
 		area.basis=basis.name;
 		area.safeguarded=basis.safeguarded;
 		if (subarea) {
@@ -248,22 +253,22 @@ public final class Tracker {
 		return area;
 	}
 
-	private Area compart(Name product, Name area, User originator) {
-		expectRegistered(originator);
-		expectAuthenticated(originator);
+	private Area compart(Name product, Name area, User actor) {
+		expectRegistered(actor);
+		expectAuthenticated(actor);
 		if (area.isEditable()) {
 			expectRegular(area);
 		}
-		stressNewArea(product, originator);
+		stressNewArea(product, actor);
 		Area a = new Area(1);
 		a.name = area;
 		a.product = product;
-		a.maintainers=new Names(originator.alias);
+		a.maintainers=new Names(actor.alias);
 		a.tasks = 0;
 		a.polls = 0;
 		a.safeguarded = true;
-		originator.contributesToProducts = originator.contributesToProducts.add(product);
-		touch(originator);
+		actor.contributesToProducts = actor.contributesToProducts.add(product);
+		touch(actor);
 		return a;
 	}
 
@@ -278,55 +283,55 @@ public final class Tracker {
 		return area;
 	}
 
-	public Task relocate(Task task, Area to, User originator) {
+	public Task relocate(Task task, Area to, User actor) {
 		if (task.area.name.equalTo(to.name))
 			return task; //NOOP
 		expectNoBoard(task.area);
-		expectAuthenticated(originator);
+		expectAuthenticated(actor);
 		expectUnsolved(task);
 		if (task.area.name.isUnknown()) {
-			expectMaintainer(to, originator); // pull from ~
+			expectMaintainer(to, actor); // pull from ~
 		} else {
-			expectMaintainer(task.area, originator); // push from
+			expectMaintainer(task.area, actor); // push from
 			if (!to.name.isUnknown()) {
-				expectMaintainer(to, originator); // to some else than ~
+				expectMaintainer(to, actor); // to some else than ~
 			}
 		}
-		stressDoRelocate(task, to, originator);
+		stressDoRelocate(task, to, actor);
 		task = task.clone();
 		task.area = to;
-		touch(originator);
+		touch(actor);
 		return task;
 	}
 	
-	public Task rebase(Task task, Version to, User originator) {
+	public Task rebase(Task task, Version to, User actor) {
 		if (task.base.name.equalTo(to.name))
 			return task; //NOOP
-		expectAuthenticated(originator);
-		expectMaintainer(task.area, originator);
+		expectAuthenticated(actor);
+		expectMaintainer(task.area, actor);
 		expectUnsolved(task);
-		stressDoRebase(task, to, originator);
+		stressDoRebase(task, to, actor);
 		task = task.clone();
 		task.base = to;
-		touch(originator);
+		touch(actor);
 		return task;
 	}
 
 	/* Versions */
 
-	public Version tag(Product product, Name version, User originator) {
-		expectRegistered(originator);
-		expectAuthenticated(originator);
+	public Version tag(Product product, Name version, User actor) {
+		expectRegistered(actor);
+		expectAuthenticated(actor);
 		if (version.isEditable()) {
 			expectVersion(version);
 		}
-		expectOriginMaintainer(product, originator);
-		stressNewVersion(product, originator);
+		expectOriginMaintainer(product, actor);
+		stressNewVersion(product, actor);
 		Version v = new Version(1);
 		v.product = product.name;
 		v.name = version;
 		v.changeset = Names.empty();
-		touch(originator);
+		touch(actor);
 		return v;
 	}
 
@@ -400,32 +405,32 @@ public final class Tracker {
 		return task;
 	}
 	
-	public Task attach(Task task, User initiator, URL attachment) {
-		expectAuthenticated(initiator);
+	public Task attach(Task task, User actor, URL attachment) {
+		expectAuthenticated(actor);
 		if (!task.area.isOpen()) {
-			expectMaintainer(task.area, initiator);
+			expectMaintainer(task.area, actor);
 		}
 		expectUnsolved(task);
 		expectConform(task, attachment);
-		stressDoAttach(task, initiator);
+		stressDoAttach(task, actor);
 		task = task.clone();
 		if (!attachment.isIntegrated()) {
 			attachment = task.product.integrate(attachment);
 		}
 		task.attachments = task.attachments.add(attachment); 
-		initiator.contributesToProducts = initiator.contributesToProducts.add(task.product.name);
-		touch(initiator);
+		actor.contributesToProducts = actor.contributesToProducts.add(task.product.name);
+		touch(actor);
 		return task;
 	}
 	
-	public Task detach(Task task, User initiator, URL attachment) {
-		expectAuthenticated(initiator);
-		expectMaintainer(task.area, initiator);
-		stressDoAttach(task, initiator);
+	public Task detach(Task task, User actor, URL attachment) {
+		expectAuthenticated(actor);
+		expectMaintainer(task.area, actor);
+		stressDoAttach(task, actor);
 		task = task.clone();
 		task.attachments = task.attachments.remove(attachment); 
-		initiator.contributesToProducts = initiator.contributesToProducts.add(task.product.name);
-		touch(initiator);
+		actor.contributesToProducts = actor.contributesToProducts.add(task.product.name);
+		touch(actor);
 		return task;
 	}
 
@@ -518,28 +523,28 @@ public final class Tracker {
 		return task;
 	}
 
-	public Poll poll(Matter matter, Gist motivation, Area area, User initiator, User affected) {
-		expectRegistered(initiator);
-		expectAuthenticated(initiator);
+	public Poll poll(Matter matter, Gist motivation, Area area, User actor, User affected) {
+		expectRegistered(actor);
+		expectAuthenticated(actor);
 		if (matter != participation) {
-			expectMaintainer(area, initiator);
+			expectMaintainer(area, actor);
 		}
-		stressNewPoll(area, initiator);
+		stressNewPoll(area, actor);
 		Poll poll = new Poll(1);
 		poll.area = area.clone();
 		poll.area.polls++;
 		poll.serial = IDN.idn(poll.area.polls);
 		poll.matter = matter;
 		poll.motivation = motivation;
-		poll.initiator = initiator.alias;
+		poll.initiator = actor.alias;
 		poll.affected = !matter.isUserRelated() ? Name.ORIGIN : affected.alias;
 		poll.start = date(now());
 		poll.outcome = Outcome.unsettled;
 		poll.consenting = Names.empty();
 		poll.dissenting = Names.empty();
 		poll.expiry = poll.start.plusDays(min(14, area.maintainers.count()));
-		initiator.contributesToProducts = initiator.contributesToProducts.add(area.product);
-		touch(initiator);
+		actor.contributesToProducts = actor.contributesToProducts.add(area.product);
+		touch(actor);
 		return poll;
 	}
 
@@ -677,43 +682,51 @@ public final class Tracker {
 		return task;
 	}
 
-	/* A user's sites */
+	/* A user's or area's sites */
 
-	public Site launch(User owner, Name site, Template template, Site...inSameMenu) {
-		return launch(null, site, template, owner, inSameMenu);
+	public Site compose(User owner, Name site, Template template, Site...inSameMenu) {
+		return compose(null, site, template, owner, inSameMenu);
 	}
 	
-	public Site launch(Area area, Name site, Template template, User originator, Site...inSameMenu) {
-		expectAuthenticated(originator);
-		expectNoMenuSiteYet(site, inSameMenu);
+	public Site compose(Area area, Name site, Template template, User actor, Site...inSameMenu) {
+		expectAuthenticated(actor);
+		expectSiteDoesNotExist(site, inSameMenu);
 		expectCanHaveMoreSites(inSameMenu);
 		if (area != null) {
-			expectMaintainer(area, originator);
+			expectMaintainer(area, actor);
 		}
-		stessNewSite(originator);
+		stessNewSite(actor);
 		Site s = area == null
-				? new Site(1, Name.ORIGIN, originator.alias, site, template)
+				? new Site(1, Name.ORIGIN, actor.alias, site, template)
 				: new Site(1, area.product, area.name, site, template);
-		touch(originator);
+		touch(actor);
 		return s;
 	}
 
-	public Site restructure(Site site, Template template, User owner) {
-		return restructure(site, null, template, owner);
+	public Site recompose(Site site, Template template, User owner) {
+		return recompose(site, null, template, owner);
 	}
-	public Site restructure(Site site, Area area, Template template, User originator) {
-		expectRegistered(originator);
-		expectAuthenticated(originator);
+	public Site recompose(Site site, Area area, Template template, User actor) {
+		expectRegistered(actor);
+		expectAuthenticated(actor);
 		if (site.isUserSite()) {
-			expectOwner(site, originator);
+			expectOwner(site, actor);
 		} else {
-			expectMaintainer(area, originator);
+			expectMaintainer(area, actor);
 		}
-		stressDoUpdate(site, originator);
+		stressDoUpdate(site, actor);
 		site = site.clone();
 		site.template = template;
-		touch(originator);
+		touch(actor);
 		return site;
+	}
+	
+	public Site erase(Site site, User actor) {
+		return erase(site, null, actor);
+	}
+	
+	public Site erase(Site site, Area area, User actor) {
+		return recompose(site, area, Template.BLANK_PAGE, actor);
 	}
 
 	/* limit checks */
@@ -734,24 +747,24 @@ public final class Tracker {
 		stressLimit(limit("user", reporter.alias), "Too many changes by user: "+reporter.alias);
 	}
 
-	private void stressNewProduct(User originator) {
-		stressLimit(limit("product@user", originator.alias), "Too many recent products by user: "+originator.alias);
-		stressUser(originator);
+	private void stressNewProduct(User actor) {
+		stressLimit(limit("product@user", actor.alias), "Too many recent products by user: "+actor.alias);
+		stressUser(actor);
 		stressLimit(limit("product", ORIGIN), "Too many new products.");
 		stressNewContent();
 	}
 
-	private void stressNewArea(Name product, User originator) {
-		stressLimit(limit("area@user", originator.alias), "Too many recent areas by user: "+originator.alias);
-		stressUser(originator);
+	private void stressNewArea(Name product, User actor) {
+		stressLimit(limit("area@user", actor.alias), "Too many recent areas by user: "+actor.alias);
+		stressUser(actor);
 		stressLimit(limit("area@product", product), "Too many new areas for product: "+product);
 		stressLimit(limit("area", ORIGIN), "Too many new areas.");
 		stressNewContent();
 	}
 
-	private void stressNewVersion(Product product, User originator) {
-		stressLimit(limit("version@user", originator.alias), "Too many recent versions by user: "+originator.alias);
-		stressUser(originator);
+	private void stressNewVersion(Product product, User actor) {
+		stressLimit(limit("version@user", actor.alias), "Too many recent versions by user: "+actor.alias);
+		stressUser(actor);
 		stressLimit(limit("version@product", product.name), "Too many new versions for product: "+product.name);
 		stressLimit(limit("version", ORIGIN), "Too many new versions.");
 		stressNewContent();
@@ -765,9 +778,9 @@ public final class Tracker {
 		stressNewContent();
 	}
 
-	private void stressNewPoll(Area area, User initiator) {
-		stressLimit(limit("poll@user", initiator.alias), "Too many new polls by user: "+initiator.alias);
-		stressUser(initiator);
+	private void stressNewPoll(Area area, User actor) {
+		stressLimit(limit("poll@user", actor.alias), "Too many new polls by user: "+actor.alias);
+		stressUser(actor);
 		stressLimit(limit("poll@area", area.name), "Too many new polls in area: "+area.name);
 		stressLimit(limit("poll", ORIGIN), "Too many new polls.");
 		stressNewContent();
@@ -787,9 +800,9 @@ public final class Tracker {
 		stressAction();
 	}
 	
-	private void stressDoConnect(Product product, User originator) {
-		stressLimit(limit("connect@user", originator.alias), "Too many recent connections by user: "+originator.alias);
-		stressUser(originator);
+	private void stressDoConnect(Product product, User actor) {
+		stressLimit(limit("connect@user", actor.alias), "Too many recent connections by user: "+actor.alias);
+		stressUser(actor);
 		stressLimit(limit("connect", ORIGIN), "Too many recent connections.");
 		stressNewContent();
 	}
@@ -802,18 +815,18 @@ public final class Tracker {
 		stressAction();		
 	}
 
-	private void stressDoRelocate(Task task, Area to, User originator) {
-		stressLimit(limit("move@user", originator.alias), "Too many recent relocations by user: "+originator.alias);
-		stressUser(originator);
+	private void stressDoRelocate(Task task, Area to, User actor) {
+		stressLimit(limit("move@user", actor.alias), "Too many recent relocations by user: "+actor.alias);
+		stressUser(actor);
 		stressLimit(limit("move@area", to.name), "Too many relocations for area: "+to.name);
 		stressLimit(limit("move@task", task.id.asName()), "Too many queue activities for task: "+task.id);
 		stressLimit(limit("move", ORIGIN), "Too many relocations recently.");
 		stressAction();
 	}
 	
-	private void stressDoRebase(Task task, Version to, User originator) {
-		stressLimit(limit("base@user", originator.alias), "Too many recent rebase actions by user: "+originator.alias);
-		stressUser(originator);
+	private void stressDoRebase(Task task, Version to, User actor) {
+		stressLimit(limit("base@user", actor.alias), "Too many recent rebase actions by user: "+actor.alias);
+		stressUser(actor);
 		stressLimit(limit("base@version", to.name), "Too many rebase actions for version: "+to.name);
 		stressLimit(limit("base@task", task.id.asName()), "Too many queue activities for task: "+task.id);
 		stressLimit(limit("base", ORIGIN), "Too many rebase actions recently.");
@@ -857,139 +870,121 @@ public final class Tracker {
 		stressAction();
 	}
 	
-	private void stressLimit(Limit limit, String error) {
+	private void stressLimit(Limit limit, String msg) {
 		if (!limits.stress(limit, clock)) {
-			denyTransition("Limit exceeded! "+error+" Please try again later!");
+			denyTransition(Error.E1_LIMIT_EXCEEDED, limit, msg);
 		}
 	}
 
 	/* consistency rules */
 
 	private static void expectNoBoard(Area area) {
-		if (area.board) {
-			denyTransition("Use request to submit to boards!");
-		}
+		if (area.board)
+			denyTransition(Error.E2_MUST_NOT_BE_BOARD, area.name);
 	}
 
 	private static void expectBoard(Area area) {
-		if (!area.board) {
-			denyTransition("Request must be submitted within an board area!");
-		}
+		if (!area.board)
+			denyTransition(Error.E3_MUST_BE_BOARD, area.name);
 	}
 
 	private static void expectNotYetPublished(Version version) {
-		if (version.isPublished()) {
-			denyTransition("This version is already released");
-		}
+		if (version.isPublished())
+			denyTransition(Error.E4_VERSION_RELEASED, version.name);
 	}
 
 	private static void expectCanHaveMoreSites(Site[] inSameMenu) {
-		if (inSameMenu.length >= 10) {
-			denyTransition("Currently each user or area can only have 10 sites!");
-		}
+		if (inSameMenu.length >= 10)
+			denyTransition(Error.E5_SITE_LIMIT_REACHED, 10);
 	}
 
-	private static void expectOwner(Site site, User initiator) {
-		if (!site.menu.equalTo(initiator.alias)) {
-			denyTransition("Only a site's owner can update it!");
-		}
+	private static void expectOwner(Site site, User actor) {
+		if (!site.menu.equalTo(actor.alias))
+			denyTransition(Error.E6_SITE_OWNERSHIP_REQUIRED, site.name);
 	}
 
-	private static void expectNoMenuSiteYet(Name site, Site[] inSameMenu) {
+	private static void expectSiteDoesNotExist(Name site, Site[] inSameMenu) {
 		for (Site s : inSameMenu)
 			if (s.name.equalTo(site))
-				denyTransition("Site already exists!");
+				denyTransition(Error.E7_SITE_EXISTS, site);
 	}
 
 	private static void expectOriginMaintainer(Product product, User user) {
-		if (!product.origin.maintainers.contains(user.alias)) {
-			denyTransition("Only maintainers of area '*' can initiate new areas and versions.");
-		}
+		if (!product.origin.maintainers.contains(user.alias))
+			denyTransition(Error.E8_PRODUCT_OWNERSHIP_REQUIRED, product.name, product.origin.name);
 	}
 
 	private static void expectRegistered(User user) {
-		if (user.isAnonymous()) {
-			denyTransition("Only registered users can create products and areas!");
-		}
+		if (user.isAnonymous())
+			denyTransition(Error.E9_REQUIRES_REGISTRATION);
 	}
 	
 	private static void expectCanReport(User reporter) {
-		if (!reporter.isAuthenticated()) {
-			denyTransition("Only authenticated users can report tasks!");
-		}
+		if (!reporter.isAuthenticated())
+			denyTransition(Error.E10_REQUIRES_AUTHENTICATION);
 	}
 
 	private static void expectCanBeInvolved(User user, Task task) {
-		if (task.participants() >= 5 && !task.aspirants.contains(user) && !task.participants.contains(user)) {
-			denyTransition("There are already to much users involved with the task: "+task);
-		}
+		if (task.participants() >= 5 
+				&& !task.aspirants.contains(user) 
+				&& !task.participants.contains(user)) 
+			denyTransition(Error.E11_TASK_USER_LIMIT_REACHED, task.id);
 	}
 
 	private static void expectMaintainer(Area area, User user) {
-		if (!area.maintainers.contains(user)) {
-			denyTransition("Only maintainers of an area may assign that area to a task (pull).");
-		}
+		if (!area.maintainers.contains(user))
+			denyTransition(Error.E12_AREA_MAINTAINER_REQUIRED, area.name, area.maintainers);
 	}
 
 	private static void expectUnsolved(Task task) {
-		if (task.status != unsolved) {
-			denyTransition("Cannot change the outcome of a task once it is concluded!");
-		}
+		if (task.status != unsolved)
+			denyTransition(Error.E13_TASK_ALREAD_SOLVED, task.id);
 	}
 	
 	private static void expectSolved(Task task) {
-		if (task.status == unsolved) {
-			denyTransition("Cannot archive an inconclusive task. Use dissolve to solve it without any action.");
-		}
+		if (task.status == unsolved)
+			denyTransition(Error.E14_TASK_NOT_SOLVED, task.id);
 	}
 	
 	private static void expectConform(Task task, URL url) {
-		if (!task.product.isIntegrated(url) && task.area.safeguarded) {
-			denyTransition("In the tasks area URLs may only refer to configured integrations.");
-		}
+		if (!task.product.isIntegrated(url) && task.area.safeguarded)
+			denyTransition(Error.E15_URL_NOT_INTEGRATED, url, task.product.integrations());
 	}
 
 	private static void expectVersion(Name name) {
-		if (!(name.isVersion() || name.isRegular())) {
-			denyTransition("A version's name must not use '@' and be shorter than 17 characters! but was: "+name);
-		}
+		if (!(name.isVersion() || name.isRegular()))
+			denyTransition(Error.E16_NAME_IS_NO_VERSION, name);
 	}
 	
 	private static void expectRegular(Name name) {
-		if (!name.isRegular()) {
-			denyTransition("A registered user's name must not use '@' and be shorter than 17 characters! but was: "+name);
-		}
+		if (!name.isRegular())
+			denyTransition(Error.E17_NAME_IS_NOT_REGULAR, name);
 	}
 	
 	private static void expectEmail(Name name) {
-		if (!name.isEmail()) {
-			denyTransition("Name can obly be changed if previously an email was used but was: "+name);
-		}
+		if (!name.isEmail())
+			denyTransition(Error.E18_NAME_IS_NO_EMAIL, name);
 	}
 
 	private static void expectAuthenticated(User user) {
-		if (!user.isAuthenticated()) {
-			denyTransition("User account must be authenticated first!");
-		}
+		if (!user.isAuthenticated())
+			denyTransition(Error.E10_REQUIRES_AUTHENTICATION);
 	}
 	
 	private static void expectCanConnect(Product product) {
-		if (product.integrations.length >= 8) {
-			denyTransition("Integrations are limited to 8 per product!");
-		}
+		if (product.integrations.length >= 8)
+			denyTransition(Error.E19_PRODUCT_INTEGRATION_LIMIT_REACHED, 8, product.name, product.integrations());
 	}
 
 	private static void expectCanWatch(User user) {
-		if (!user.isAuthenticated()) {
-			denyTransition("Only authenticated users can watch");
-		}
-		if (!user.canWatch()) {
-			denyTransition("User has reached maximum number of watched tasks. Unwatch tasks or increase limit by closing tasks.");
-		}
+		if (!user.isAuthenticated())
+			denyTransition(Error.E10_REQUIRES_AUTHENTICATION);
+		if (!user.canWatch())
+			denyTransition(Error.E20_USER_WATCH_LIMIT_REACHED);
 	}
 
-	private static void denyTransition(String reason) {
-		throw new IllegalStateException(reason);
+	private static void denyTransition(Error error, Object...args) {
+		throw new TransitionDenied(error, args);
 	}
 
 	private long now() {

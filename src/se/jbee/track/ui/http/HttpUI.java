@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 import se.jbee.track.ui.ctrl.Params;
 
 @FunctionalInterface
-public interface HttpAdapter {
+public interface HttpUI {
 
 	/**
 	 * Responds the request by writing to output stream.

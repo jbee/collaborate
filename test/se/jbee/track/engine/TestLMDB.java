@@ -6,7 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static se.jbee.track.engine.Change.authenticate;
-import static se.jbee.track.engine.Change.launch;
+import static se.jbee.track.engine.Change.compose;
 import static se.jbee.track.engine.Change.register;
 import static se.jbee.track.model.Email.email;
 import static se.jbee.track.model.Name.as;
@@ -72,8 +72,8 @@ public class TestLMDB {
 		try (DB db = new LMDB(Env.create().setMapSize(1014*1024*10), path)) {
 			User u1 = tracker.register(null, as("user1"), email("pass1@ex.de"));
 			u1 = tracker.authenticate(u1, u1.otp);
-			Site s1 = tracker.launch(u1, as("def"), template("ghi"));
-			Site s2 = tracker.launch(u1, as("mno"), template("pqr"));
+			Site s1 = tracker.compose(u1, as("def"), template("ghi"));
+			Site s2 = tracker.compose(u1, as("mno"), template("pqr"));
 			try (TxRW tx = db.write()) {
 				ByteBuffer buf = ByteBuffer.allocateDirect(1024);
 				Convert.site2bin.convert(s1, buf);
@@ -126,12 +126,12 @@ public class TestLMDB {
 			assertNotNull(changed.get(0).after);
 
 			User usr = (User)changed.get(0).after;
-			change = authenticate(user, usr.otp).and(launch(user, site, template("ghi")));
+			change = authenticate(user, usr.otp).and(compose(user, site, template("ghi")));
 			changed = Transaction.run(change, db, realTime, limits);
 					
 			assertEquals(2, changed.length());
 			
-			assertArrayEquals(new Change.Operation[]{Change.Operation.launch}, changed.get(1).transitions);
+			assertArrayEquals(new Change.Operation[]{Change.Operation.compose}, changed.get(1).transitions);
 			assertNull(changed.get(1).before);
 			assertNotNull(changed.get(1).after);
 			assertSame(User.class, changed.get(0).after.getClass());
@@ -158,10 +158,10 @@ public class TestLMDB {
 			assertEquals(1, sh.length());
 			assertNotNull(e);
 			assertEquals(changed.timestamp, e.timestamp);
-			assertEquals(ID.userId(user), e.originator);
+			assertEquals(ID.userId(user), e.actor);
 			assertEquals(2, e.cardinality());
 			assertEquals(Change.Operation.authenticate, e.transition(0).ops[0]);
-			assertEquals(Change.Operation.launch, e.transition(1).ops[0]);
+			assertEquals(Change.Operation.compose, e.transition(1).ops[0]);
 		}		
 	}
 }

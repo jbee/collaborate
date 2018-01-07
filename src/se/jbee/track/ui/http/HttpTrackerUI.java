@@ -4,7 +4,7 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 
 import se.jbee.track.ui.ctrl.Ctrl;
-import se.jbee.track.ui.ctrl.Ctrl.DynamicPage;
+import se.jbee.track.ui.ctrl.Ctrl.ListPage;
 import se.jbee.track.ui.ctrl.Params;
 
 /**
@@ -13,18 +13,18 @@ import se.jbee.track.ui.ctrl.Params;
  * server implementation and to allow for testing as if making HTTP request
  * without actually running a HTTP server.
  */
-public class HttpTrackerAdapter implements HttpAdapter {
+public class HttpTrackerUI implements HttpUI {
 
 	private final Ctrl ctrl;
 
-	public HttpTrackerAdapter(Ctrl ctrl) {
+	public HttpTrackerUI(Ctrl ctrl) {
 		super();
 		this.ctrl = ctrl;
 	}
 
 	@Override
 	public int respond(Params params, PrintWriter out) {
-		DynamicPage page = ctrl.query(params);
+		ListPage page = ctrl.list(params);
 		HTMLRenderer renderer = new HTMLRenderer(out, page.actor);
 		//TODO render page
 		if (true)

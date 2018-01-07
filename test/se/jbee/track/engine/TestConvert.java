@@ -62,7 +62,7 @@ public class TestConvert {
 	@Test
 	public void siteConversion() {
 		User user1 = newTestUser();
-		Site site1 = tracker.launch(user1, as("my-tasks"), template("foobar"));
+		Site site1 = tracker.compose(user1, as("my-tasks"), template("foobar"));
 		assertConsistentConversion(bin2site, site2bin, site1);
 	}
 

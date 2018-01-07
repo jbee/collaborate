@@ -31,6 +31,7 @@ import se.jbee.track.model.Poll;
 import se.jbee.track.model.Product;
 import se.jbee.track.model.Site;
 import se.jbee.track.model.Task;
+import se.jbee.track.model.Transitory;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
 
@@ -224,9 +225,13 @@ public final class Transaction extends DAO implements Tx, Limits {
 	}
 	
 	private static <T> void write(TxRW tx, ID id, T e, Convert<T, ByteBuffer> writer, ByteBuffer buf) {
-		writer.convert(e, buf).flip();
-		tx.put(id, buf);
-		buf.clear();
+		if (e instanceof Transitory && ((Transitory) e).obsolete()) {
+			tx.delete(id);
+		} else {
+			writer.convert(e, buf).flip();
+			tx.put(id, buf);
+			buf.clear();
+		}
 	}
 	
 	private void freeOccupiedLimits() {

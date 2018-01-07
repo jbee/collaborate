@@ -10,6 +10,8 @@ public final class Template extends Bytes implements Comparable<Template> {
 	public static final Template BLANK_PAGE = new Template(new byte[0]);
 	
 	public static Template template(String template) {
+		if (template.isEmpty())
+			return BLANK_PAGE;
 		if (!isText(template)) {
 			throw new IllegalArgumentException("Template contains illegal characters.");
 		}
@@ -27,6 +29,10 @@ public final class Template extends Bytes implements Comparable<Template> {
 	private Template(byte[] template) {
 		super();
 		this.template = template;
+	}
+	
+	public boolean isEmpty() {
+		return template.length == 0;
 	}
 
 	@Override

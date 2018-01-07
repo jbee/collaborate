@@ -22,9 +22,10 @@ public class DBController implements Ctrl {
 	}
 
 	@Override
-	public DynamicPage query(Params params) {
+	public ListPage list(Params params) {
+		
 		// TODO Auto-generated method stub
-		return null;
+		return new ListPage();
 	}
 
 	

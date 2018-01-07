@@ -21,8 +21,8 @@ import org.lmdbjava.Env;
 
 import se.jbee.track.db.DB;
 import se.jbee.track.db.LMDB;
-import se.jbee.track.ui.ctrl.Ctrl;
 import se.jbee.track.ui.ctrl.DBController;
+import se.jbee.track.ui.ctrl.Param;
 import se.jbee.track.ui.ctrl.Params;
 
 public class HttpTrackerServer extends AbstractHandler {
@@ -40,11 +40,12 @@ public class HttpTrackerServer extends AbstractHandler {
 		ContextHandler contextHandler = new ContextHandler("/static");
 		contextHandler.setHandler(resource_handler);
 		handlers.addHandler(contextHandler);
-		DB db = createDB(args);
-		handlers.addHandler(new HttpTrackerServer(new DBController(db, null, null, null)));
-		server.setHandler(handlers);
-		server.start();
-		server.join();
+		try (DB db = createDB(args)) {
+			handlers.addHandler(new HttpTrackerServer(new HttpTrackerUI(new DBController(db, null, null, null))));
+			server.setHandler(handlers);
+			server.start();
+			server.join();
+		} 
 	}
 
 	private static DB createDB(String[] args) throws IOException {
@@ -63,11 +64,10 @@ public class HttpTrackerServer extends AbstractHandler {
 		return new LMDB(Env.create().setMapSize(1014 * 1024 * sizeMB), file);
 	}
 	
-	private final HttpAdapter adapter;
+	private final HttpUI ui;
 	
-	public HttpTrackerServer(Ctrl crtl) {
-		super();
-		this.adapter = new HttpTrackerAdapter(crtl);
+	public HttpTrackerServer(HttpUI ui) {
+		this.ui = ui;
 	}
 
 	@Override
@@ -77,12 +77,14 @@ public class HttpTrackerServer extends AbstractHandler {
 			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 		} else {
 			response.setContentType("text/html; charset=utf-8");
-			response.setStatus(HttpServletResponse.SC_OK);
 			//Cookie[] cookies = request.getCookies();
-			//TODO use session to fill data
-			adapter.respond(Params.fromPath(target), response.getWriter());
+			Params params = Params.fromPath(target);
+			params.set(Param.actor, baseRequest.getSession(true).getId());
+			if (params.getOrDefault(Param.viewed, "").equals("@")) {
+				params.set(Param.viewed, params.get(Param.actor));
+			}
+			response.setStatus(ui.respond(params, response.getWriter()));
 		}
-
 		baseRequest.setHandled(true);
 	}
 

@@ -94,4 +94,11 @@ public final class Product extends Entity<Product> {
 				return URL.fromBytes(join(i.name.bytes(), new byte[] {':'}, copyOfRange(attachment.bytes(), i.base.length(), attachment.length())));
 		return attachment;
 	}
+
+	public Names integrations() {
+		Names res = Names.empty();
+		for (Integration i : integrations)
+			res = res.add(i.name);
+		return res;
+	}
 }

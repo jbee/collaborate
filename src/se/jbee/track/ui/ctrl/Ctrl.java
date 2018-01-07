@@ -7,13 +7,13 @@ import se.jbee.track.model.User;
 
 public interface Ctrl {
 	
-	DynamicPage query(Params params);
+	ListPage list(Params params);
 	
 	/**
-	 * The content of a dynamic page is controlled by the {@link #page}
+	 * The content of a {@link ListPage} is controlled by the {@link #page}'s
 	 * {@link Template} and the queries contained in it.
 	 */
-	class DynamicPage {  
+	class ListPage {  
 		/**
 		 * The user looking at the {@link #page}.
 		 * This is always the user that has authorized himself. 

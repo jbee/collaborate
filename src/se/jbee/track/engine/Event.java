@@ -30,13 +30,13 @@ public final class Event implements Comparable<Event>, Iterable<Event.Transition
 	 * This class will expect the {@link Event} creating class to take care of this "trick".
 	 */
 	public final long timestamp; // also the key
-	public final ID originator; 
+	public final ID actor; 
 	private final Transition[] transitions;
 	
-	public Event(long timestamp, ID originator, Transition... transitions) {
+	public Event(long timestamp, ID actor, Transition... transitions) {
 		super();
 		this.timestamp = timestamp;
-		this.originator = originator;
+		this.actor = actor;
 		this.transitions = transitions;
 	}
 

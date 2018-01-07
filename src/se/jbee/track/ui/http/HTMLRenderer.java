@@ -79,7 +79,7 @@ public class HTMLRenderer {
 			out.append("<li>");
 			switch (menu.action) {
 			default:
-			case view:
+			case list:
 				out.append("<a href='/").append(menu.action.name()).append("/").append(site.menu).append("/");
 				if (!site.name.equalTo(Name.as("@home"))) {
 					out.append(site.name).append("/");
@@ -208,7 +208,7 @@ public class HTMLRenderer {
 	}
 
 	private void renderTaskLink(Task task) {
-		renderTaskActionLink(task, "idn", Action.view, "#"+task.id);
+		renderTaskActionLink(task, "idn", Action.list, "#"+task.id);
 	}
 
 	private void renderCssClasses(Task task) {

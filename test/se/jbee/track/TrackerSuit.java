@@ -14,12 +14,13 @@ import se.jbee.track.model.TestCriterium;
 import se.jbee.track.model.TestGist;
 import se.jbee.track.model.TestName;
 import se.jbee.track.model.TestURL;
+import se.jbee.track.ui.ctrl.TestURLToParams;
 
 @RunWith(Suite.class)
 @SuiteClasses({ TestTracker.class, TestConvert.class, TestLMDB.class,
 		TestCriteria.class, TestOTP.class, TestUseCode.class,
 		TestCriterium.class, TestGist.class, TestTaskSet.class,
-		TestBytes.class, TestURL.class, TestName.class })
+		TestBytes.class, TestURL.class, TestName.class, TestURLToParams.class })
 public class TrackerSuit {
 	// run all tests...
 }

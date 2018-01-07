@@ -29,6 +29,8 @@ public interface DB extends AutoCloseable {
 		
 		void put(ID key, ByteBuffer value);
 		
+		void delete(ID key);
+		
 		void commit();
 		
 	}

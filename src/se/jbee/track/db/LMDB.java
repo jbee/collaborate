@@ -112,6 +112,12 @@ public final class LMDB implements DB {
 			setKey(id);
 			table(id.type).put(txn, key, value);
 		}
+		
+		@Override
+		public void delete(ID id) {
+			setKey(id);
+			table(id.type).delete(txn, key);
+		}
 
 		@Override
 		public void commit() {
