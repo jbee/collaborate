@@ -34,8 +34,8 @@ public class HTMLRenderer {
 	}
 
 	public void render(Ctrl.ListPage page) {
-		out.append("<!DOCTYPE html>");
-		out.append("<head><link rel='stylesheet' href='/static/vizio.css'></head><body>");
+		out.append("<!DOCTYPE html><head><title>collaborate!</title>");
+		out.append("<link rel='stylesheet' href='/static/vizio.css'></head><body>");
 		renderStaticMenu();
 		renderMenu(page.menu);
 		renderList(page.page, page.results);
@@ -50,8 +50,7 @@ public class HTMLRenderer {
 	}
 
 	private void renderStaticMenu() {
-		out.append("<div class='menu'><span class='group'><h1>Collaborate!</h1></span>");
-		out.append("</div>");
+		
 	}
 
 	public void renderTable(Coloring scheme, Class<? extends Enum<?>> type) {
@@ -64,7 +63,7 @@ public class HTMLRenderer {
 	}
 
 	public void renderMenu(Site[] entries) {
-		out.append("<div class='menu'><span class='group'>").append("???").append("</span><ul>");
+		out.append("<div class='menu'><span class='group'>").append("<h1>collaborate!</h1>").append("</span><ul>");
 		for (Site site : entries) {
 			out.append("<li>");
 			out.append("<a href='/").append(site.menu).append("/").append(site.name).append("/");

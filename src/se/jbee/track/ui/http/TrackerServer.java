@@ -36,6 +36,7 @@ public class TrackerServer extends AbstractHandler {
 		Server server = new Server(8080);
 
 		ResourceHandler resource_handler = new ResourceHandler();
+		resource_handler.setCacheControl("no-store,no-cache,must-revalidate");
 		// Configure the ResourceHandler. Setting the resource base indicates where the files should be served out of.
 		// In this example it is the current directory but it can be configured to anything that the jvm has access to.
 		resource_handler.setDirectoriesListed(true);
