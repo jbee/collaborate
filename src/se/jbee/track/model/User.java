@@ -32,7 +32,7 @@ public final class User extends Entity<User> {
 		voted(Mail.Delivery.hourly),     // for a poll where user can vote (is maintainer)
 		// task
 		reported(Mail.Delivery.hourly), // new tasks (in maintained area)
-		forked(Mail.Delivery.daily),    // derived (from an task the user is involved)
+		developed(Mail.Delivery.daily), // a task the user is involved in has been updated or segmented
 		moved(Mail.Delivery.daily),     // where user is involved
 		solved(Mail.Delivery.hourly),   // where user is involved
 		extended(Mail.Delivery.hourly)  // where user is involved

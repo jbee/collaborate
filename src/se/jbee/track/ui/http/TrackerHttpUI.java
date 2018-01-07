@@ -13,11 +13,11 @@ import se.jbee.track.ui.ctrl.Params;
  * server implementation and to allow for testing as if making HTTP request
  * without actually running a HTTP server.
  */
-public class HttpTrackerUI implements HttpUI {
+public class TrackerHttpUI implements HttpUI {
 
 	private final Ctrl ctrl;
 
-	public HttpTrackerUI(Ctrl ctrl) {
+	public TrackerHttpUI(Ctrl ctrl) {
 		super();
 		this.ctrl = ctrl;
 	}
@@ -26,6 +26,7 @@ public class HttpTrackerUI implements HttpUI {
 	public int respond(Params params, PrintWriter out) {
 		ListPage page = ctrl.list(params);
 		HTMLRenderer renderer = new HTMLRenderer(out, page.actor);
+		renderer.render(page);
 		//TODO render page
 		if (true)
 			return HttpURLConnection.HTTP_OK;

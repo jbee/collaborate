@@ -13,6 +13,7 @@ import se.jbee.track.model.TestCriteria;
 import se.jbee.track.model.TestCriterium;
 import se.jbee.track.model.TestGist;
 import se.jbee.track.model.TestName;
+import se.jbee.track.model.TestTemplate;
 import se.jbee.track.model.TestURL;
 import se.jbee.track.ui.ctrl.TestURLToParams;
 
@@ -20,7 +21,8 @@ import se.jbee.track.ui.ctrl.TestURLToParams;
 @SuiteClasses({ TestTracker.class, TestConvert.class, TestLMDB.class,
 		TestCriteria.class, TestOTP.class, TestUseCode.class,
 		TestCriterium.class, TestGist.class, TestTaskSet.class,
-		TestBytes.class, TestURL.class, TestName.class, TestURLToParams.class })
+		TestBytes.class, TestURL.class, TestName.class, TestURLToParams.class,
+		TestTemplate.class })
 public class TrackerSuit {
 	// run all tests...
 }

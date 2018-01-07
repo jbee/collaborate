@@ -4,6 +4,10 @@ import static se.jbee.track.model.Date.date;
 
 import java.io.PrintWriter;
 
+import se.jbee.track.cache.Matches;
+import se.jbee.track.model.Criteria;
+import se.jbee.track.model.Criteria.Coloring;
+import se.jbee.track.model.Criteria.Property;
 import se.jbee.track.model.Heat;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
@@ -13,13 +17,8 @@ import se.jbee.track.model.Site;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
-import se.jbee.track.model.Criteria.Coloring;
 import se.jbee.track.ui.ctrl.Action;
-import se.jbee.track.ui.view.Menu;
-import se.jbee.track.ui.view.Page;
-import se.jbee.track.ui.view.View;
-import se.jbee.track.ui.view.View.Silo;
-import se.jbee.track.ui.view.Widget;
+import se.jbee.track.ui.ctrl.Ctrl;
 
 public class HTMLRenderer {
 
@@ -34,12 +33,12 @@ public class HTMLRenderer {
 		this.now = System.currentTimeMillis();
 	}
 
-	public void render(Page page) {
+	public void render(Ctrl.ListPage page) {
 		out.append("<!DOCTYPE html>");
 		out.append("<head><link rel='stylesheet' href='/static/vizio.css'></head><body>");
 		renderStaticMenu();
-		render(page.menus);
-		render(page.view, page.data);
+		renderMenu(page.menu);
+		renderList(page.page, page.results);
 
 		out.append("<div class='footer'><div class='column'>");
 		renderTable(Coloring.motive, Motive.class);
@@ -51,10 +50,7 @@ public class HTMLRenderer {
 	}
 
 	private void renderStaticMenu() {
-		out.append("<div class='menu'><span class='group'><h1>TaCo</h1></span>");
-		// Liberated Task Coordination
-		// Reality Tracker (track what really is not would we believe or want to be)
-		// ColTT
+		out.append("<div class='menu'><span class='group'><h1>Collaborate!</h1></span>");
 		out.append("</div>");
 	}
 
@@ -67,53 +63,48 @@ public class HTMLRenderer {
 		out.append("</table>");
 	}
 
-	public void render(Menu[] menus) {
-		for (Menu menu : menus) {
-			render(menu);
-		}
-	}
-
-	private void render(Menu menu) {
-		out.append("<div class='menu'><span class='group'>").append(menu.label).append("</span><ul>");
-		for (Site site : menu.entries) {
+	public void renderMenu(Site[] entries) {
+		out.append("<div class='menu'><span class='group'>").append("???").append("</span><ul>");
+		for (Site site : entries) {
 			out.append("<li>");
-			switch (menu.action) {
-			default:
-			case list:
-				out.append("<a href='/").append(menu.action.name()).append("/").append(site.menu).append("/");
-				if (!site.name.equalTo(Name.as("@home"))) {
-					out.append(site.name).append("/");
-				}
-				out.append("'>").append(site.name.display()).append("</a>"); break;
+			out.append("<a href='/").append(site.menu).append("/").append(site.name).append("/");
+			if (!site.name.equalTo(Name.as("@home"))) {
+				out.append(site.name).append("/");
 			}
+			out.append("'>").append(site.name.display()).append("</a>");
 			out.append("</li>");
 		}
 		out.append("</ul></div>");
 	}
 
-	public void render(View view, Task[][][] data) {
-		for (int i = 0; i < view.silos.length; i++) {
-			render(view.silos[i], data[i]);
-		}
-	}
-
-	private void render(Silo silo, Task[][] data) {
+	public void renderList(Site page, Matches[] matches) {
+		Object[] seq = page.template.elements();
 		out.append("<div class='column'>");
-		out.append("<h2>").append(silo.title).append("</h2>");
-		for (int i = 0; i < silo.widgets.length; i++) {
-			render(silo.widgets[i], data[i]);
+		int i = 0;
+		for (Object e : seq) {
+			if (e instanceof Criteria) {
+				out.append("<h2>").append("TODO use last name").append("</h2>");
+				render((Criteria) e, matches[i++]);
+			} else {
+				out.append(e.toString());
+				//TODO open new columns on --------
+			}
 		}
 		out.append("</div>");
 	}
 
-	public void render(Widget widget, Task[] tasks) {
-		out.append("<h3>").append(widget.caption).append("</h3>");
-		out.append(" (by ").append(widget.scheme.name()).append(")");
+	public void render(Criteria criteria, Matches matches) {
+		out.append("<h3>").append(criteria.toString()).append("</h3>");
+		Coloring scheme = Coloring.heat;
+		if (criteria.indexOf(Property.color) > 0) {
+			scheme = (Coloring) criteria.get(criteria.indexOf(Property.color)).rvalues[0];
+		}
+		out.append(" (by ").append(scheme.name()).append(")");
 		//TODO render a link "scheme", when clicked turns itself into a dropdown, that is just changing the table next to it
 		// once selected the dropdown turns into the color link again
 		// this is done with JS on client side
-		out.append("<table class='list scheme-").append(widget.scheme.name()).append("'>");
-		for (Task task : tasks) {
+		out.append("<table class='list scheme-").append(scheme.name()).append("'>");
+		for (Task task : matches.tasks) {
 			render(task);
 		}
 		out.append("</table>");

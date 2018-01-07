@@ -50,7 +50,7 @@ public final class Template extends Bytes implements Comparable<Template> {
 		return new String(template, UTF_16BE);
 	}
 
-	public Object[] parse() {
+	public Object[] elements() {
 		if (parsed != null)
 			return parsed;
 		parsed = parseTemplate();
@@ -63,18 +63,62 @@ public final class Template extends Bytes implements Comparable<Template> {
 		String e = "";
 		boolean wasQuery = false;
 		List<Object> parts = new ArrayList<>();
-		for (String line : toString().split("\n")) {
+		String[] lines = toString().split("\n");
+		for (String line : lines) {
 			boolean isQuery = line.startsWith("[");
 			if (isQuery == wasQuery) {
-				e += line+ (!isQuery ? "\n":"");
+				if (isQuery) {
+					e += line;
+				} else {
+					if (line.matches("^\\s*$")) {
+						if (!e.endsWith("\n"))
+							e+="\n";
+						parts.add(e);
+						e = "";
+					} else if (line.matches("^\\s*[-]{3,}\\s*$")) {
+						if (!e.endsWith("\n"))
+							e+="\n";
+						parts.add(e);
+						parts.add(line);
+						e = "";
+					} else {
+						e += line+ "\n";
+					}
+				}
 			} else {
 				parts.add(wasQuery ? Criteria.parse(e) : e);
 				e = line;
 			}
+			wasQuery=isQuery;
 		}
 		if (!e.isEmpty()) {
 			parts.add(wasQuery ? Criteria.parse(e) : e);
 		}
 		return parts.toArray();
 	}
+	
+	//TODO less formal. A template can contain any text. We do a simple markup there. If a line starts with [ it is considered part of a query
+	
+	/* so one can write
+	 * 
+	 * *** My Title ***
+	 * 
+	 * Some text here.
+	 * In multiple lines.
+	 * 
+	 * My oldies
+	 * [user=@]
+	 * [age>20]
+	 * 
+	 * Hot just now
+	 * [product=@][temperature > 90]
+	 * 
+	 * *** Next Silo ***
+	 * ...
+	 */
+	
+	// also there could be simple markups for a 
+	// * search form => ???
+	// * current users polls => !!!
+	// * 
 }

@@ -19,19 +19,27 @@ public interface Ctrl {
 		 * This is always the user that has authorized himself. 
 		 * Not the "as" viewer. 
 		 */
-		public User actor;
+		public final User actor;
 		/**
 		 * Related sites shown as menu
 		 */
-		public Site[] menu;
+		public final Site[] menu;
 		/**
 		 * The template shown
 		 */
-		public Site page;
+		public final Site page;
 		/**
 		 * Query results in order of occurrence in the {@link Template} of the
 		 * {@link #page}.
 		 */
-		public Matches[] results; 
+		public final Matches[] results;
+		
+		public ListPage(User actor, Site[] menu, Site page, Matches[] results) {
+			this.actor = actor;
+			this.menu = menu;
+			this.page = page;
+			this.results = results;
+		}
+		
 	}
 }

@@ -17,15 +17,19 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.server.session.HashSessionIdManager;
+import org.eclipse.jetty.server.session.HashSessionManager;
+import org.eclipse.jetty.server.session.SessionHandler;
 import org.lmdbjava.Env;
 
 import se.jbee.track.db.DB;
 import se.jbee.track.db.LMDB;
+import se.jbee.track.model.Date;
 import se.jbee.track.ui.ctrl.DBController;
 import se.jbee.track.ui.ctrl.Param;
 import se.jbee.track.ui.ctrl.Params;
 
-public class HttpTrackerServer extends AbstractHandler {
+public class TrackerServer extends AbstractHandler {
 
 	public static void main( String[] args ) throws Exception
 	{
@@ -40,8 +44,13 @@ public class HttpTrackerServer extends AbstractHandler {
 		ContextHandler contextHandler = new ContextHandler("/static");
 		contextHandler.setHandler(resource_handler);
 		handlers.addHandler(contextHandler);
+        server.setSessionIdManager(new HashSessionIdManager());
 		try (DB db = createDB(args)) {
-			handlers.addHandler(new HttpTrackerServer(new HttpTrackerUI(new DBController(db, null, null, null))));
+			TrackerServer app = new TrackerServer(new TrackerHttpUI(new DBController(db, null, null, null)));
+			HashSessionManager manager = new HashSessionManager();
+	        SessionHandler sessions = new SessionHandler(manager);
+	        sessions.setHandler(app);
+			handlers.addHandler(sessions);
 			server.setHandler(handlers);
 			server.start();
 			server.join();
@@ -49,7 +58,7 @@ public class HttpTrackerServer extends AbstractHandler {
 	}
 
 	private static DB createDB(String[] args) throws IOException {
-		String path = System.getProperty("java.io.tmpdir") + "/db"+System.currentTimeMillis()+"/";
+		String path = System.getProperty("java.io.tmpdir") + "/collaborate-"+Date.today()+"/";
 		if (args.length >= 1) {
 			path = args[0];
 		}
@@ -66,7 +75,7 @@ public class HttpTrackerServer extends AbstractHandler {
 	
 	private final HttpUI ui;
 	
-	public HttpTrackerServer(HttpUI ui) {
+	public TrackerServer(HttpUI ui) {
 		this.ui = ui;
 	}
 
