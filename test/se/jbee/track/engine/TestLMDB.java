@@ -29,6 +29,7 @@ import se.jbee.track.db.DB;
 import se.jbee.track.db.DB.TxR;
 import se.jbee.track.db.DB.TxRW;
 import se.jbee.track.db.LMDB;
+import se.jbee.track.model.Email;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.ID.Type;
 import se.jbee.track.model.Name;
@@ -67,7 +68,7 @@ public class TestLMDB {
 	
 	@Test
 	public void putGetAdapterAPI() throws IOException {
-		Tracker tracker = new Tracker(() -> System.currentTimeMillis(), new NoLimits());
+		Tracker tracker = new Tracker(new Server(Email.email("admin@example.com"), () -> System.currentTimeMillis(), new NoLimits()));
 		final File path = tmp.newFolder();
 		try (DB db = new LMDB(Env.create().setMapSize(1014*1024*10), path)) {
 			User u1 = tracker.register(null, as("user1"), email("pass1@ex.de"));
@@ -115,9 +116,10 @@ public class TestLMDB {
 			Name site = as("def");
 			Clock realTime = () -> System.currentTimeMillis();
 			LinearLimits limits = new LinearLimits(5);
+			Server server = new Server(Email.email("admin@example.com"), realTime, limits);
 
 			Change change = register(user, email("test@example.com"));
-			Changes changed = Transaction.run(change, db , realTime, limits);
+			Changes changed = Transaction.run(change, db, server);
 			
 			assertEquals(1, changed.length());
 			
@@ -127,7 +129,7 @@ public class TestLMDB {
 
 			User usr = (User)changed.get(0).after;
 			change = authenticate(user, usr.otp).and(compose(user, site, template("ghi")));
-			changed = Transaction.run(change, db, realTime, limits);
+			changed = Transaction.run(change, db, server);
 					
 			assertEquals(2, changed.length());
 			

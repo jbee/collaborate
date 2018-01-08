@@ -18,6 +18,7 @@ import static se.jbee.track.engine.Convert.site2bin;
 import static se.jbee.track.engine.Convert.task2bin;
 import static se.jbee.track.engine.Convert.user2bin;
 import static se.jbee.track.engine.Convert.version2bin;
+import static se.jbee.track.engine.Server.Switch.OPEN;
 import static se.jbee.track.model.Email.email;
 import static se.jbee.track.model.Gist.gist;
 import static se.jbee.track.model.Name.as;
@@ -30,6 +31,7 @@ import org.junit.Test;
 
 import se.jbee.track.engine.Event.Transition;
 import se.jbee.track.model.Area;
+import se.jbee.track.model.Email;
 import se.jbee.track.model.Gist;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.IDN;
@@ -46,7 +48,7 @@ import se.jbee.track.model.Version;
 public class TestConvert {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(TestConvert.this::tick, new NoLimits());
+	private Tracker tracker = new Tracker(new Server(Email.email("admin@example.com"), TestConvert.this::tick, new NoLimits(), OPEN));
 
 	private long tick() {
 		now += 60000;

@@ -9,7 +9,7 @@ package se.jbee.track.engine;
  * or counter cannot be {@link #stress(Limit, Clock)}ed any more.
  * 
  * In principle limits are shared by all users. Users can however
- * {@link #occupy(Limit, Clock)}ate a limit exclusively. Than no other user may
+ * {@link #occupy(Limit, Clock)} a limit exclusively. Than no other user may
  * {@link #stress(Limit, Clock)} or {@link #occupy(Limit, Clock)} that limit
  * until the limit is {@link #free(Limit)}ed again by the holder, otherwise this
  * causes a {@link ConcurrentUsage}.

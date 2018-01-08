@@ -52,12 +52,12 @@ public final class Transaction extends DAO implements Tx, Limits {
 	 * @return a list of changed entities each given as a pair: before and after the change 
 	 * @throws ConcurrentUsage when trying to change an entity already changed by an ongoing transaction (in another thread)
 	 */
-	public static Changes run(Change set, DB db, Clock clock, Limits limits) throws ConcurrentUsage {
-		final long now = max(lastTick.incrementAndGet(), clock.time());
+	public static Changes run(Change set, DB db, Server server) throws ConcurrentUsage {
+		final long now = max(lastTick.incrementAndGet(), server.clock.time());
 		final Clock fixedNow = () -> now;
-		try (Transaction tx = new Transaction(fixedNow, limits, db)) {
+		try (Transaction tx = new Transaction(fixedNow, server.limits, db)) {
 			try {
-				set.apply(new Tracker(fixedNow, tx), tx);
+				set.apply(new Tracker(server.with(fixedNow, tx)), tx);
 				return tx.commit();
 			} finally {
 				tx.freeOccupiedLimits();

@@ -21,6 +21,7 @@ import static se.jbee.track.model.Status.unsolved;
 
 import java.util.EnumMap;
 
+import se.jbee.track.engine.Limits.ConcurrentUsage;
 import se.jbee.track.engine.TransitionDenied.Error;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.Attachments;
@@ -58,13 +59,11 @@ public final class Tracker {
 	 */
 	private static final long TOKEN_VALIDITY = 600000L;
 
-	private final Clock clock;
-	private final Limits limits;
+	private final Server server;
 
-	public Tracker(Clock clock, Limits limits) {
+	public Tracker(Server server) {
 		super();
-		this.clock = clock;
-		this.limits = limits;
+		this.server = server;
 	}
 
 	/* Users + Accounts */
@@ -72,17 +71,19 @@ public final class Tracker {
 	/**
 	 * When a user is registered with just an email the alias is also the email.
 	 * 
-	 * Users never provide a password. Instead a OTP is set each time the user
-	 * wants to log in. The OTP needs to be {@link #authenticate(User, byte[])}
-	 * d.
+	 * Users never provide a password. Instead an {@link OTP} is set each time
+	 * the user wants to log in. The {@link OTP} needs to be
+	 * {@link #authenticate(User, byte[])} d.
 	 * 
 	 * After {@link #register(User, Name, Email)} the user uses
-	 * {@link #confirm(User)} to request a new OTP (that is send to him via
-	 * email).
+	 * {@link #confirm(User)} to request a new {@link OTP} (that is send to him
+	 * via email).
 	 * 
 	 * This is actually more secure than using passwords. A users password can
 	 * never be stolen or hacked. Each OTP is only usable once. To steal an
-	 * account an attacker has to steal the users email account.
+	 * account an attacker has to steal the users email account or perform a
+	 * man in the middle attack. User passwords can never leak because there
+	 * simply are none.
 	 */
 	public User register(User existing, Name alias, Email email) {
 		if (existing != null)
@@ -106,9 +107,11 @@ public final class Tracker {
 
 	/**
 	 * Used to initialize a "log in" for a registered user. 
+	 * He confirms that he still (or now) has control over the email connected
+	 * to the user account.
 	 */
 	public User confirm(User user) {
-		long now = clock.time();
+		long now = now();
 		if (now < user.millisOtpExprires && now < user.millisOtpExprires-TOKEN_VALIDITY+60000L) {
 			// protected against requesting to many tokens
 			denyTransition(Error.E21_TOKEN_ON_COOLDOWN);
@@ -121,16 +124,19 @@ public final class Tracker {
 
 	private void confirmOTP(User user) {
 		stressDoConfirm();
-		user.otp = OTP.next();
+		user.otp = OTP.next(); // this is blanked out as soon as the OTP is send
 		user.encryptedOtp = OTP.encrypt(user.otp);
-		user.millisOtpExprires = clock.time() + TOKEN_VALIDITY;
+		user.millisOtpExprires = now() + TOKEN_VALIDITY;
 	}
 
 	/**
 	 * Used to confirm the users identity and complete a "log in". 
 	 */
 	public User authenticate(User user, byte[] token) {
-		if (clock.time() > user.millisOtpExprires) {
+		if (server.isOnLockdown() && !server.isAdmin(user)) {
+			denyTransition(Error.E26_LOCKDOWN);
+		}
+		if (now() > user.millisOtpExprires) {
 			denyTransition(Error.E22_TOKEN_EXPIRED);
 		}
 		if (!OTP.isToken(token, user.encryptedOtp)) {
@@ -141,7 +147,7 @@ public final class Tracker {
 		// invalidate token
 		user.otp=null;
 		user.encryptedOtp=null;
-		user.millisOtpExprires=clock.time()-1L;
+		user.millisOtpExprires=now()-1L;
 		touch(user);
 		return user;
 	}
@@ -176,8 +182,12 @@ public final class Tracker {
 	/* Products */
 
 	public Product constitute(Name product, User actor) {
-		expectRegistered(actor);
-		expectAuthenticated(actor);
+		if (server.isOpen()) {
+			expectRegistered(actor);
+			expectAuthenticated(actor);
+		} else {
+			expectAdmin(server, actor);
+		}
 		expectRegular(product);
 		stressNewProduct(actor);
 		Product p = new Product(1);
@@ -280,6 +290,8 @@ public final class Tracker {
 			area.maintainers = area.maintainers.remove(maintainer);
 			touch(maintainer);
 			// NB: votes cannot 'get stuck' as voter can change their vote until a vote is settled
+			//TODO this could however decide a previously undecided vote - same if a user is forced to leave
+			// such Polls would ideally be resolved in the same transaction
 		}
 		return area;
 	}
@@ -877,8 +889,14 @@ public final class Tracker {
 	}
 	
 	private void stressLimit(Limit limit, String msg) {
-		if (!limits.stress(limit, clock)) {
-			denyTransition(Error.E1_LIMIT_EXCEEDED, limit, msg);
+		if (server.isOnLockdown())
+			return; // no limit checks for admins during the lockdown
+		try {
+			if (!server.limits.stress(limit, server.clock)) {
+				denyTransition(Error.E1_LIMIT_EXCEEDED, limit, msg);
+			}
+		} catch (ConcurrentUsage e) {
+			denyTransition(Error.E27_LIMIT_OCCUPIED, limit, msg);
 		}
 	}
 
@@ -988,13 +1006,19 @@ public final class Tracker {
 		if (!user.canWatch())
 			denyTransition(Error.E20_USER_WATCH_LIMIT_REACHED);
 	}
+	
+	private static void expectAdmin(Server server, User actor) {
+		if (!server.isAdmin(actor)) {
+			denyTransition(Error.E25_ADMIN_REQUIRED);
+		}
+	}
 
 	private static void denyTransition(Error error, Object...args) {
 		throw new TransitionDenied(error, args);
 	}
 
 	private long now() {
-		return clock.time();
+		return server.clock.time();
 	}
 
 }
