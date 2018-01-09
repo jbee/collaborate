@@ -3,10 +3,10 @@ package se.jbee.track.model;
 public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparable<T> {
 
 	public final transient int initalVersion;
+
 	private int version;
-	
+	private boolean corrupted = false;
 	private transient ID uniqueId;
-	private transient boolean corrupted = false;
 	
 	protected abstract ID computeID();
 	
@@ -23,15 +23,15 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 		this.version = initalVersion;
 	}
 	
-	public int version() {
+	public final int version() {
 		return version;
 	}
 	
-	public boolean isModified() {
+	public final boolean isModified() {
 		return version > initalVersion;
 	}
 	
-	public boolean isCurrupted() {
+	public final boolean isCurrupted() {
 		return corrupted;
 	}
 	
@@ -43,9 +43,25 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 		version++;
 	}
 	
+	/**
+	 * This is a way to lift the other instance to the same version as this
+	 * version of the very same entity.
+	 * 
+	 * If another or an older entity is passed no change is done. If the other
+	 * instance is changed it also is flagged as {@link #corrupted}. This way it
+	 * can be updated to a higher version but only by simultaneously making it
+	 * illegal to store this updated entity as we do not know if its state is
+	 * 100% identical. We do this in the assumption that its state is a 100%
+	 * identical but a programming mistake could render this false and we do not
+	 * want to rely on that.
+	 * 
+	 * Also the update will only be done if this entity itself is not yet
+	 * {@link #corrupted}.
+	 */
 	@SuppressWarnings("unchecked")
 	public final void update(Entity<T> other) {
-		if (isMoreRecent((T) other)) {
+		if (!isCurrupted() && isMoreRecent((T) other)) {
+			other.corrupted = true; // most often the other already is corrupted
 			other.version = version;
 		}
 	}
