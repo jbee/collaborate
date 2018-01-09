@@ -44,7 +44,7 @@ public abstract class Identifier<T extends Identifier<T>> extends Bytes implemen
 		throw new UnsupportedOperationException("Identifiers cannot be changed!");
 	}
 	
-	public boolean startsWith(Identifier<?> other) {
+	public final boolean startsWith(Identifier<?> other) {
 		if (other.symbols.length > symbols.length)
 			return false;
 		for (int i = 0; i < other.symbols.length; i++) {

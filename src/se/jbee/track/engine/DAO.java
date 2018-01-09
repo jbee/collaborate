@@ -14,6 +14,7 @@ import static se.jbee.track.model.ID.productId;
 import static se.jbee.track.model.ID.siteId;
 import static se.jbee.track.model.ID.userId;
 import static se.jbee.track.model.ID.versionId;
+import static se.jbee.track.model.Name.as;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -134,34 +135,44 @@ public class DAO implements Repository {
 	
 	@Override
 	public void tasks(Name product, Predicate<Task> consumer) {
-		txr.range(ID.taskId(product, IDN.ZERO), (k,v) -> { 
-			if (!k.startsWith(product))
-				return false; // stop as soon as another product is reached
-			return consumer.test(Convert.bin2task.convert(this, v)); 
-		});
+		range(bin2task, ID.taskId(product, IDN.ZERO), 
+				(t) -> t.product.name.equalTo(product) && consumer.test(t));
 	}
 	
 	@Override
 	public Product[] products() {
-		List<Product> res = new ArrayList<>();
-		txr.range(ID.productId(Name.as("0")), (k,v) -> {
-			res.add(Convert.bin2product.convert(this, v));
-			return true; 
-		});
-		return res.toArray(new Product[0]);
+		return range(bin2product, new Product[0], ID.productId(as("0")), 
+				(p) -> true);
 	}
 	
 	@Override
 	public Site[] sites(Name product, Name menu) {
-		List<Site> res = new ArrayList<>();
-		txr.range(ID.siteId(product, menu, Name.as("0")), (k,v) -> {
-			Site s = Convert.bin2site.convert(this, v);
-			if (s.menu.equalTo(menu)) {
-				res.add(s);
-				return true;
-			}
-			return false;
+		return range(bin2site, new Site[0], ID.siteId(product, menu, as("0")),
+				(s) -> s.menu.equalTo(menu));
+	}
+	
+	@Override
+	public Poll[] polls(Name product, Name area) {
+		return range(bin2poll, new Poll[0], ID.pollId(product, area, IDN.ZERO), 
+				(p) -> p.area.name.equalTo(area));
+	}
+	
+	private <T> void range(Convert<Repository, T> reader, ID start, Predicate<T> filter) {
+		txr.range(start, (k,v) -> filter.test(transactionObjectOrDecode(reader, k, v)));
+	}
+	
+	private <T> T[] range(Convert<Repository, T> reader, T[] empty, ID start, Predicate<T> filter) {
+		List<T> res = new ArrayList<>();
+		txr.range(start, (k,v) -> {
+			T e = transactionObjectOrDecode(reader, k, v);
+			return filter.test(e) && res.add(e);
 		});
-		return res.toArray(new Site[0]);
+		return res.toArray(empty);
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <T> T transactionObjectOrDecode(Convert<Repository, T> reader, ID k, ByteBuffer v) {
+		Object et = transactionObject(k);
+		return (et != null) ? (T)et : reader.convert(this, v);
 	}
 }

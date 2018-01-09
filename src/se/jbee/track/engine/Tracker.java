@@ -290,8 +290,6 @@ public final class Tracker {
 			area.maintainers = area.maintainers.remove(maintainer);
 			touch(maintainer);
 			// NB: votes cannot 'get stuck' as voter can change their vote until a vote is settled
-			//TODO this could however decide a previously undecided vote - same if a user is forced to leave
-			// such Polls would ideally be resolved in the same transaction
 		}
 		return area;
 	}
@@ -557,7 +555,7 @@ public final class Tracker {
 		poll.initiator = actor.alias;
 		poll.affected = !matter.isUserRelated() ? Name.ORIGIN : affected.alias;
 		poll.start = date(now());
-		poll.outcome = Outcome.unsettled;
+		poll.outcome = Outcome.inconclusive;
 		poll.consenting = Names.empty();
 		poll.dissenting = Names.empty();
 		poll.expiry = poll.start.plusDays(min(14, area.maintainers.count()));
@@ -572,6 +570,25 @@ public final class Tracker {
 
 	public Poll dissent(Poll poll, User voter) {
 		return vote(poll, voter, false);
+	}
+	
+	/**
+	 * When users leave an area as a maintainer the polls of that area might be
+	 * affected by the change. This method is used to process ALL {@link Poll}s 
+	 * of the area left by a maintainer. As this is a passive effect of another
+	 * event there are no checks on the authentification of the actor or likewise.
+	 */
+	public Poll recount(Poll poll, Name resignedUser, User actor) {
+		if (poll.hasVoted(resignedUser)) {
+			poll = poll.clone();
+			poll.consenting = poll.consenting.remove(resignedUser);
+			poll.dissenting = poll.dissenting.remove(resignedUser);
+			if (!poll.isConcluded() && poll.isEffectivelySettled()) {
+				settle(poll);
+			}
+			touch(actor);
+		}
+		return poll;
 	}
 
 	private Poll vote(Poll poll, User voter, boolean consent) {
@@ -590,7 +607,7 @@ public final class Tracker {
 				poll.consenting = poll.consenting.remove(voter);				
 			}
 			touch(voter);
-			if (poll.isSettled()) {
+			if (poll.isEffectivelySettled()) {
 				settle(poll);
 			}
 		}

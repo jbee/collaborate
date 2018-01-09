@@ -48,6 +48,7 @@ import se.jbee.track.model.Mail;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
+import se.jbee.track.model.Poll;
 import se.jbee.track.model.Poll.Matter;
 import se.jbee.track.model.Product.Integration;
 import se.jbee.track.model.Purpose;
@@ -201,10 +202,13 @@ public interface Change {
 		return (t, tx) -> { tx.put(compart, t.compart(tx.area(product, basis), partition, tx.user(actor), subarea)); };
 	}
 	
-	static Change leave(Name product, Name area, Name maintainer) {
-		return (t, tx) -> { tx.put(leave, t.leave(tx.area(product, area), tx.user(maintainer))); };
+	static Change leave(Name product, Name area, Name leavingMaintainer) {
+		return (t, tx) -> { 
+			tx.put(leave, t.leave(tx.area(product, area), tx.user(leavingMaintainer)));
+			recount(leave, t,tx, product, area, leavingMaintainer, leavingMaintainer);
+		};
 	}
-	
+
 	static Change relocate(Name product, IDN task, Name toArea, Name actor) {
 		return (t, tx) -> { tx.put(relocate, t.relocate(tx.task(product, task), tx.area(product, toArea), tx.user(actor))); };
 	}
@@ -274,7 +278,13 @@ public interface Change {
 	}
 	
 	static Change consent(Name product, Name area, IDN serial, Name voter) {
-		return (t, tx) -> { tx.put(consent, t.consent(tx.poll(product, area, serial), tx.user(voter))); };
+		return (t, tx) -> { 
+			Poll poll = t.consent(tx.poll(product, area, serial), tx.user(voter));
+			tx.put(consent, poll);
+			if (poll.isConcluded() && poll.matter == Matter.resignation) {
+				recount(consent, t, tx, product, area, poll.affected, voter);
+			}
+		};
 	}
 	
 	static Change dissent(Name product, Name area, IDN serial, Name voter) {
@@ -323,5 +333,11 @@ public interface Change {
 	
 	static Change erase(Name product, Name area, Name site, Name user) {
 		return (t, tx) -> { tx.put(erase, t.erase(tx.site(product, area, site), tx.area(product, area), tx.user(user))); };
+	}
+	
+	static void recount(Operation op, Tracker t, Tx tx, Name product, Name area, Name resignedUser, Name actor) {
+		User user = tx.user(actor);
+		for (Poll p : tx.polls(product, area))
+			tx.put(op, t.recount(p, resignedUser, user));
 	}
 }

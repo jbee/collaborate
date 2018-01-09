@@ -117,6 +117,8 @@ public final class User extends Entity<User> {
 	}
 
 	public boolean isAuthenticated() {
+		//TODO make this session dependent - the user should have authenticated in this session
+		// maybe reset a users auth when a register/confirm occurs 
 		return authenticated > 0 && alias.isEditable();
 	}
 

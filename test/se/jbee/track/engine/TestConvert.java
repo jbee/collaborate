@@ -219,6 +219,12 @@ public class TestConvert {
 			// TODO Auto-generated method stub
 			return null;
 		}
+		
+		@Override
+		public Poll[] polls(Name product, Name area) {
+			// TODO Auto-generated method stub
+			return null;
+		}
 
 		@Override
 		public void close() {

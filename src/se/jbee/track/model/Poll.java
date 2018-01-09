@@ -46,10 +46,10 @@ public final class Poll extends Entity<Poll> {
 	}
 	
 	public boolean canVote(Name voter) {
-		return area.maintainers.contains(voter) && !affected.equalTo(voter) && !isSettled();
+		return !isConcluded() && area.maintainers.contains(voter) && !affected.equalTo(voter) && !isEffectivelySettled();
 	}
 
-	public boolean isSettled() {
+	public boolean isEffectivelySettled() {
 		int all = area.maintainers.count();
 		int pro = consenting.count();
 		int contra = dissenting.count();
@@ -58,6 +58,15 @@ public final class Poll extends Entity<Poll> {
 	}
 
 	public boolean isAccepted() {
-		return consenting.count() > dissenting.count() && isSettled();
+		return outcome == Outcome.consent || (consenting.count() > dissenting.count() && isEffectivelySettled());
 	}
+	
+	public boolean isConcluded() {
+		return outcome != Outcome.inconclusive;
+	}
+
+	public boolean hasVoted(Name user) {
+		return consenting.contains(user) || dissenting.contains(user);
+	}
+	
 }

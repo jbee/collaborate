@@ -28,8 +28,10 @@ public interface Repository extends AutoCloseable {
 	History history(ID entity) throws UnknownEntity;
 
 	void tasks(Name product, Predicate<Task> consumer);
+	
 	Product[] products();
 	Site[] sites(Name product, Name menu);
+	Poll[] polls(Name product, Name area);
 	
 	/**
 	 * No {@link Exception} here!
