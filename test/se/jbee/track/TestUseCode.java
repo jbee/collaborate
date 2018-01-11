@@ -3,6 +3,7 @@ package se.jbee.track;
 import static org.junit.Assert.fail;
 
 import java.util.BitSet;
+import java.util.HashMap;
 
 import org.junit.Test;
 
@@ -73,18 +74,42 @@ public class TestUseCode {
 		assertUniqueCode(User.Notification.class);
 	}
 	
+	@Test
+	public void authStatesHaveUniqueCode() {
+		assertUniqueCode(User.AuthState.class);
+	}
+	
+	@Test
+	public void operationsHaveUniqueHash() {
+		assertUniqueHash(Change.Operation.class);
+	}
+	
 	private static <E extends Enum<E>> void assertUniqueCode(Class<E> type) {
 		final E[] enumConstants = type.getEnumConstants();
-		if (enumConstants.length > 128)
-			fail("All enums must not use more than 128 constants!");
+		if (enumConstants.length > 64)
+			fail("All enums must not use more than 64 constants!");
 		if (!type.isAnnotationPresent(UseCode.class))
 			return;
-		BitSet set = new BitSet(128);
+		BitSet set = new BitSet(64);
 		for (E c : enumConstants) {
 			int idx = c.name().charAt(0);
 			if (set.get(idx))
 			fail("Code is used twice: "+c.name());
 			set.set(idx);
+		}
+	}
+	
+	private static <E extends Enum<E>> void assertUniqueHash(Class<E> type) {
+		final E[] enumConstants = type.getEnumConstants();
+		HashMap<Integer, E> taken = new HashMap<>();
+		for (E e : enumConstants) {
+			int hash = 0;
+			for (char c : e.name().toCharArray()) {
+				hash = (hash << 2) + c;
+			}
+			if (taken.containsKey(hash))
+				fail("Equal sum: "+taken.get(hash)+", "+e);
+			taken.put(hash, e);
 		}
 	}
 }

@@ -9,7 +9,7 @@ import se.jbee.track.model.ID.Type;
 
 public final class Changes implements Iterable<Changes.Entry<?>>{
 
-	public static final Changes EMPTY = new Changes(0, new Entry[0]);
+	public static final Changes EMPTY = new Changes(0, 0, new Entry[0]);
 	
 	public static final class Entry<T extends Entity<T>> {
 		
@@ -38,11 +38,13 @@ public final class Changes implements Iterable<Changes.Entry<?>>{
 	}
 	
 	public final long timestamp;
+	public final  long serial;
 	private final Entry<?>[] log;
 	
-	public Changes(long timestamp, Entry<?>[] log) {
+	public Changes(long timestamp, long serial, Entry<?>[] log) {
 		super();
 		this.timestamp = timestamp;
+		this.serial = serial;
 		this.log = log;
 	}
 	
@@ -52,6 +54,10 @@ public final class Changes implements Iterable<Changes.Entry<?>>{
 	
 	public int length() {
 		return log.length;
+	}
+	
+	public boolean isEmpty() {
+		return length() == 0;
 	}
 	
 	@Override

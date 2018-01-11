@@ -45,6 +45,7 @@ import se.jbee.track.model.Task;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.URL;
 import se.jbee.track.model.User;
+import se.jbee.track.model.User.AuthState;
 import se.jbee.track.model.User.Notification;
 import se.jbee.track.model.Version;
 import se.jbee.track.util.Array;
@@ -86,44 +87,54 @@ public final class Tracker {
 	 * simply are none.
 	 */
 	public User register(User existing, Name alias, Email email) {
-		if (existing != null)
-			denyTransition(Error.E24_USER_EXISTS, alias);
+		if (existing != null) {
+			if (existing.email.equalTo(email))
+				return confirm(existing, existing.authState);
+			if (!existing.isDubious(now()))
+				denyTransition(Error.E24_USER_EXISTS, alias);
+		}
 		if (!alias.isEmail()) { // so email or regular names are OK
 			expectRegular(alias);
 			//TODO should we check that an email is only used for a single user?
+			// in general it is OK for a user to have multiple account for a single email but there should be a limit to prevent abuse.
 		}
 		stressNewUser();
-		existing = new User(1);
-		existing.alias = alias;
-		existing.email = email;
-		existing.notificationSettings=new EnumMap<>(Notification.class);
-		existing.authenticated = 0;
-		existing.contributesToProducts = Names.empty();
-		existing.watches = 0;
-		existing.millisLastActive=now(); // cannot use touch as version should stay same
-		confirmOTP(existing);
-		return existing;
+		User user = new User(1);
+		user.alias = alias;
+		user.email = email;
+		user.notificationSettings=new EnumMap<>(Notification.class);
+		user.contributesToProducts = Names.empty();
+		user.watches = 0;
+		user.millisLastActive=now(); // cannot use touch as version should stay same
+		confirmOTP(user, AuthState.registered);
+		return user;
 	}
-
+	
 	/**
 	 * Used to initialize a "log in" for a registered user. 
 	 * He confirms that he still (or now) has control over the email connected
 	 * to the user account.
 	 */
 	public User confirm(User user) {
+		return confirm(user, AuthState.confirming);
+	}
+		
+	private User confirm(User user, AuthState state) {	
 		long now = now();
+		//TODO increase time - make cool-down grow with power of 2?
+		// 1min cool-down protection against requesting to many tokens
 		if (now < user.millisOtpExprires && now < user.millisOtpExprires-TOKEN_VALIDITY+60000L) {
-			// protected against requesting to many tokens
 			denyTransition(Error.E21_TOKEN_ON_COOLDOWN);
 		}
 		user = user.clone();
-		confirmOTP(user);
+		confirmOTP(user, state);
 		touch(user);
 		return user;
 	}
 
-	private void confirmOTP(User user) {
+	private void confirmOTP(User user, AuthState state) {
 		stressDoConfirm();
+		user.authState=state;
 		user.otp = OTP.next(); // this is blanked out as soon as the OTP is send
 		user.encryptedOtp = OTP.encrypt(user.otp);
 		user.millisOtpExprires = now() + TOKEN_VALIDITY;
@@ -143,7 +154,7 @@ public final class Tracker {
 			denyTransition(Error.E23_TOKEN_INVALID);
 		}
 		user = user.clone();
-		user.authenticated++;
+		user.authState = AuthState.authenticated;
 		// invalidate token
 		user.otp=null;
 		user.encryptedOtp=null;
@@ -193,6 +204,7 @@ public final class Tracker {
 		Product p = new Product(1);
 		p.name = product;
 		p.tasks = 0;
+		p.categories = Names.empty();
 		p.integrations = new Product.Integration[0];
 		p.origin = compart(p.name, Name.ORIGIN, actor);
 		p.somewhere = compart(p.name, Name.UNKNOWN, actor);
@@ -233,6 +245,21 @@ public final class Tracker {
 		product = product.clone();
 		product.integrations = Array.remove(product.integrations, endpoint, Integration::equalTo);
 		touch(actor);
+		return product;
+	}
+	
+	public Product suggest(Product product, Name category, User actor) {
+		expectRegistered(actor);
+		expectAuthenticated(actor);
+		expectOriginMaintainer(product, actor);
+		if (!product.categories.contains(category)) {
+			if (product.categories.count() >= 10)
+				denyTransition(Error.E28_CATEGORY_LIMIT, 10);
+			stressUser(actor);
+			product = product.clone();
+			product.categories = product.categories.add(category);
+			touch(actor);
+		}
 		return product;
 	}
 
@@ -278,6 +305,7 @@ public final class Tracker {
 		a.tasks = 0;
 		a.polls = 0;
 		a.safeguarded = true;
+		a.category = Name.UNKNOWN;
 		actor.contributesToProducts = actor.contributesToProducts.add(product);
 		touch(actor);
 		return a;
@@ -290,6 +318,19 @@ public final class Tracker {
 			area.maintainers = area.maintainers.remove(maintainer);
 			touch(maintainer);
 			// NB: votes cannot 'get stuck' as voter can change their vote until a vote is settled
+		}
+		return area;
+	}
+	
+	public Area categorise(Area area, Name category, User actor) {
+		expectRegistered(actor);
+		expectAuthenticated(actor);
+		expectMaintainer(area, actor);
+		if (!area.category.equalTo(category)) {
+			stressUser(actor);
+			area = area.clone();
+			area.category = category;
+			touch(actor);
 		}
 		return area;
 	}
@@ -327,7 +368,7 @@ public final class Tracker {
 		touch(actor);
 		return task;
 	}
-
+	
 	/* Versions */
 
 	public Version tag(Product product, Name version, User actor) {
@@ -426,6 +467,8 @@ public final class Tracker {
 		if (!task.area.isOpen()) {
 			expectMaintainer(task.area, actor);
 		}
+		if (task.attachments.contains(attachment))
+			return task;
 		expectUnsolved(task);
 		expectConform(task, attachment);
 		stressDoAttach(task, actor);
@@ -442,6 +485,8 @@ public final class Tracker {
 	public Task detach(Task task, User actor, URL attachment) {
 		expectAuthenticated(actor);
 		expectMaintainer(task.area, actor);
+		if (!task.attachments.contains(attachment))
+			return task;
 		stressDoAttach(task, actor);
 		task = task.clone();
 		task.attachments = task.attachments.remove(attachment); 

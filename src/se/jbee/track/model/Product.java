@@ -44,6 +44,11 @@ public final class Product extends Entity<Product> {
 	 */
 	public Version somewhen;
 
+	/**
+	 * A set of suggested categories.
+	 */
+	public Names categories;
+	
 	public int tasks;
 	
 	public Product(int version) {

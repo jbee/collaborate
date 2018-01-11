@@ -45,12 +45,15 @@ public final class User extends Entity<User> {
 		}
 	}
 	
+	@UseCode
+	public static enum AuthState { registered, confirming, authenticated }
+	
 	private static final int INITIAL_WATCH_LIMIT = 20;
 
 	public Name alias;
 	// account
 	public Email email;
-	public int authenticated; // count
+	public AuthState authState;
 	public transient byte[] otp; // mem only
 	public byte[] encryptedOtp; // persisted
 	public long millisOtpExprires;
@@ -117,9 +120,7 @@ public final class User extends Entity<User> {
 	}
 
 	public boolean isAuthenticated() {
-		//TODO make this session dependent - the user should have authenticated in this session
-		// maybe reset a users auth when a register/confirm occurs 
-		return authenticated > 0 && alias.isEditable();
+		return authState == AuthState.authenticated && alias.isEditable();
 	}
 
 	public void emphasised(long now) {
@@ -133,6 +134,14 @@ public final class User extends Entity<User> {
 
 	public boolean canWatch() {
 		return watches < INITIAL_WATCH_LIMIT + (xp / 10);
+	}
+	
+	/**
+	 * A dubious user has never been confirmed. After the OTP expired another
+	 * user can claim this account name and effectively replace the dubious user.
+	 */
+	public boolean isDubious(long now) {
+		return authState == AuthState.registered && now > millisOtpExprires;
 	}
 
 }

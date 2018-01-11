@@ -4,6 +4,8 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
+import se.jbee.track.ui.ctrl.Param.Command;
+
 public class TestURLToParams {
 
 	@Test
@@ -12,7 +14,7 @@ public class TestURLToParams {
 		
 		assertEquals(2, params.size());
 		assertEquals(params.get(Param.viewed), "@");
-		assertEquals(params.get(Param.command), Action.list.name());
+		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
@@ -21,7 +23,7 @@ public class TestURLToParams {
 		
 		assertEquals(2, params.size());
 		assertEquals(params.get(Param.viewed), "foo");
-		assertEquals(params.get(Param.command), Action.list.name());
+		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
@@ -31,7 +33,7 @@ public class TestURLToParams {
 		assertEquals(3, params.size());
 		assertEquals(params.get(Param.viewed), "foo");
 		assertEquals(params.get(Param.site), "bar");
-		assertEquals(params.get(Param.command), Action.list.name());
+		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
@@ -42,7 +44,7 @@ public class TestURLToParams {
 		assertEquals(params.get(Param.viewed), "foo");
 		assertEquals(params.get(Param.site), "bar");
 		assertEquals(params.get(Param.role), "baz");
-		assertEquals(params.get(Param.command), Action.list.name());
+		assertEquals(params.get(Param.command), Command.list.name());
 	}
 
 	@Test
@@ -51,7 +53,7 @@ public class TestURLToParams {
 		
 		assertEquals(2, params.size());
 		assertEquals(params.get(Param.product), "foo");
-		assertEquals(params.get(Param.command), Action.list.name());
+		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
@@ -61,7 +63,7 @@ public class TestURLToParams {
 		assertEquals(3, params.size());
 		assertEquals(params.get(Param.product), "foo");
 		assertEquals(params.get(Param.area), "bar");
-		assertEquals(params.get(Param.command), Action.list.name());
+		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
@@ -72,7 +74,7 @@ public class TestURLToParams {
 		assertEquals(params.get(Param.product), "foo");
 		assertEquals(params.get(Param.area), "*");
 		assertEquals(params.get(Param.site), "bar");
-		assertEquals(params.get(Param.command), Action.list.name());
+		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
@@ -83,7 +85,7 @@ public class TestURLToParams {
 		assertEquals(params.get(Param.product), "foo");
 		assertEquals(params.get(Param.area), "baz");
 		assertEquals(params.get(Param.site), "bar");
-		assertEquals(params.get(Param.command), Action.list.name());
+		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
@@ -95,7 +97,7 @@ public class TestURLToParams {
 		assertEquals(params.get(Param.area), "baz");
 		assertEquals(params.get(Param.site), "bar");
 		assertEquals(params.get(Param.role), "que");
-		assertEquals(params.get(Param.command), Action.list.name());
+		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
@@ -105,7 +107,7 @@ public class TestURLToParams {
 		assertEquals(3, params.size());
 		assertEquals(params.get(Param.product), "foo");
 		assertEquals(params.get(Param.version), "0.4");
-		assertEquals(params.get(Param.command), Action.version.name());
+		assertEquals(params.get(Param.command), Command.version.name());
 	}
 	
 	@Test
@@ -115,7 +117,7 @@ public class TestURLToParams {
 		assertEquals(3, params.size());
 		assertEquals(params.get(Param.product), "foo");
 		assertEquals(params.get(Param.task), "146");
-		assertEquals(params.get(Param.command), Action.details.name());
+		assertEquals(params.get(Param.command), Command.details.name());
 	}
 
 	@Test
@@ -126,7 +128,7 @@ public class TestURLToParams {
 		assertEquals(params.get(Param.product), "foo");
 		assertEquals(params.get(Param.area), "bar");
 		assertEquals(params.get(Param.serial), "146");
-		assertEquals(params.get(Param.command), Action.details.name());
+		assertEquals(params.get(Param.command), Command.details.name());
 	}
 	
 	@Test
@@ -137,7 +139,7 @@ public class TestURLToParams {
 		assertEquals(params.get(Param.product), "foo");
 		assertEquals(params.get(Param.area), "RFC");
 		assertEquals(params.get(Param.serial), "146");
-		assertEquals(params.get(Param.command), Action.details.name());
+		assertEquals(params.get(Param.command), Command.details.name());
 	}
 
 }

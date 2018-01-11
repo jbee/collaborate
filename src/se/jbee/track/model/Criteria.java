@@ -468,9 +468,50 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		
 	}
 	
-	public static enum Coloring {
+	public static enum Coloration {
 
-		heat, status, goal, motive,
+		heat, status, goal, motive, 
+	}
+	
+	/**
+	 * Pages not using a {@link #list} {@link Layout} usually only use a single
+	 * query in the {@link Site} {@link Template} as these layouts require
+	 * horizontal space.
+	 * 
+	 * @author jan
+	 */
+	public static enum Layout {
+		/**
+		 * The usual list of task
+		 */
+		list,
+		/**
+		 * A board is grouping the results in columns given by a the
+		 * {@link Property#group}. The columns are usually the constants of an
+		 * enum. Special boards for version, area or user would work too; user
+		 * gives the classic "unassigned", "planed", "in progress", "done")
+		 */
+		board,
+		/**
+		 * Is a overview table only showing a specific property of the matching
+		 * task to give a overall impression or indication about an aspect.
+		 * 
+		 * Tasks are the rows. Columns could be users (this makes very much
+		 * sense as multiple users can work on a task). It helps to understand
+		 * how well task are covered.
+		 * 
+		 * Another tableau could be using areas as rows and showing
+		 * accumulations in the columns. Like using Status as columns would show
+		 * how many tasks of a type in each state exist. Or maybe even links to
+		 * em.
+		 */
+		tableau,
+		/**
+		 * Tree is used in connection with filter on {@link Property#basis} or {@link Property#origin}.
+		 * The tasks are shown as a tree with the origin being the root.
+		 */
+		tree
+		
 	}
 	
 	/**
@@ -481,10 +522,9 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		offset(number, 0, eq, ge, le, gt, lt),
 		length(number, 0, eq, le, lt),
 		order(property, 0, Property.class, asc, desc),
-		//TODO trees can equally queried by a criteria just that there should be a basis or origin filter to make sense
-		// a board is splitting the results in silos by a property (in order of that property - should be a enum or numeric one; version, area or user would work too; user gives the classic "unassigned", "planed", "in progress", "done")
-		// 'tree' or 'list' or 'board' itself is a set of showing the results
-		color(property, 0, Coloring.class, eq),
+		group(property, 0, Property.class, eq),
+		coloration(property, 0, Coloration.class, eq),
+		layout(property, 0, Layout.class, eq),
 		
 		// task properties
 		emphasis(number, 10, eq, ge, le, gt, lt),
@@ -511,6 +551,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		aspirant(name, 45, eq, neq, in, nin),
 		participant(name, 45, eq, neq, in, nin),
 		area(name, 20, eq, neq, in, nin),
+		category(name, 8, eq, neq, in, nin),
 		product(name, 1, eq, neq, in, nin),
 		url(text, 70, eq, gt, lt, in, nin), //TODO when eq, gt or lt is used and the value is not an URL (starts with http) then we somehow have to know what kind of integration URL is meant and look for that
 		gist(text, 70, eq, gt, lt, in, nin),
@@ -549,7 +590,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		}
 		
 		public boolean isResultProperty() {
-			return ordinal() <= color.ordinal();
+			return ordinal() <= coloration.ordinal();
 		}
 		
 		public boolean isSetValue() {

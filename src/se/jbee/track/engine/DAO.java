@@ -1,13 +1,13 @@
 package se.jbee.track.engine;
 
-import static se.jbee.track.engine.Convert.bin2area;
-import static se.jbee.track.engine.Convert.bin2event;
-import static se.jbee.track.engine.Convert.bin2poll;
-import static se.jbee.track.engine.Convert.bin2product;
-import static se.jbee.track.engine.Convert.bin2site;
-import static se.jbee.track.engine.Convert.bin2task;
-import static se.jbee.track.engine.Convert.bin2user;
-import static se.jbee.track.engine.Convert.bin2version;
+import static se.jbee.track.engine.Bincoder.bin2area;
+import static se.jbee.track.engine.Bincoder.bin2event;
+import static se.jbee.track.engine.Bincoder.bin2poll;
+import static se.jbee.track.engine.Bincoder.bin2product;
+import static se.jbee.track.engine.Bincoder.bin2site;
+import static se.jbee.track.engine.Bincoder.bin2task;
+import static se.jbee.track.engine.Bincoder.bin2user;
+import static se.jbee.track.engine.Bincoder.bin2version;
 import static se.jbee.track.model.ID.areaId;
 import static se.jbee.track.model.ID.pollId;
 import static se.jbee.track.model.ID.productId;
@@ -56,7 +56,7 @@ public class DAO implements Repository {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private final <T extends Entity<T>> T load(ID id, Convert<Repository, T> reader) {
+	private final <T extends Entity<T>> T load(ID id, Bincoder<Repository, T> reader) {
 		Object res = transactionObject(id);
 		if (res != null)
 			return (T) res;		
@@ -65,7 +65,7 @@ public class DAO implements Repository {
 		return e;
 	}
 
-	private <T> T loadObject(ID id, Convert<Repository, T> reader) {
+	private <T> T loadObject(ID id, Bincoder<Repository, T> reader) {
 		return reader.convert(this, read(id));
 	}
 	
@@ -123,7 +123,7 @@ public class DAO implements Repository {
 	@Override
 	public History history(ID entity) throws UnknownEntity {
 		ID id = ID.historyId(entity);
-		return Convert.bin2history.convert(id, read(id));
+		return Bincoder.bin2history.convert(id, read(id));
 	}
 
 	private ByteBuffer read(ID id) throws UnknownEntity {
@@ -157,11 +157,11 @@ public class DAO implements Repository {
 				(p) -> p.area.name.equalTo(area));
 	}
 	
-	private <T> void range(Convert<Repository, T> reader, ID start, Predicate<T> filter) {
+	private <T> void range(Bincoder<Repository, T> reader, ID start, Predicate<T> filter) {
 		txr.range(start, (k,v) -> filter.test(transactionObjectOrDecode(reader, k, v)));
 	}
 	
-	private <T> T[] range(Convert<Repository, T> reader, T[] empty, ID start, Predicate<T> filter) {
+	private <T> T[] range(Bincoder<Repository, T> reader, T[] empty, ID start, Predicate<T> filter) {
 		List<T> res = new ArrayList<>();
 		txr.range(start, (k,v) -> {
 			T e = transactionObjectOrDecode(reader, k, v);
@@ -171,7 +171,7 @@ public class DAO implements Repository {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <T> T transactionObjectOrDecode(Convert<Repository, T> reader, ID k, ByteBuffer v) {
+	private <T> T transactionObjectOrDecode(Bincoder<Repository, T> reader, ID k, ByteBuffer v) {
 		Object et = transactionObject(k);
 		return (et != null) ? (T)et : reader.convert(this, v);
 	}

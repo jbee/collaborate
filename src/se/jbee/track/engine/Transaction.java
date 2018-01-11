@@ -1,13 +1,13 @@
 package se.jbee.track.engine;
 
 import static java.lang.Math.max;
-import static se.jbee.track.engine.Convert.area2bin;
-import static se.jbee.track.engine.Convert.poll2bin;
-import static se.jbee.track.engine.Convert.product2bin;
-import static se.jbee.track.engine.Convert.site2bin;
-import static se.jbee.track.engine.Convert.task2bin;
-import static se.jbee.track.engine.Convert.user2bin;
-import static se.jbee.track.engine.Convert.version2bin;
+import static se.jbee.track.engine.Bincoder.area2bin;
+import static se.jbee.track.engine.Bincoder.poll2bin;
+import static se.jbee.track.engine.Bincoder.product2bin;
+import static se.jbee.track.engine.Bincoder.site2bin;
+import static se.jbee.track.engine.Bincoder.task2bin;
+import static se.jbee.track.engine.Bincoder.user2bin;
+import static se.jbee.track.engine.Bincoder.version2bin;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -81,7 +81,7 @@ public final class Transaction extends DAO implements Tx, Limits {
 	private final Limits limits;
 	private final DB db;
 
-	private ID originator;
+	private ID actor;
 	
 	private Transaction(Clock clock, Limits limits, DB db) {
 		super(db.read());
@@ -116,24 +116,24 @@ public final class Transaction extends DAO implements Tx, Limits {
 	private void putUser(Entity<?> e, final ID id) {
 		if (loadedUsers.isEmpty()) {
 			if (e instanceof User) {
-				trackOriginator(id); // registered user
+				trackActor(id); // registered user
 			}
 		} else {
+			// make sure only the acting user can be stored
 			for (User user : loadedUsers.values()) {
 				if (user.isModified()) {
 					final ID userID = user.uniqueID();
-					trackOriginator(userID);
+					trackActor(userID);
 					changed.put(userID, user);
-					loadedUsers.remove(user);	
 				}
 			}
 		}
 	}
 
-	private void trackOriginator(final ID userID) {
-		if (originator == null) {
-			originator = userID;
-		} else if (!userID.equalTo(originator)){
+	private void trackActor(final ID userID) {
+		if (actor == null) {
+			actor = userID;
+		} else if (!userID.equalTo(actor)){
 			throw new IllegalArgumentException("All changes within one transation must originate from same user.");
 		}
 	}
@@ -163,10 +163,10 @@ public final class Transaction extends DAO implements Tx, Limits {
 
 	private Changes commit() {
 		super.close(); // no more reading
-		if (originator == null)
+		if (actor == null)
 			throw new IllegalStateException("Acting user has to be updated during a transaction!");
 		if (changed.isEmpty())
-			return Changes.EMPTY;
+			return Changes.EMPTY; // empty changesets have serial 0 and can be discarded/ignored
 		ByteBuffer buf = ByteBuffer.allocateDirect(4096);
 		try (TxRW tx = db.write()) {
 			Changes log = writeTx(tx, buf);
@@ -175,6 +175,14 @@ public final class Transaction extends DAO implements Tx, Limits {
 			return log;
 		}
 	}
+	
+	/**
+	 * Each {@link Changes} change-set get a incrementing serial attached.
+	 * This serial is unique within a run of the application. It is not
+	 * persisted but it helps further processing to reorder {@link Changes} 
+	 * if necessary as they can identify (and wait) missing sets.
+	 */
+	private static final AtomicLong serial = new AtomicLong();
 	
 	private Changes writeTx(TxRW tx, ByteBuffer buf) {
 		Changes.Entry<?>[] res = new Changes.Entry[changed.size()];
@@ -194,7 +202,8 @@ public final class Transaction extends DAO implements Tx, Limits {
 			default: throw new UnsupportedOperationException("Cannot store entities of type: "+id);
 			}
 		}
-		return new Changes(clock.time(), res);
+		// serial is fetched within the TX write() that only one thread can enter at a time so it has the actual write sequence
+		return new Changes(clock.time(), serial.incrementAndGet(), res);
 	}
 
 	private void writeHistoryAndEvent(TxRW tx, Changes changes, ByteBuffer buf) {
@@ -220,11 +229,11 @@ public final class Transaction extends DAO implements Tx, Limits {
 			tx.put(hid, buf);
 			buf.clear();
 		}
-		Event e = new Event(timestamp, originator, transitions);
-		write(tx, e.uniqueID() , e, Convert.event2bin, buf);
+		Event e = new Event(timestamp, actor, transitions);
+		write(tx, e.uniqueID() , e, Bincoder.event2bin, buf);
 	}
 	
-	private static <T> void write(TxRW tx, ID id, T e, Convert<T, ByteBuffer> writer, ByteBuffer buf) {
+	private static <T> void write(TxRW tx, ID id, T e, Bincoder<T, ByteBuffer> writer, ByteBuffer buf) {
 		if (e instanceof Transitory && ((Transitory) e).obsolete()) {
 			tx.delete(id);
 		} else {

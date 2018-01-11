@@ -77,15 +77,15 @@ public class TestLMDB {
 			Site s2 = tracker.compose(u1, as("mno"), template("pqr"));
 			try (TxRW tx = db.write()) {
 				ByteBuffer buf = ByteBuffer.allocateDirect(1024);
-				Convert.site2bin.convert(s1, buf);
+				Bincoder.site2bin.convert(s1, buf);
 				buf.flip();
 				tx.put(s1.uniqueID(), buf);
 				buf.clear();
-				Convert.site2bin.convert(s2, buf);
+				Bincoder.site2bin.convert(s2, buf);
 				buf.flip();
 				tx.put(s2.uniqueID(), buf);
 				buf.clear();
-				Convert.user2bin.convert(u1, buf);
+				Bincoder.user2bin.convert(u1, buf);
 				buf.flip();
 				tx.put(u1.uniqueID(), buf);
 				buf.clear();
@@ -96,11 +96,11 @@ public class TestLMDB {
 			User u1r;
 			try (TxR tx = db.read()) {
 				ByteBuffer buf = tx.get(s1.uniqueID());
-				s1r = Convert.bin2site.convert(null, buf);
+				s1r = Bincoder.bin2site.convert(null, buf);
 				buf = tx.get(s2.uniqueID());
-				s2r = Convert.bin2site.convert(null, buf);
+				s2r = Bincoder.bin2site.convert(null, buf);
 				buf = tx.get(u1.uniqueID());
-				u1r = Convert.bin2user.convert(null, buf);
+				u1r = Bincoder.bin2user.convert(null, buf);
 			}
 			assertEquals(s1.name, s1r.name);
 			assertEquals(s2.name, s2r.name);
@@ -145,14 +145,14 @@ public class TestLMDB {
 			Event e;
 			try (TxR tx = db.read()) {
 				ByteBuffer buf = tx.get(ID.siteId(user, site));
-				s = Convert.bin2site.convert(null, buf);
+				s = Bincoder.bin2site.convert(null, buf);
 				buf = tx.get(ID.userId(user));
-				u = Convert.bin2user.convert(null, buf);
+				u = Bincoder.bin2user.convert(null, buf);
 				ID hid = ID.historyId(s.uniqueID());
 				buf = tx.get(hid);
-				sh = Convert.bin2history.convert(hid, buf);
+				sh = Bincoder.bin2history.convert(hid, buf);
 				buf = tx.get(ID.eventId(changed.timestamp));
-				e = Convert.bin2event.convert(null, buf);
+				e = Bincoder.bin2event.convert(null, buf);
 			}
 			assertEquals(site, s.name);
 			assertEquals(user, u.alias);

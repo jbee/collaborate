@@ -6,7 +6,7 @@ import java.io.PrintWriter;
 
 import se.jbee.track.cache.Matches;
 import se.jbee.track.model.Criteria;
-import se.jbee.track.model.Criteria.Coloring;
+import se.jbee.track.model.Criteria.Coloration;
 import se.jbee.track.model.Criteria.Property;
 import se.jbee.track.model.Heat;
 import se.jbee.track.model.Motive;
@@ -17,8 +17,8 @@ import se.jbee.track.model.Site;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
-import se.jbee.track.ui.ctrl.Action;
 import se.jbee.track.ui.ctrl.Ctrl;
+import se.jbee.track.ui.ctrl.Param.Command;
 
 public class HTMLRenderer {
 
@@ -41,10 +41,10 @@ public class HTMLRenderer {
 		renderList(page.page, page.results);
 
 		out.append("<div class='footer'><div class='column'>");
-		renderTable(Coloring.status, Status.class);
-		renderTable(Coloring.goal, Purpose.class);
-		renderTable(Coloring.motive, Motive.class);
-		renderTable(Coloring.heat, Heat.class);
+		renderTable(Coloration.status, Status.class);
+		renderTable(Coloration.goal, Purpose.class);
+		renderTable(Coloration.motive, Motive.class);
+		renderTable(Coloration.heat, Heat.class);
 		out.append("</div></div>");
 		out.append("</body>");
 	}
@@ -53,7 +53,7 @@ public class HTMLRenderer {
 		
 	}
 
-	public void renderTable(Coloring scheme, Class<? extends Enum<?>> type) {
+	public void renderTable(Coloration scheme, Class<? extends Enum<?>> type) {
 		out.append("<table class='legend scheme-").append(scheme.name()).append("'>");
 		out.append("<tr><th>").append(scheme.name()).append("</th></td>");
 		for (Enum<?> v : type.getEnumConstants()) {
@@ -94,9 +94,9 @@ public class HTMLRenderer {
 
 	public void render(Criteria criteria, Matches matches) {
 		out.append("<h3>").append(criteria.toString()).append("</h3>");
-		Coloring scheme = Coloring.heat;
-		if (criteria.indexOf(Property.color) > 0) {
-			scheme = (Coloring) criteria.get(criteria.indexOf(Property.color)).rvalues[0];
+		Coloration scheme = Coloration.heat;
+		if (criteria.indexOf(Property.coloration) > 0) {
+			scheme = (Coloration) criteria.get(criteria.indexOf(Property.coloration)).rvalues[0];
 		}
 		out.append(" (by ").append(scheme.name()).append(")");
 		//TODO render a link "scheme", when clicked turns itself into a dropdown, that is just changing the table next to it
@@ -142,9 +142,9 @@ public class HTMLRenderer {
 		out.append("</td><td>");
 		if (viewer.isAuthenticated()) {
 			if (task.aspirants.contains(viewer) || task.participants.contains(viewer)) {
-				renderTaskActionLink(task, "btn", Action.abandon, "&minus;");
+				renderTaskActionLink(task, "btn", Command.abandon, "&minus;");
 			} else {
-				renderTaskActionLink(task, "btn", Action.enlist, "&plus;");
+				renderTaskActionLink(task, "btn", Command.enlist, "&plus;");
 			}
 		}
 		renderUsersList(task);
@@ -153,11 +153,11 @@ public class HTMLRenderer {
 	}
 
 	private void renderStressLink(Task task) {
-		renderTaskActionLink(task, "stress btn", Action.stress,"!");
+		renderTaskActionLink(task, "stress btn", Command.stress,"!");
 	}
 
-	private void renderTaskActionLink(Task task, String cssClasses, Action action, String label) {
-		out.append("<a class='").append(cssClasses).append("' href='/").append(action.name()).append("/").append(task.product.name).append("/").append(task.id.toString()).append("/'>").append(label).append("</a>");
+	private void renderTaskActionLink(Task task, String cssClasses, Command command, String label) {
+		out.append("<a class='").append(cssClasses).append("' href='/").append(command.name()).append("/").append(task.product.name).append("/").append(task.id.toString()).append("/'>").append(label).append("</a>");
 	}
 
 	private void renderDataAttributes(Task task) {
@@ -198,7 +198,7 @@ public class HTMLRenderer {
 	}
 
 	private void renderTaskLink(Task task) {
-		renderTaskActionLink(task, "idn", Action.list, "#"+task.id);
+		renderTaskActionLink(task, "idn", Command.list, "#"+task.id);
 	}
 
 	private void renderCssClasses(Task task) {

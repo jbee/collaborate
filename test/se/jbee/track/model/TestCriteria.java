@@ -11,10 +11,7 @@ import java.util.EnumMap;
 
 import org.junit.Test;
 
-import se.jbee.track.model.Criteria;
-import se.jbee.track.model.Date;
-import se.jbee.track.model.Name;
-import se.jbee.track.model.Criteria.Coloring;
+import se.jbee.track.model.Criteria.Coloration;
 import se.jbee.track.model.Criteria.Operator;
 import se.jbee.track.model.Criteria.Property;
 
@@ -30,11 +27,11 @@ public class TestCriteria {
 	
 	@Test
 	public void valuesAreTyped() {
-		Criteria criteria = Criteria.parse("[color=heat][length=20][user~{foo,bar}]");
+		Criteria criteria = Criteria.parse("[coloration=heat][length=20][user~{foo,bar}]");
 		assertEquals(3, criteria.count());
-		assertEquals("[user ~ {foo, bar}][color = heat][length = 20]", criteria.toString());
+		assertEquals("[user ~ {foo, bar}][coloration = heat][length = 20]", criteria.toString());
 		assertSame(Name.class, criteria.get(0).rvalues[0].getClass());
-		assertSame(Coloring.class, criteria.get(1).rvalues[0].getClass());
+		assertSame(Coloration.class, criteria.get(1).rvalues[0].getClass());
 		assertSame(Integer.class, criteria.get(2).rvalues[0].getClass());
 	}
 	

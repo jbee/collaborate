@@ -6,6 +6,7 @@ import static se.jbee.track.engine.Change.Operation.archive;
 import static se.jbee.track.engine.Change.Operation.aspire;
 import static se.jbee.track.engine.Change.Operation.attach;
 import static se.jbee.track.engine.Change.Operation.authenticate;
+import static se.jbee.track.engine.Change.Operation.categorise;
 import static se.jbee.track.engine.Change.Operation.compart;
 import static se.jbee.track.engine.Change.Operation.compose;
 import static se.jbee.track.engine.Change.Operation.configure;
@@ -98,11 +99,13 @@ public interface Change {
 		constitute,
 		connect,
 		disconnect,
+		suggest,
 		
 		// areas
 		open, 
 		compart,
 		leave,
+		categorise,
 		
 		// versions
 		tag,
@@ -207,6 +210,10 @@ public interface Change {
 			tx.put(leave, t.leave(tx.area(product, area), tx.user(leavingMaintainer)));
 			recount(leave, t,tx, product, area, leavingMaintainer, leavingMaintainer);
 		};
+	}
+	
+	static Change categorise(Name product, Name area, Name category, Name actor) {
+		return (t, tx) -> {	tx.put(categorise, t.categorise(tx.area(product, area), category, tx.user(actor))); };
 	}
 
 	static Change relocate(Name product, IDN task, Name toArea, Name actor) {

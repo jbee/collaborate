@@ -30,6 +30,9 @@ import se.jbee.track.engine.History;
 import se.jbee.track.engine.Repository;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.Criteria;
+import se.jbee.track.model.Criteria.Criterium;
+import se.jbee.track.model.Criteria.Operator;
+import se.jbee.track.model.Criteria.Property;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Motive;
@@ -43,9 +46,6 @@ import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
-import se.jbee.track.model.Criteria.Criterium;
-import se.jbee.track.model.Criteria.Operator;
-import se.jbee.track.model.Criteria.Property;
 
 /**
  * Each worker is responsible for a single {@link Product}.
@@ -75,6 +75,7 @@ final class CacheWorker implements Cache {
 	private Map<Name, TaskSet> byWatcher = new HashMap<>(); // almost fix
 	private Map<Name, TaskSet> byArea = new HashMap<>(); // almost fix
 	private Map<Name, TaskSet> byVersion = new HashMap<>(); // almost fix
+	private Map<Name, TaskSet> byCategory = new HashMap<>(); // almost fix
 	
 	private Map<IDN, TaskSet> byBasis = new HashMap<>(); // fix
 	private Map<IDN, TaskSet> byOrigin = new HashMap<>(); // fix
@@ -143,6 +144,7 @@ final class CacheWorker implements Cache {
 			for (Name n : t.watchers)
 				f.accept(getOrInit(n, byWatcher), t.id);
 			f.accept(getOrInit(t.area.name, byArea), t.id);
+			f.accept(getOrInit(t.area.category, byCategory), t.id);
 			f.accept(getOrInit(t.base.name, byVersion), t.id);
 			f.accept(getOrInit(t.status, byStatus), t.id);
 			f.accept(getOrInit(t.purpose, byPurpose), t.id);
@@ -310,6 +312,7 @@ final class CacheWorker implements Cache {
 		case watcher: return byWatcher;
 		case maintainer: return byMaintainer;
 		case area: return byArea;
+		case category: return byCategory;
 		case version: return byVersion;
 		case purpose: return byPurpose;
 		case motive: return byMotive;
@@ -492,14 +495,16 @@ final class CacheWorker implements Cache {
 					a.abandoned = after.abandoned;
 					a.exclusive = after.exclusive;
 					a.maintainers = after.maintainers;
-					after.update(a);
 				}				
 				break;
+			case categorise:
+				a.category = after.category; break;
 			}
 		}
 		if (after.tasks > a.tasks) {
 			a.tasks = after.tasks;
 		}
+		after.update(a);
 	}
 	
 	/**

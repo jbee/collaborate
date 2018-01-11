@@ -2,22 +2,22 @@ package se.jbee.track.engine;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
-import static se.jbee.track.engine.Convert.area2bin;
-import static se.jbee.track.engine.Convert.bin2area;
-import static se.jbee.track.engine.Convert.bin2event;
-import static se.jbee.track.engine.Convert.bin2poll;
-import static se.jbee.track.engine.Convert.bin2product;
-import static se.jbee.track.engine.Convert.bin2site;
-import static se.jbee.track.engine.Convert.bin2task;
-import static se.jbee.track.engine.Convert.bin2user;
-import static se.jbee.track.engine.Convert.bin2version;
-import static se.jbee.track.engine.Convert.event2bin;
-import static se.jbee.track.engine.Convert.poll2bin;
-import static se.jbee.track.engine.Convert.product2bin;
-import static se.jbee.track.engine.Convert.site2bin;
-import static se.jbee.track.engine.Convert.task2bin;
-import static se.jbee.track.engine.Convert.user2bin;
-import static se.jbee.track.engine.Convert.version2bin;
+import static se.jbee.track.engine.Bincoder.area2bin;
+import static se.jbee.track.engine.Bincoder.bin2area;
+import static se.jbee.track.engine.Bincoder.bin2event;
+import static se.jbee.track.engine.Bincoder.bin2poll;
+import static se.jbee.track.engine.Bincoder.bin2product;
+import static se.jbee.track.engine.Bincoder.bin2site;
+import static se.jbee.track.engine.Bincoder.bin2task;
+import static se.jbee.track.engine.Bincoder.bin2user;
+import static se.jbee.track.engine.Bincoder.bin2version;
+import static se.jbee.track.engine.Bincoder.event2bin;
+import static se.jbee.track.engine.Bincoder.poll2bin;
+import static se.jbee.track.engine.Bincoder.product2bin;
+import static se.jbee.track.engine.Bincoder.site2bin;
+import static se.jbee.track.engine.Bincoder.task2bin;
+import static se.jbee.track.engine.Bincoder.user2bin;
+import static se.jbee.track.engine.Bincoder.version2bin;
 import static se.jbee.track.engine.Server.Switch.OPEN;
 import static se.jbee.track.model.Email.email;
 import static se.jbee.track.model.Gist.gist;
@@ -123,7 +123,7 @@ public class TestConvert {
 		return u1;
 	}
 
-	static <T> void assertConsistentConversion(Convert<Repository,T> reader, Convert<T, ByteBuffer> writer, T value) {
+	static <T> void assertConsistentConversion(Bincoder<Repository,T> reader, Bincoder<T, ByteBuffer> writer, T value) {
 		ByteBuffer buf = ByteBuffer.allocate(2048);
 		writer.convert(value, buf);
 		byte[] written = new byte[buf.position()];

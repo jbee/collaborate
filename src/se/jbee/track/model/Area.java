@@ -15,6 +15,8 @@ public final class Area extends Entity<Area> {
 	public Name basis;
 	public Names maintainers;
 	
+	public Name category;
+	
 	/**
 	 * Do only maintainers get to stress?
 	 */

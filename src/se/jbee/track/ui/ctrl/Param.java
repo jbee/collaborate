@@ -18,4 +18,17 @@ public enum Param {
 	serial, // IDN of a board task
 	menu, // enum: none, user, area
 	// then we use a EnumMap<Param,String> to pass them from e.g. HTTP or a CLI
+	;
+	
+	public static enum Command {
+
+		//GETS
+		list, 
+		details, 
+		version,
+		
+		
+		// PUTS/POSTS
+		enlist, approach, abandon, stress
+	};
 }

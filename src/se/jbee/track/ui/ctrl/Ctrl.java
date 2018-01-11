@@ -5,7 +5,15 @@ import se.jbee.track.model.Site;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.User;
 
+/**
+ * For each type of page there will be a method accepting input parameters.
+ *  
+ * @author jan
+ */
 public interface Ctrl {
+	// this could also be: interface Controller<P> { P run(Params params); }
+	// and than 1 class per type of page/command
+	// also there could be a renderer per page type
 	
 	ListPage list(Params params);
 	

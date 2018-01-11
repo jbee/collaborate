@@ -29,7 +29,8 @@ public final class TransitionDenied extends IllegalStateException {
 		E24_USER_EXISTS(24, "User name %s is already taken by another user."), 
 		E25_ADMIN_REQUIRED(25, "Only admin may perform this action for this installation."), 
 		E26_LOCKDOWN(26, "Server is undergoing maintenance work. Access is restricted to administrators. Please try again later."), 
-		E27_LIMIT_OCCUPIED( 27, "Concurrent change detected by limit %s. Please try again.")
+		E27_LIMIT_OCCUPIED( 27, "Concurrent change detected by limit %s. Please try again."), 
+		E28_CATEGORY_LIMIT(28, "Categories per product are limited to %d.")
 		
 		;
 		public final int code;
