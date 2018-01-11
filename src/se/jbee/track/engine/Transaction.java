@@ -169,10 +169,13 @@ public final class Transaction extends DAO implements Tx, Limits {
 			return Changes.EMPTY; // empty changesets have serial 0 and can be discarded/ignored
 		ByteBuffer buf = ByteBuffer.allocateDirect(4096);
 		try (TxRW tx = db.write()) {
-			Changes log = writeTx(tx, buf);
-			writeHistoryAndEvent(tx, log, buf);
+			Changes.Entry<?>[] log = writeTx(tx, buf);
+			long timestamp = clock.time();
+			writeHistoryAndEvent(tx, log, timestamp, buf);
 			tx.commit();
-			return log;
+			// serial is fetched within the TX write() but after commit() so we know this is successful
+			// also only one thread can enter the write block
+			return new Changes(timestamp, serial.incrementAndGet(), log);
 		}
 	}
 	
@@ -184,7 +187,7 @@ public final class Transaction extends DAO implements Tx, Limits {
 	 */
 	private static final AtomicLong serial = new AtomicLong();
 	
-	private Changes writeTx(TxRW tx, ByteBuffer buf) {
+	private Changes.Entry<?>[] writeTx(TxRW tx, ByteBuffer buf) {
 		Changes.Entry<?>[] res = new Changes.Entry[changed.size()];
 		int i = 0;
 		for (Entry<ID,Entity<?>> e : changed.entrySet()) {
@@ -202,13 +205,11 @@ public final class Transaction extends DAO implements Tx, Limits {
 			default: throw new UnsupportedOperationException("Cannot store entities of type: "+id);
 			}
 		}
-		// serial is fetched within the TX write() that only one thread can enter at a time so it has the actual write sequence
-		return new Changes(clock.time(), serial.incrementAndGet(), res);
+		return res;
 	}
 
-	private void writeHistoryAndEvent(TxRW tx, Changes changes, ByteBuffer buf) {
-		final Transition[] transitions = new Transition[changes.length()];
-		final long timestamp = changes.timestamp;
+	private void writeHistoryAndEvent(TxRW tx, Changes.Entry<?>[] changes, long timestamp, ByteBuffer buf) {
+		final Transition[] transitions = new Transition[changes.length];
 		int i = 0;
 		for (Changes.Entry<?> e : changes) {
 			ID id = e.after.uniqueID();
