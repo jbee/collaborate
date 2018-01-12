@@ -22,12 +22,11 @@ import org.eclipse.jetty.server.session.HashSessionManager;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.lmdbjava.Env;
 
+import se.jbee.track.api.Param;
+import se.jbee.track.api.Params;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.LMDB;
 import se.jbee.track.model.Date;
-import se.jbee.track.ui.ctrl.DBController;
-import se.jbee.track.ui.ctrl.Param;
-import se.jbee.track.ui.ctrl.Params;
 
 public class TrackerServer extends AbstractHandler {
 
@@ -48,7 +47,7 @@ public class TrackerServer extends AbstractHandler {
 		handlers.addHandler(contextHandler);
         server.setSessionIdManager(new HashSessionIdManager());
 		try (DB db = createDB(args)) {
-			TrackerServer app = new TrackerServer(new TrackerHttpUI(new DBController(db, null, null, null)));
+			TrackerServer app = new TrackerServer(new TrackerHttpUI(null, null));
 			HashSessionManager manager = new HashSessionManager();
 	        SessionHandler sessions = new SessionHandler(manager);
 	        sessions.setHandler(app);

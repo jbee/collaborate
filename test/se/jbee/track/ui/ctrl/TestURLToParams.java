@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-import se.jbee.track.ui.ctrl.Param.Command;
+import se.jbee.track.api.Param;
+import se.jbee.track.api.Params;
+import se.jbee.track.api.Param.Command;
 
 public class TestURLToParams {
 

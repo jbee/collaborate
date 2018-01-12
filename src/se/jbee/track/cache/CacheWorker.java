@@ -178,6 +178,8 @@ final class CacheWorker implements Cache {
 	
 	@Override
 	public Future<Void> invalidate(Changes changes) {
+		//TODO if there is a gap in serial put the ones coming late in a separate map. 
+		// the later update will notice the gap again and pull all from the map that are inbetween
 		return es.submit(() -> { update(changes); return null; } );
 	}
 	

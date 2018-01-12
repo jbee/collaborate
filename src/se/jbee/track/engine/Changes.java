@@ -38,8 +38,14 @@ public final class Changes implements Iterable<Changes.Entry<?>>{
 	}
 	
 	public final long timestamp;
-	public final  long serial;
 	private final Entry<?>[] log;
+	/**
+	 * A non-persistent monotonically increasing number that is unique during
+	 * application lifetime. A larger serial happened after a smaller one. A
+	 * serial that is a direct successor happened directly after that one
+	 * (speaking order not time).
+	 */
+	public final  long serial;
 	
 	public Changes(long timestamp, long serial, Entry<?>[] log) {
 		super();

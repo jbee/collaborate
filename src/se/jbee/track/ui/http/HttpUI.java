@@ -2,7 +2,7 @@ package se.jbee.track.ui.http;
 
 import java.io.PrintWriter;
 
-import se.jbee.track.ui.ctrl.Params;
+import se.jbee.track.api.Params;
 
 @FunctionalInterface
 public interface HttpUI {

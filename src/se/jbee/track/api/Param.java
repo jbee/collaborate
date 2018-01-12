@@ -1,4 +1,4 @@
-package se.jbee.track.ui.ctrl;
+package se.jbee.track.api;
 
 public enum Param {
 

@@ -1,14 +1,14 @@
-package se.jbee.track.ui.ctrl;
+package se.jbee.track.api;
 
-import static se.jbee.track.ui.ctrl.Param.command;
-import static se.jbee.track.ui.ctrl.Param.serial;
-import static se.jbee.track.ui.ctrl.Param.task;
-import static se.jbee.track.ui.ctrl.Param.version;
-import static se.jbee.track.ui.ctrl.Param.viewed;
+import static se.jbee.track.api.Param.command;
+import static se.jbee.track.api.Param.serial;
+import static se.jbee.track.api.Param.task;
+import static se.jbee.track.api.Param.version;
+import static se.jbee.track.api.Param.viewed;
 
 import java.util.EnumMap;
 
-import se.jbee.track.ui.ctrl.Param.Command;
+import se.jbee.track.api.Param.Command;
 
 /**
  * A set of {@link Param} key-value pairs. 

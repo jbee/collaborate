@@ -169,7 +169,7 @@ public final class Transaction extends DAO implements Tx, Limits {
 			return Changes.EMPTY; // empty changesets have serial 0 and can be discarded/ignored
 		ByteBuffer buf = ByteBuffer.allocateDirect(4096);
 		try (TxRW tx = db.write()) {
-			Changes.Entry<?>[] log = writeTx(tx, buf);
+			Changes.Entry<?>[] log = writeEntities(tx, buf);
 			long timestamp = clock.time();
 			writeHistoryAndEvent(tx, log, timestamp, buf);
 			tx.commit();
@@ -187,7 +187,7 @@ public final class Transaction extends DAO implements Tx, Limits {
 	 */
 	private static final AtomicLong serial = new AtomicLong();
 	
-	private Changes.Entry<?>[] writeTx(TxRW tx, ByteBuffer buf) {
+	private Changes.Entry<?>[] writeEntities(TxRW tx, ByteBuffer buf) {
 		Changes.Entry<?>[] res = new Changes.Entry[changed.size()];
 		int i = 0;
 		for (Entry<ID,Entity<?>> e : changed.entrySet()) {
