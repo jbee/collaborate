@@ -462,6 +462,17 @@ public final class Tracker {
 		return task;
 	}
 	
+	public Task disclose(Task task, User actor) {
+		expectAuthenticated(actor);
+		expectOriginMaintainer(task.output, actor);
+		if (task.exploitable && !task.disclosed) {
+			task = task.clone();
+			task.disclosed = true;
+			touch(actor);
+		}
+		return task;
+	}
+	
 	public Task attach(Task task, User actor, URL attachment) {
 		expectAuthenticated(actor);
 		if (!task.area.isOpen()) {
@@ -997,7 +1008,7 @@ public final class Tracker {
 
 	private static void expectOriginMaintainer(Output output, User user) {
 		if (!output.origin.maintainers.contains(user.alias))
-			denyTransition(Error.E8_OUTPUT_OWNERSHIP_REQUIRED, output.name, output.origin.name);
+			denyTransition(Error.E8_OUTPUT_OWNERSHIP_REQUIRED, output.name, output.origin.name, output.origin.maintainers);
 	}
 
 	private static void expectRegistered(User user) {

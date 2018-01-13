@@ -15,6 +15,7 @@ import static se.jbee.track.engine.Change.Operation.connect;
 import static se.jbee.track.engine.Change.Operation.consent;
 import static se.jbee.track.engine.Change.Operation.constitute;
 import static se.jbee.track.engine.Change.Operation.detach;
+import static se.jbee.track.engine.Change.Operation.disclose;
 import static se.jbee.track.engine.Change.Operation.disconnect;
 import static se.jbee.track.engine.Change.Operation.dissent;
 import static se.jbee.track.engine.Change.Operation.dissolve;
@@ -133,6 +134,7 @@ public interface Change {
 		dissolve,
 		
 		archive,
+		disclose,
 		
 		emphasise,
 
@@ -270,6 +272,10 @@ public interface Change {
 	
 	static Change emphasise(Name output, IDN task, Name voter) {
 		return (t, tx) -> { tx.put(emphasise, t.emphasise(tx.task(output, task), tx.user(voter))); };
+	}
+	
+	static Change disclose(Name output, IDN task, Name actor) {
+		return (t, tx) -> { tx.put(disclose, t.disclose(tx.task(output, task), tx.user(actor))); };
 	}
 	
 	static Change attach(Name output, IDN task, Name byUser, URL attachment) {

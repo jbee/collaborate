@@ -4,7 +4,7 @@ package se.jbee.track.model;
 public final class Mail {
 
 	@UseCode
-	public static enum Subject { confirmation, information }
+	public static enum Subject { confirmation, information } //TODO rename to Objective and add a Subject enum for different types of mails
 	
 	@UseCode
 	public static enum Delivery { promptly, shortly, hourly, daily, weekly, never }

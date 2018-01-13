@@ -10,7 +10,7 @@ public final class TransitionDenied extends IllegalStateException {
 		E5_PAGE_LIMIT_REACHED(5, "Pages per user/area are limited to %d."), 
 		E6_PAGE_OWNERSHIP_REQUIRED(6, "Only the owner or maintainer of page %s may change it."), 
 		E7_PAGE_EXISTS(7, "Page %s already exists."), 
-		E8_OUTPUT_OWNERSHIP_REQUIRED(8, "To extend output %s you need to be a maintainer of it's %s area."), 
+		E8_OUTPUT_OWNERSHIP_REQUIRED(8, "You have a maintainer of %s %s to perform this operation, like %s."), 
 		E9_REQUIRES_REGISTRATION(9, "Please login or register to perform this action."), 
 		E10_REQUIRES_AUTHENTICATION(10, "Please (re)authenticate to perform this action."), 
 		E11_TASK_USER_LIMIT_REACHED(11, "The maximum number of users that can be involved with task %s is reached."), 

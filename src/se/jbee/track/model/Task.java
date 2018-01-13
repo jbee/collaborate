@@ -19,6 +19,7 @@ public class Task extends Entity<Task> {
 	public Status status;
 	public Names changeset;
 	public boolean exploitable;
+	public boolean disclosed;
 	
 	// working with a task (data that might change)
 	public IDN basis = IDN.ZERO; // direct predecessor
