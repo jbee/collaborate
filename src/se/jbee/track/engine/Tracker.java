@@ -46,7 +46,6 @@ import se.jbee.track.model.Template;
 import se.jbee.track.model.URL;
 import se.jbee.track.model.User;
 import se.jbee.track.model.User.AuthState;
-import se.jbee.track.model.User.Notification;
 import se.jbee.track.model.Version;
 import se.jbee.track.util.Array;
 
@@ -54,6 +53,10 @@ import se.jbee.track.util.Array;
  * Implementation of the tracker-business logic.
  */
 public final class Tracker {
+
+	private static final Name DO = Name.as("do");
+
+	private static final Name USER = Name.as("user");
 
 	/**
 	 * A minute.
@@ -91,7 +94,7 @@ public final class Tracker {
 			if (existing.email.equalTo(email))
 				return confirm(existing, existing.authState);
 			if (!existing.isDubious(now()))
-				denyTransition(Error.E24_USER_EXISTS, alias);
+				denyTransition(Error.E24_NAME_OCCULIED, alias);
 		}
 		if (!alias.isEmail()) { // so email or regular names are OK
 			expectRegular(alias);
@@ -102,7 +105,7 @@ public final class Tracker {
 		User user = new User(1);
 		user.alias = alias;
 		user.email = email;
-		user.notificationSettings=new EnumMap<>(Notification.class);
+		user.notificationSettings=new EnumMap<>(Mail.Notification.class);
 		user.contributesToOutputs = Names.empty();
 		user.watches = 0;
 		user.millisLastActive=now(); // cannot use touch as version should stay same
@@ -155,6 +158,7 @@ public final class Tracker {
 		}
 		user = user.clone();
 		user.authState = AuthState.authenticated;
+		user.authenticated++;
 		// invalidate token
 		user.otp=null;
 		user.encryptedOtp=null;
@@ -177,11 +181,11 @@ public final class Tracker {
 		return user;
 	}
 	
-	public User configure(User user, EnumMap<Notification, Mail.Delivery> notifications) {
+	public User configure(User user, EnumMap<Mail.Notification, Mail.Delivery> notifications) {
 		expectAuthenticated(user);
 		stressDoConfiguration(user);
 		user = user.clone();
-		user.notificationSettings = notifications == null ? new EnumMap<>(Notification.class) : notifications;
+		user.notificationSettings = notifications == null ? new EnumMap<>(Mail.Notification.class) : notifications;
 		touch(user);
 		return user;
 	}
@@ -192,7 +196,7 @@ public final class Tracker {
 
 	/* Outputs */
 
-	public Output constitute(Name output, User actor) {
+	public Output envision(Name output, User actor) {
 		if (server.isOpen()) {
 			expectRegistered(actor);
 			expectAuthenticated(actor);
@@ -1056,6 +1060,8 @@ public final class Tracker {
 	private static void expectRegular(Name name) {
 		if (!name.isRegular())
 			denyTransition(Error.E17_NAME_IS_NOT_REGULAR, name);
+		if (name.equalTo(USER) || name.equals(DO)) // no object created by a user should be named "user" or "do"
+			denyTransition(Error.E24_NAME_OCCULIED, name);
 	}
 	
 	private static void expectEmail(Name name) {

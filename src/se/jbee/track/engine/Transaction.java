@@ -234,11 +234,11 @@ public final class Transaction extends DAO implements Tx, Limits {
 		write(tx, e.uniqueID() , e, Bincoder.event2bin, buf);
 	}
 	
-	private static <T> void write(TxRW tx, ID id, T e, Bincoder<T, ByteBuffer> writer, ByteBuffer buf) {
+	private static <T> void write(TxRW tx, ID id, T e, Bincoder<T, ByteBuffer> encoder, ByteBuffer buf) {
 		if (e instanceof Transitory && ((Transitory) e).obsolete()) {
 			tx.delete(id);
 		} else {
-			writer.convert(e, buf).flip();
+			encoder.convert(e, buf).flip();
 			tx.put(id, buf);
 			buf.clear();
 		}

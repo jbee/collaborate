@@ -56,17 +56,17 @@ public class DAO implements Repository {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private final <T extends Entity<T>> T load(ID id, Bincoder<Repository, T> reader) {
+	private final <T extends Entity<T>> T load(ID id, Bincoder<Repository, T> decoder) {
 		Object res = transactionObject(id);
 		if (res != null)
 			return (T) res;		
-		T e = loadObject(id, reader);
+		T e = loadObject(id, decoder);
 		loaded.put(id, e);
 		return e;
 	}
 
-	private <T> T loadObject(ID id, Bincoder<Repository, T> reader) {
-		return reader.convert(this, read(id));
+	private <T> T loadObject(ID id, Bincoder<Repository, T> decoder) {
+		return decoder.convert(this, read(id));
 	}
 	
 	/**
@@ -157,22 +157,22 @@ public class DAO implements Repository {
 				(p) -> p.area.name.equalTo(area));
 	}
 	
-	private <T> void range(Bincoder<Repository, T> reader, ID start, Predicate<T> filter) {
-		txr.range(start, (k,v) -> filter.test(transactionObjectOrDecode(reader, k, v)));
+	private <T> void range(Bincoder<Repository, T> decoder, ID start, Predicate<T> filter) {
+		txr.range(start, (k,v) -> filter.test(transactionObjectOrDecode(decoder, k, v)));
 	}
 	
-	private <T> T[] range(Bincoder<Repository, T> reader, T[] empty, ID start, Predicate<T> filter) {
+	private <T> T[] range(Bincoder<Repository, T> decoder, T[] empty, ID start, Predicate<T> filter) {
 		List<T> res = new ArrayList<>();
 		txr.range(start, (k,v) -> {
-			T e = transactionObjectOrDecode(reader, k, v);
+			T e = transactionObjectOrDecode(decoder, k, v);
 			return filter.test(e) && res.add(e);
 		});
 		return res.toArray(empty);
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <T> T transactionObjectOrDecode(Bincoder<Repository, T> reader, ID k, ByteBuffer v) {
+	private <T> T transactionObjectOrDecode(Bincoder<Repository, T> decoder, ID k, ByteBuffer v) {
 		Object et = transactionObject(k);
-		return (et != null) ? (T)et : reader.convert(this, v);
+		return (et != null) ? (T)et : decoder.convert(this, v);
 	}
 }

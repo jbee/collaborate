@@ -3,6 +3,7 @@ package se.jbee.track.engine;
 public final class TransitionDenied extends IllegalStateException {
 
 	public static enum Error {
+		// should answer one of: What do I want you (the user) to do/change? What can be done about it?
 		E1_LIMIT_EXCEEDED(1, "Activity limit %s exceeded. %s Please try again later."), 
 		E2_MUST_NOT_BE_BOARD(2, "Area %s is a board. Use 'request' to submit to a board."), 
 		E3_MUST_BE_BOARD(3, "Cannot use 'request' for area %s. Only boards allow it."), 
@@ -26,7 +27,7 @@ public final class TransitionDenied extends IllegalStateException {
 		E21_TOKEN_ON_COOLDOWN(21, "Please wait a minute before requesting another token."), 
 		E22_TOKEN_EXPIRED(22, "Sorry. Your token expired already."), 
 		E23_TOKEN_INVALID(23, "The token you provided is not correct."), 
-		E24_USER_EXISTS(24, "User name %s is already taken by another user."), 
+		E24_NAME_OCCULIED(24, "The name %s is already taken. Please chose another name."), 
 		E25_ADMIN_REQUIRED(25, "Only admin may perform this action for this installation."), 
 		E26_LOCKDOWN(26, "Server is undergoing maintenance work. Access is restricted to administrators. Please try again later."), 
 		E27_LIMIT_OCCUPIED( 27, "Concurrent change detected by limit %s. Please try again."), 

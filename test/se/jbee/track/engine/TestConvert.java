@@ -71,14 +71,14 @@ public class TestConvert {
 	@Test
 	public void outputConversion() {
 		User user1 = newTestUser();
-		Output prod1 = tracker.constitute(as("p1"), user1);
+		Output prod1 = tracker.envision(as("p1"), user1);
 		assertConsistentConversion(bin2output, output2bin, prod1);
 	}
 
 	@Test
 	public void areaConversion() {
 		User user1 = newTestUser();
-		Output prod1 = tracker.constitute(as("p1"), user1);
+		Output prod1 = tracker.envision(as("p1"), user1);
 		Area area1 = tracker.compart(prod1, as("area1"), user1);
 		assertConsistentConversion(bin2area, area2bin, area1);
 	}
@@ -86,7 +86,7 @@ public class TestConvert {
 	@Test
 	public void versionConversion() {
 		User user1 = newTestUser();
-		Output prod1 = tracker.constitute(as("p1"), user1);
+		Output prod1 = tracker.envision(as("p1"), user1);
 		Version v1 = tracker.tag(prod1, as("v1"), user1);
 		assertConsistentConversion(bin2version, version2bin, v1);
 	}
@@ -94,7 +94,7 @@ public class TestConvert {
 	@Test
 	public void pollConversion() {
 		User user1 = newTestUser();
-		Output prod1 = tracker.constitute(as("p1"), user1);
+		Output prod1 = tracker.envision(as("p1"), user1);
 		User user2 = tracker.register(null, as("user2"), email("user2@example.com"));
 		Poll poll1 = tracker.poll(Matter.inclusion, Gist.gist("foo"), prod1.origin, user1, user2);
 		assertConsistentConversion(bin2poll, poll2bin, poll1);
@@ -103,7 +103,7 @@ public class TestConvert {
 	@Test
 	public void taskConversion() {
 		User user1 = newTestUser();
-		Output prod1 = tracker.constitute(as("p1"), user1);
+		Output prod1 = tracker.envision(as("p1"), user1);
 		Task task1 = tracker.reportDefect(prod1, gist("broken"), user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentConversion(bin2task, task2bin, task1);
 	}

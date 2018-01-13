@@ -55,10 +55,10 @@ public class TestUseCode {
 	}
 	
 	@Test
-	public void subjectHasUniqueCode() {
-		assertUniqueCode(Mail.Subject.class);
+	public void objectiveHasUniqueCode() {
+		assertUniqueCode(Mail.Objective.class);
 	}
-
+	
 	@Test
 	public void operationHasUniqueCode() {
 		assertUniqueCode(Change.Operation.class);
@@ -71,7 +71,7 @@ public class TestUseCode {
 	
 	@Test
 	public void notificationsHaveUniqueCode() {
-		assertUniqueCode(User.Notification.class);
+		assertUniqueCode(Mail.Notification.class);
 	}
 	
 	@Test

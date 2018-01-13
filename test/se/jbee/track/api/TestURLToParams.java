@@ -1,4 +1,4 @@
-package se.jbee.track.ui.ctrl;
+package se.jbee.track.api;
 
 import static org.junit.Assert.assertEquals;
 
@@ -29,6 +29,15 @@ public class TestURLToParams {
 	}
 	
 	@Test
+	public void userOriginAlias() {
+		Params params = Params.fromPath("/*/foo/");
+		
+		assertEquals(2, params.size());
+		assertEquals(params.get(Param.viewed), "foo");
+		assertEquals(params.get(Param.command), Command.list.name());
+	}
+	
+	@Test
 	public void userAliasPage() {
 		Params params = Params.fromPath("/user/foo/bar/");
 		
@@ -51,7 +60,7 @@ public class TestURLToParams {
 
 	@Test
 	public void outputName() {
-		Params params = Params.fromPath("/output/foo/");
+		Params params = Params.fromPath("/foo/");
 		
 		assertEquals(2, params.size());
 		assertEquals(params.get(Param.output), "foo");
@@ -60,7 +69,7 @@ public class TestURLToParams {
 	
 	@Test
 	public void outputNameArea() {
-		Params params = Params.fromPath("/output/foo/bar/");
+		Params params = Params.fromPath("/foo/bar/");
 		
 		assertEquals(3, params.size());
 		assertEquals(params.get(Param.output), "foo");
@@ -70,7 +79,7 @@ public class TestURLToParams {
 	
 	@Test
 	public void outputNameOriginPage() {
-		Params params = Params.fromPath("/output/foo/*/bar");
+		Params params = Params.fromPath("/foo/*/bar");
 		
 		assertEquals(4, params.size());
 		assertEquals(params.get(Param.output), "foo");
@@ -81,7 +90,7 @@ public class TestURLToParams {
 	
 	@Test
 	public void outputNameAreaPage() {
-		Params params = Params.fromPath("/output/foo/baz/bar");
+		Params params = Params.fromPath("/foo/baz/bar");
 		
 		assertEquals(4, params.size());
 		assertEquals(params.get(Param.output), "foo");
@@ -92,7 +101,7 @@ public class TestURLToParams {
 	
 	@Test
 	public void outputNameAreaPageAsRole() {
-		Params params = Params.fromPath("/output/foo/baz/bar/as/que");
+		Params params = Params.fromPath("/foo/baz/bar/as/que");
 		
 		assertEquals(5, params.size());
 		assertEquals(params.get(Param.output), "foo");
@@ -104,7 +113,7 @@ public class TestURLToParams {
 	
 	@Test
 	public void outputNameVersion() {
-		Params params = Params.fromPath("/output/foo/v/0.4");
+		Params params = Params.fromPath("/foo/v/0.4");
 		
 		assertEquals(3, params.size());
 		assertEquals(params.get(Param.output), "foo");
@@ -114,7 +123,7 @@ public class TestURLToParams {
 	
 	@Test
 	public void outputNameTask() {
-		Params params = Params.fromPath("/output/foo/146");
+		Params params = Params.fromPath("/foo/146");
 		
 		assertEquals(3, params.size());
 		assertEquals(params.get(Param.output), "foo");
@@ -124,7 +133,7 @@ public class TestURLToParams {
 
 	@Test
 	public void outputNameAreaSerial() {
-		Params params = Params.fromPath("/output/foo/bar/146");
+		Params params = Params.fromPath("/foo/bar/146");
 		
 		assertEquals(4, params.size());
 		assertEquals(params.get(Param.output), "foo");
@@ -135,7 +144,7 @@ public class TestURLToParams {
 	
 	@Test
 	public void outputNameAreaDashSerial() {
-		Params params = Params.fromPath("/output/foo/RFC-146");
+		Params params = Params.fromPath("/foo/RFC-146");
 		
 		assertEquals(4, params.size());
 		assertEquals(params.get(Param.output), "foo");

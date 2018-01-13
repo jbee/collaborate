@@ -33,7 +33,6 @@ import se.jbee.track.model.URL;
 import se.jbee.track.model.UseCode;
 import se.jbee.track.model.User;
 import se.jbee.track.model.User.AuthState;
-import se.jbee.track.model.User.Notification;
 import se.jbee.track.model.Version;
 
 /**
@@ -71,7 +70,7 @@ public interface Bincoder<I,O> {
 	Matter[] matters = Matter.values();
 	Mail.Delivery[] deliveries = Mail.Delivery.values();
 	Change.Operation[] operations = Change.Operation.values();
-	Notification[] notifications = Notification.values();
+	Mail.Notification[] notifications = Mail.Notification.values();
 	AuthState[] states = AuthState.values();
 	
 	/**
@@ -95,6 +94,7 @@ public interface Bincoder<I,O> {
 		u.email = Email.fromBytes(getShortBytes(from));
 		u.notificationSettings = bin2enumMap(notifications, deliveries, from);
 		u.authState = bin2enum(states, from);
+		u.authenticated = from.getInt();
 		u.encryptedOtp = getShortBytes(from);
 		u.millisOtpExprires = from.getLong();
 		u.watches = from.getInt();
@@ -117,6 +117,7 @@ public interface Bincoder<I,O> {
 		putShortBytes(u.email, to);
 		enumMap2bin(u.notificationSettings, to);
 		enum2bin(u.authState, to);
+		to.putInt(u.authenticated);
 		putShortBytes(u.encryptedOtp, to);
 		to.putLong(u.millisOtpExprires);
 		to.putInt(u.watches);

@@ -29,6 +29,9 @@ public enum Param {
 		
 		
 		// PUTS/POSTS
-		enlist, approach, abandon, stress
+		enlist, approach, abandon, stress,
+		
+		// generates testdata
+		sample
 	};
 }

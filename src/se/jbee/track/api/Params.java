@@ -9,6 +9,8 @@ import static se.jbee.track.api.Param.viewed;
 import java.util.EnumMap;
 
 import se.jbee.track.api.Param.Command;
+import se.jbee.track.model.Name;
+import se.jbee.track.model.Names;
 
 /**
  * A set of {@link Param} key-value pairs. 
@@ -21,6 +23,24 @@ public final class Params extends EnumMap<Param, String> {
 		put(p, val);
 		return this;
 	}
+	
+	public Params set(Param p, Enum<?> val) {
+		return set(p, val.name());
+	}
+	
+	public <E extends Enum<E>> E value(Param p, E def) {
+		String v = get(p);
+		return v == null ? def : Enum.valueOf(def.getDeclaringClass(), v);
+	}
+	
+	public Names names(Param p) {
+		Names res = Names.empty();
+		String v = getOrDefault(p, "");
+		if (!v.isEmpty())
+			for (String n : v.split("\\s*,\\s*|\\s+"))
+				res = res.add(Name.as(n));
+		return res;
+	}
 
 	// URLs
 
@@ -32,15 +52,16 @@ public final class Params extends EnumMap<Param, String> {
 	 *  /user/{alias}/
 	 *  /user/{alias}/{page}/
 	 *  /user/{alias}/{page}/as/{alias}
-	 *  /output/{name}/
-	 *  /output/{name}/* /{page}
-	 *  /output/{name}/{area}/
-	 *  /output/{name}/{area}/{page}/
-	 *  /output/{name}/{area}/{page}/as/{alias}
-	 *  /output/{name}/v/{version}/
-	 *  /output/{name}/{idn}
-	 *  /output/{name}/{area}/{serial}
+	 *  /{output}/
+	 *  /{output}/* /{page}
+	 *  /{output}/{area}/
+	 *  /{output}/{area}/{page}/
+	 *  /{output}/{area}/{page}/as/{alias}
+	 *  /{output}/v/{version}/
+	 *  /{output}/{idn}
+	 *  /{output}/{area}/{serial}
 	 * </pre>
+	 * All POST/PUT URLs use <code>/do/</code> as first segement. 
 	 */
 	public static Params fromPath(String path) {
 		if (path.startsWith("/"))
@@ -48,50 +69,51 @@ public final class Params extends EnumMap<Param, String> {
 		Params params = new Params();
 		if (!path.isEmpty()) {
 			String[] segments = path.split("[/?]");
-			switch (segments[0]) {
-			case "user":
-				params.set(command, Command.list.name());
+			String s0 = segments[0];
+			if ("user".equals(s0) || "*".equals(s0)) {
+				params.set(command, Command.list);
 				params.set(viewed, segments.length >= 2 ? segments[1] : "@");
 				if (segments.length >= 3) { params.set(Param.page, segments[2]); }
-				break;
-			case "output": //TODO remove output from path - make sure "user" is no logal output name
-				if (segments.length >= 2) { params.set(Param.output, segments[1]); }
-				if (segments.length >= 3) { 
-					String s2 = segments[2];
-					if ("v".equals(s2)) { 
-						params.set(version, segments[3]);
-						params.set(command, Command.version.name());
-					} else if (s2.matches("\\d+")) {
-						params.set(task, s2);
-						params.set(command, Command.details.name());
+			} else {
+				params.set(Param.output, s0);
+				if (segments.length >= 2) { 
+					String s1 = segments[1];
+					if ("v".equals(s1)) { 
+						params.set(version, segments[2]);
+						params.set(command, Command.version);
+					} else if (s1.matches("\\d+")) {
+						params.set(task, s1);
+						params.set(command, Command.details);
 					} else { 
-						params.set(Param.area, s2);
-						if (segments.length >= 4) {
-							String s3 = segments[3];
-							if (s3.matches("\\d+")) {
-								params.set(serial, s3);
-								params.set(command, Command.details.name());
+						params.set(Param.area, s1);
+						if (segments.length >= 3) {
+							String s2 = segments[2];
+							if (s2.matches("\\d+")) {
+								params.set(serial, s2);
+								params.set(command, Command.details);
 							} else {
-								params.set(command, Command.list.name());
-								params.set(Param.page, s3);
+								params.set(command, Command.list);
+								params.set(Param.page, s2);
 							}
 						} else {
-							if (s2.matches("^.+-\\d+$")) {
-								params.set(command, Command.details.name());
-								params.set(Param.area, s2.substring(0, s2.lastIndexOf('-')));
-								params.set(Param.serial, s2.substring(s2.lastIndexOf('-')+1));
+							if (s1.matches("^.+-\\d+$")) {
+								params.set(command, Command.details);
+								params.set(Param.area, s1.substring(0, s1.lastIndexOf('-')));
+								params.set(Param.serial, s1.substring(s1.lastIndexOf('-')+1));
 							} else {
-								params.set(command, Command.list.name());
+								params.set(command, Command.list);
 							}
 						}
 					} 
 				} else {
-					params.set(Param.command, Command.list.name());
+					params.set(Param.command, Command.list);
 				}
 			}
 			if (segments.length >= 2 && "as".equals(segments[segments.length-2])) {
 				params.set(Param.role, segments[segments.length-1]);
 			}
+		} else {
+			//TODO product overview page
 		}
 		return params;
 	}

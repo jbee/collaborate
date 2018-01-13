@@ -1,6 +1,6 @@
 package se.jbee.track.mail;
 
-import static se.jbee.track.model.Mail.Subject.confirmation;
+import static se.jbee.track.model.Mail.Objective.confirmation;
 
 import java.io.File;
 import java.io.IOException;
@@ -81,7 +81,7 @@ public class FileMailer implements Mailer {
 	 */
 	@Override
 	public boolean deliver(Mail mail) {
-		if (mail.subject == confirmation) {
+		if (mail.objective == confirmation) {
 			try {
 				confirmations.put(mail);
 				return true;

@@ -7,60 +7,25 @@ import java.util.EnumMap;
 
 public final class User extends Entity<User> {
 
-	/**
-	 * The idea of a fine grained setting is to reduce mails or mail handling by
-	 * allowing users to configure away messages by using
-	 * {@link Mail.Delivery#never} and at the same time give the user a way to
-	 * adopt mails to their usage pattern.
-	 * 
-	 * In general one get mails for all tasks involved or watched. So watching
-	 * is mostly a way to trigger notifications for task one isn't involved in.
-	 */
 	@UseCode
-	public static enum Notification {
-		// user
-		authenticated(Mail.Delivery.never), // a login occurred
-		// output
-		constituted(Mail.Delivery.daily),
-		// area
-		opened(Mail.Delivery.daily),    // for user that are origin maintainers
-		left(Mail.Delivery.daily),      // by a maintainer (to other maintainers)
-		// version
-		tagged(Mail.Delivery.daily),    // for user that are origin maintainers
-		// poll
-		polled(Mail.Delivery.hourly),   // in an area the user is maintainer (can vote)
-		voted(Mail.Delivery.hourly),     // for a poll where user can vote (is maintainer)
-		// task
-		reported(Mail.Delivery.hourly), // new tasks (in maintained area)
-		developed(Mail.Delivery.daily), // a task the user is involved in has been updated or segmented
-		moved(Mail.Delivery.daily),     // where user is involved
-		solved(Mail.Delivery.hourly),   // where user is involved
-		extended(Mail.Delivery.hourly)  // where user is involved
-		;
-		
-		public final Mail.Delivery def;
-		
-		Notification(Mail.Delivery def) {
-			this.def = def;
-		}
-	}
-	
-	@UseCode
-	public static enum AuthState { registered, confirming, authenticated }
+	public static enum AuthState { unregistered, registered, confirming, authenticated }
 	
 	private static final int INITIAL_WATCH_LIMIT = 20;
+
+	public static final User ANONYMOUS = anonymousUser();
 
 	public Name alias;
 	// account
 	public Email email;
-	public AuthState authState;
+	public AuthState authState = AuthState.unregistered;
+	public int authenticated; // how often
 	public transient byte[] otp; // mem only
 	public byte[] encryptedOtp; // persisted
 	public long millisOtpExprires;
 	
 	// user data
 	public int watches; // n tasks
-	public EnumMap<Notification,Mail.Delivery> notificationSettings;
+	public EnumMap<Mail.Notification,Mail.Delivery> notificationSettings;
 	//TODO preferred page size?
 	
 	// change log
@@ -82,6 +47,13 @@ public final class User extends Entity<User> {
 		super(version);
 	}
 	
+	private static User anonymousUser() {
+		User a  = new User(0);
+		a.alias=Name.ANONYMOUS;
+		a.authState=AuthState.unregistered;
+		return a;
+	}
+
 	/**
 	 * User entity is not cloned to but changed in place an explicitly modified
 	 * by touching.

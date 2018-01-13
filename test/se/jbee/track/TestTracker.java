@@ -37,7 +37,7 @@ public class TestTracker {
 		Date today = date(now);
 		User user = tracker.register(null, as("moos"), email("moos@example.com"));
 		user = tracker.authenticate(user, user.otp);
-		Output output = tracker.constitute(as("test"), user);
+		Output output = tracker.envision(as("test"), user);
 		Task task = tracker.reportDefect(output, gist("A problem"), user, output.somewhere, output.somewhen, false);
 
 		task = tracker.emphasise(task, user);

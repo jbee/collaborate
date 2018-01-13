@@ -1,4 +1,4 @@
-package se.jbee.track.ui.http;
+package se.jbee.track.http;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;

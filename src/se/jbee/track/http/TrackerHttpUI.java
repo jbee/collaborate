@@ -1,4 +1,4 @@
-package se.jbee.track.ui.http;
+package se.jbee.track.http;
 
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
