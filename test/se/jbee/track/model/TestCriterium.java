@@ -16,7 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import se.jbee.track.model.Date;
-import se.jbee.track.model.Product;
+import se.jbee.track.model.Output;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Criteria.Criterium;
 import se.jbee.track.model.Criteria.Property;
@@ -24,19 +24,19 @@ import se.jbee.track.model.Criteria.Property;
 public class TestCriterium {
 
 	private final Date today = Date.today();
-	private final Product p1 = new Product(1);
+	private final Output p1 = new Output(1);
 	private final Task t = new Task(1);
 
 	@Before
 	public void setUp() {
 		p1.name = as("p1");
-		t.product = p1;
+		t.output = p1;
 		t.reported = today.minusDays(1);
 	}
 	
 	@Test
 	public void eq() {
-		Criterium c1 = new Criterium(Property.product, eq, p1.name);
+		Criterium c1 = new Criterium(Property.output, eq, p1.name);
 		assertTrue(c1.matches(t, today));
 		p1.name = as("p2");
 		assertFalse(c1.matches(t, today));
@@ -109,31 +109,31 @@ public class TestCriterium {
 	
 	@Test
 	public void in() {
-		Criterium c1 = new Criterium(Property.product, in, p1.name, as("p2"));
+		Criterium c1 = new Criterium(Property.output, in, p1.name, as("p2"));
 		assertTrue(c1.matches(t, today));
 		
-		Criterium c2 = new Criterium(Property.product, in, as("p2"), p1.name);
+		Criterium c2 = new Criterium(Property.output, in, as("p2"), p1.name);
 		assertTrue(c2.matches(t, today));
 		
-		Criterium c3 = new Criterium(Property.product, in, as("p2"), p1.name, as("p3"));
+		Criterium c3 = new Criterium(Property.output, in, as("p2"), p1.name, as("p3"));
 		assertTrue(c3.matches(t, today));
 		
-		Criterium c4 = new Criterium(Property.product, in, as("p2"), as("p3"));
+		Criterium c4 = new Criterium(Property.output, in, as("p2"), as("p3"));
 		assertFalse(c4.matches(t, today));		
 	}
 	
 	@Test
 	public void nin() {
-		Criterium c1 = new Criterium(Property.product, nin, p1.name, as("p2"));
+		Criterium c1 = new Criterium(Property.output, nin, p1.name, as("p2"));
 		assertFalse(c1.matches(t, today));
 		
-		Criterium c2 = new Criterium(Property.product, nin, as("p2"), p1.name);
+		Criterium c2 = new Criterium(Property.output, nin, as("p2"), p1.name);
 		assertFalse(c2.matches(t, today));
 		
-		Criterium c3 = new Criterium(Property.product, nin, as("p2"), p1.name, as("p3"));
+		Criterium c3 = new Criterium(Property.output, nin, as("p2"), p1.name, as("p3"));
 		assertFalse(c3.matches(t, today));
 		
-		Criterium c4 = new Criterium(Property.product, nin, as("p2"), as("p3"));
+		Criterium c4 = new Criterium(Property.output, nin, as("p2"), as("p3"));
 		assertTrue(c4.matches(t, today));		
 	}
 }

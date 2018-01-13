@@ -5,8 +5,8 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import se.jbee.track.api.Param;
-import se.jbee.track.api.Params;
 import se.jbee.track.api.Param.Command;
+import se.jbee.track.api.Params;
 
 public class TestURLToParams {
 
@@ -29,116 +29,116 @@ public class TestURLToParams {
 	}
 	
 	@Test
-	public void userAliasSite() {
+	public void userAliasPage() {
 		Params params = Params.fromPath("/user/foo/bar/");
 		
 		assertEquals(3, params.size());
 		assertEquals(params.get(Param.viewed), "foo");
-		assertEquals(params.get(Param.site), "bar");
+		assertEquals(params.get(Param.page), "bar");
 		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
-	public void userAliasSiteAsRole() {
+	public void userAliasPageAsRole() {
 		Params params = Params.fromPath("/user/foo/bar/as/baz");
 		
 		assertEquals(4, params.size());
 		assertEquals(params.get(Param.viewed), "foo");
-		assertEquals(params.get(Param.site), "bar");
+		assertEquals(params.get(Param.page), "bar");
 		assertEquals(params.get(Param.role), "baz");
 		assertEquals(params.get(Param.command), Command.list.name());
 	}
 
 	@Test
-	public void productName() {
-		Params params = Params.fromPath("/product/foo/");
+	public void outputName() {
+		Params params = Params.fromPath("/output/foo/");
 		
 		assertEquals(2, params.size());
-		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.output), "foo");
 		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
-	public void productNameArea() {
-		Params params = Params.fromPath("/product/foo/bar/");
+	public void outputNameArea() {
+		Params params = Params.fromPath("/output/foo/bar/");
 		
 		assertEquals(3, params.size());
-		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.output), "foo");
 		assertEquals(params.get(Param.area), "bar");
 		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
-	public void productNameOriginSite() {
-		Params params = Params.fromPath("/product/foo/*/bar");
+	public void outputNameOriginPage() {
+		Params params = Params.fromPath("/output/foo/*/bar");
 		
 		assertEquals(4, params.size());
-		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.output), "foo");
 		assertEquals(params.get(Param.area), "*");
-		assertEquals(params.get(Param.site), "bar");
+		assertEquals(params.get(Param.page), "bar");
 		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
-	public void productNameAreaSite() {
-		Params params = Params.fromPath("/product/foo/baz/bar");
+	public void outputNameAreaPage() {
+		Params params = Params.fromPath("/output/foo/baz/bar");
 		
 		assertEquals(4, params.size());
-		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.output), "foo");
 		assertEquals(params.get(Param.area), "baz");
-		assertEquals(params.get(Param.site), "bar");
+		assertEquals(params.get(Param.page), "bar");
 		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
-	public void productNameAreaSiteAsRole() {
-		Params params = Params.fromPath("/product/foo/baz/bar/as/que");
+	public void outputNameAreaPageAsRole() {
+		Params params = Params.fromPath("/output/foo/baz/bar/as/que");
 		
 		assertEquals(5, params.size());
-		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.output), "foo");
 		assertEquals(params.get(Param.area), "baz");
-		assertEquals(params.get(Param.site), "bar");
+		assertEquals(params.get(Param.page), "bar");
 		assertEquals(params.get(Param.role), "que");
 		assertEquals(params.get(Param.command), Command.list.name());
 	}
 	
 	@Test
-	public void productNameVersion() {
-		Params params = Params.fromPath("/product/foo/v/0.4");
+	public void outputNameVersion() {
+		Params params = Params.fromPath("/output/foo/v/0.4");
 		
 		assertEquals(3, params.size());
-		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.output), "foo");
 		assertEquals(params.get(Param.version), "0.4");
 		assertEquals(params.get(Param.command), Command.version.name());
 	}
 	
 	@Test
-	public void productNameTask() {
-		Params params = Params.fromPath("/product/foo/146");
+	public void outputNameTask() {
+		Params params = Params.fromPath("/output/foo/146");
 		
 		assertEquals(3, params.size());
-		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.output), "foo");
 		assertEquals(params.get(Param.task), "146");
 		assertEquals(params.get(Param.command), Command.details.name());
 	}
 
 	@Test
-	public void productNameAreaSerial() {
-		Params params = Params.fromPath("/product/foo/bar/146");
+	public void outputNameAreaSerial() {
+		Params params = Params.fromPath("/output/foo/bar/146");
 		
 		assertEquals(4, params.size());
-		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.output), "foo");
 		assertEquals(params.get(Param.area), "bar");
 		assertEquals(params.get(Param.serial), "146");
 		assertEquals(params.get(Param.command), Command.details.name());
 	}
 	
 	@Test
-	public void productNameAreaDashSerial() {
-		Params params = Params.fromPath("/product/foo/RFC-146");
+	public void outputNameAreaDashSerial() {
+		Params params = Params.fromPath("/output/foo/RFC-146");
 		
 		assertEquals(4, params.size());
-		assertEquals(params.get(Param.product), "foo");
+		assertEquals(params.get(Param.output), "foo");
 		assertEquals(params.get(Param.area), "RFC");
 		assertEquals(params.get(Param.serial), "146");
 		assertEquals(params.get(Param.command), Command.details.name());

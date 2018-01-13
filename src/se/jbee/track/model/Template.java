@@ -111,7 +111,7 @@ public final class Template extends Bytes implements Comparable<Template> {
 	 * [age>20]
 	 * 
 	 * Hot just now
-	 * [product=@][temperature > 90]
+	 * [output=@][temperature > 90]
 	 * 
 	 * *** Next Silo ***
 	 * ...

@@ -14,7 +14,7 @@ public final class ID extends Identifier<ID> {
 	@UseCode
 	public enum Type {
 		// core domain (uses upper case symbols)
-		User, Site, Product, Area, Version, Task, 
+		User, Page, Output, Area, Version, Task, 
 		
 		// support domain (uses lower case symbols)
 		poll, event, history;
@@ -50,42 +50,42 @@ public final class ID extends Identifier<ID> {
 		return new ID(type, id);
 	}
 	
-	public static ID productId(Name product) {
-		return id(ID.Type.Product, product);
+	public static ID outputId(Name output) {
+		return id(ID.Type.Output, output);
 	}
 
-	public static ID pollId(Name product, Name area, IDN serial) {
-		return id(ID.Type.poll, product, area, serial.asName());
+	public static ID pollId(Name output, Name area, IDN serial) {
+		return id(ID.Type.poll, output, area, serial.asName());
 	}
 
 	/**
-	 * A user site ID 
+	 * A user {@link Page} ID 
 	 */
-	public static ID siteId(Name user, Name name) {
-		return siteId(Name.ORIGIN, user, name);
+	public static ID pageId(Name user, Name name) {
+		return pageId(Name.ORIGIN, user, name);
 	}
 	
 	/**
-	 * A area site ID 
+	 * A area {@link Page} ID 
 	 */
-	public static ID siteId(Name product, Name area, Name name) {
-		return id(ID.Type.Site, product, area, name);
+	public static ID pageId(Name output, Name area, Name name) {
+		return id(ID.Type.Page, output, area, name);
 	}
 
 	public static ID userId(Name name) {
 		return id(ID.Type.User, name);
 	}
 
-	public static ID areaId(Name product, Name area) {
-		return id(ID.Type.Area, product, area);
+	public static ID areaId(Name output, Name area) {
+		return id(ID.Type.Area, output, area);
 	}
 
-	public static ID versionId(Name product, Name version) {
-		return id(ID.Type.Version, product, version);
+	public static ID versionId(Name output, Name version) {
+		return id(ID.Type.Version, output, version);
 	}
 
-	public static ID taskId(Name product, IDN id) {
-		return ID.id(ID.Type.Task, product, id.asName());
+	public static ID taskId(Name output, IDN id) {
+		return ID.id(ID.Type.Task, output, id.asName());
 	}
 	
 	public static ID eventId(long timestamp) {

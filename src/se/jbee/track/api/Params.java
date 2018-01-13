@@ -30,16 +30,16 @@ public final class Params extends EnumMap<Param, String> {
 	 * Paths examples:
 	 * <pre>
 	 *  /user/{alias}/
-	 *  /user/{alias}/{site}/
-	 *  /user/{alias}/{site}/as/{alias}
-	 *  /product/{name}/
-	 *  /product/{name}/* /{site}
-	 *  /product/{name}/{area}/
-	 *  /product/{name}/{area}/{site}/
-	 *  /product/{name}/{area}/{site}/as/{alias}
-	 *  /product/{name}/v/{version}/
-	 *  /product/{name}/{idn}
-	 *  /product/{name}/{area}/{serial}
+	 *  /user/{alias}/{page}/
+	 *  /user/{alias}/{page}/as/{alias}
+	 *  /output/{name}/
+	 *  /output/{name}/* /{page}
+	 *  /output/{name}/{area}/
+	 *  /output/{name}/{area}/{page}/
+	 *  /output/{name}/{area}/{page}/as/{alias}
+	 *  /output/{name}/v/{version}/
+	 *  /output/{name}/{idn}
+	 *  /output/{name}/{area}/{serial}
 	 * </pre>
 	 */
 	public static Params fromPath(String path) {
@@ -52,10 +52,10 @@ public final class Params extends EnumMap<Param, String> {
 			case "user":
 				params.set(command, Command.list.name());
 				params.set(viewed, segments.length >= 2 ? segments[1] : "@");
-				if (segments.length >= 3) { params.set(Param.site, segments[2]); }
+				if (segments.length >= 3) { params.set(Param.page, segments[2]); }
 				break;
-			case "product":
-				if (segments.length >= 2) { params.set(Param.product, segments[1]); }
+			case "output": //TODO remove output from path - make sure "user" is no logal output name
+				if (segments.length >= 2) { params.set(Param.output, segments[1]); }
 				if (segments.length >= 3) { 
 					String s2 = segments[2];
 					if ("v".equals(s2)) { 
@@ -73,7 +73,7 @@ public final class Params extends EnumMap<Param, String> {
 								params.set(command, Command.details.name());
 							} else {
 								params.set(command, Command.list.name());
-								params.set(Param.site, s3);
+								params.set(Param.page, s3);
 							}
 						} else {
 							if (s2.matches("^.+-\\d+$")) {

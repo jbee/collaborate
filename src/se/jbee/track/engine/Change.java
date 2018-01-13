@@ -49,9 +49,9 @@ import se.jbee.track.model.Mail;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
+import se.jbee.track.model.Output.Integration;
 import se.jbee.track.model.Poll;
 import se.jbee.track.model.Poll.Matter;
-import se.jbee.track.model.Product.Integration;
 import se.jbee.track.model.Purpose;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.URL;
@@ -90,12 +90,12 @@ public interface Change {
 		name,
 		configure,
 		
-		// sites
+		// pages
 		compose,
 		recompose,
 		erase,
 		
-		// products
+		// outputs
 		constitute,
 		connect,
 		disconnect,
@@ -181,170 +181,173 @@ public interface Change {
 		return (t, tx) -> { tx.put(configure, t.configure(tx.user(user), notifications)); };
 	}
 	
-	static Change constitute(Name product, Name actor) {
-		return (t, tx) -> { tx.put(constitute, t.constitute(product, tx.user(actor))); };
+	static Change constitute(Name output, Name actor) {
+		return (t, tx) -> { tx.put(constitute, t.constitute(output, tx.user(actor))); };
 	}
 	
-	static Change connect(Name product, Integration endpoint, Name actor) {
-		return (t, tx) -> { tx.put(connect, t.connect(tx.product(product), endpoint, tx.user(actor))); };
+	static Change connect(Name output, Integration endpoint, Name actor) {
+		return (t, tx) -> { tx.put(connect, t.connect(tx.output(output), endpoint, tx.user(actor))); };
 	}
 
-	static Change disconnect(Name product, Name integration, Name actor) {
-		return (t, tx) -> { tx.put(disconnect, t.disconnect(tx.product(product), integration, tx.user(actor))); };
+	static Change disconnect(Name output, Name integration, Name actor) {
+		return (t, tx) -> { tx.put(disconnect, t.disconnect(tx.output(output), integration, tx.user(actor))); };
 	}
 
-	static Change open(Name product, Name board, Name actor, Motive motive, Purpose purpose) {
-		return (t, tx) -> { tx.put(open, t.open(tx.product(product), board, tx.user(actor), motive, purpose)); };
+	static Change open(Name output, Name board, Name actor, Motive motive, Purpose purpose) {
+		return (t, tx) -> { tx.put(open, t.open(tx.output(output), board, tx.user(actor), motive, purpose)); };
 	}
 	
-	static Change compart(Name product, Name area, Name actor) {
-		return (t, tx) -> { tx.put(compart, t.compart(tx.product(product), area, tx.user(actor))); };
+	static Change compart(Name output, Name area, Name actor) {
+		return (t, tx) -> { tx.put(compart, t.compart(tx.output(output), area, tx.user(actor))); };
 	}
 	
-	static Change compart(Name product, Name basis, Name partition, Name actor, boolean subarea) {
-		return (t, tx) -> { tx.put(compart, t.compart(tx.area(product, basis), partition, tx.user(actor), subarea)); };
+	static Change compart(Name output, Name basis, Name partition, Name actor, boolean subarea) {
+		return (t, tx) -> { tx.put(compart, t.compart(tx.area(output, basis), partition, tx.user(actor), subarea)); };
 	}
 	
-	static Change leave(Name product, Name area, Name leavingMaintainer) {
+	static Change leave(Name output, Name area, Name leavingMaintainer) {
 		return (t, tx) -> { 
-			tx.put(leave, t.leave(tx.area(product, area), tx.user(leavingMaintainer)));
-			recount(leave, t,tx, product, area, leavingMaintainer, leavingMaintainer);
+			tx.put(leave, t.leave(tx.area(output, area), tx.user(leavingMaintainer)));
+			recount(leave, t,tx, output, area, leavingMaintainer, leavingMaintainer);
 		};
 	}
 	
-	static Change categorise(Name product, Name area, Name category, Name actor) {
-		return (t, tx) -> {	tx.put(categorise, t.categorise(tx.area(product, area), category, tx.user(actor))); };
+	static Change categorise(Name output, Name area, Name category, Name actor) {
+		return (t, tx) -> {	tx.put(categorise, t.categorise(tx.area(output, area), category, tx.user(actor))); };
 	}
 
-	static Change relocate(Name product, IDN task, Name toArea, Name actor) {
-		return (t, tx) -> { tx.put(relocate, t.relocate(tx.task(product, task), tx.area(product, toArea), tx.user(actor))); };
+	static Change relocate(Name output, IDN task, Name toArea, Name actor) {
+		return (t, tx) -> { tx.put(relocate, t.relocate(tx.task(output, task), tx.area(output, toArea), tx.user(actor))); };
 	}
 	
-	static Change rebase(Name product, IDN task, Name toVersion, Name actor) {
-		return (t, tx) -> { tx.put(rebase, t.rebase(tx.task(product, task), tx.version(product, toVersion), tx.user(actor)));};
+	static Change rebase(Name output, IDN task, Name toVersion, Name actor) {
+		return (t, tx) -> { tx.put(rebase, t.rebase(tx.task(output, task), tx.version(output, toVersion), tx.user(actor)));};
 	}
 	
-	static Change tag(Name product, Name version, Name actor) {
-		return (t, tx) -> { tx.put(tag, t.tag(tx.product(product), version, tx.user(actor))); };
+	static Change tag(Name output, Name version, Name actor) {
+		return (t, tx) -> { tx.put(tag, t.tag(tx.output(output), version, tx.user(actor))); };
 	}
 	
-	static Change propose(Name product, Gist gist, Name reporter, Name area) {
-		return (t, tx) -> { tx.put(propose, t.reportProposal(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
+	static Change propose(Name output, Gist gist, Name reporter, Name area) {
+		return (t, tx) -> { tx.put(propose, t.reportProposal(tx.output(output), gist, tx.user(reporter), tx.area(output, area))); };
 	}
 	
-	static Change indicate(Name product, Gist gist, Name reporter, Name area) {
-		return (t, tx) -> { tx.put(indicate, t.reportNecessity(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
+	static Change indicate(Name output, Gist gist, Name reporter, Name area) {
+		return (t, tx) -> { tx.put(indicate, t.reportNecessity(tx.output(output), gist, tx.user(reporter), tx.area(output, area))); };
 	}
 	
-	static Change remind(Name product, Gist gist, Name reporter, Name area) {
-		return (t, tx) -> { tx.put(remind, t.reportThought(tx.product(product), gist, tx.user(reporter), tx.area(product, area))); };
+	static Change remind(Name output, Gist gist, Name reporter, Name area) {
+		return (t, tx) -> { tx.put(remind, t.reportThought(tx.output(output), gist, tx.user(reporter), tx.area(output, area))); };
 	}
 	
-	static Change warn(Name product, Gist gist, Name reporter, Name area, Name version, boolean exploitable) {
-		return (t, tx) -> { tx.put(warn, t.reportDefect(tx.product(product), gist, tx.user(reporter), tx.area(product, area), tx.version(product, version), exploitable)); };
+	static Change warn(Name output, Gist gist, Name reporter, Name area, Name version, boolean exploitable) {
+		return (t, tx) -> { tx.put(warn, t.reportDefect(tx.output(output), gist, tx.user(reporter), tx.area(output, area), tx.version(output, version), exploitable)); };
 	}
 	
-	static Change request(Name product, Gist gist, Name reporter, Name board) {
-		return (t, tx) -> { tx.put(request, t.reportRequest(tx.product(product), gist, tx.user(reporter), tx.area(product, board))); };
+	static Change request(Name output, Gist gist, Name reporter, Name board) {
+		return (t, tx) -> { tx.put(request, t.reportRequest(tx.output(output), gist, tx.user(reporter), tx.area(output, board))); };
 	}
 	
-	static Change segment(Name product, IDN basis, Purpose purpose, Gist gist, Name reporter, Names changeset) {
-		return (t, tx) -> { tx.put(segment, t.reportSegment(tx.task(product, basis), purpose, gist, tx.user(reporter), changeset)); };
+	static Change segment(Name output, IDN basis, Purpose purpose, Gist gist, Name reporter, Names changeset) {
+		return (t, tx) -> { tx.put(segment, t.reportSegment(tx.task(output, basis), purpose, gist, tx.user(reporter), changeset)); };
 	}
 	
-	static Change absolve(Name product, IDN task, Name byUser, Gist conclusion) {
-		return (t, tx) -> { tx.put(absolve, t.absolve(tx.task(product, task), tx.user(byUser), conclusion)); };
+	static Change absolve(Name output, IDN task, Name byUser, Gist conclusion) {
+		return (t, tx) -> { tx.put(absolve, t.absolve(tx.task(output, task), tx.user(byUser), conclusion)); };
 	}
 	
-	static Change resolve(Name product, IDN task, Name byUser, Gist conclusion) {
-		return (t, tx) -> { tx.put(resolve, t.resolve(tx.task(product, task), tx.user(byUser), conclusion)); };
+	static Change resolve(Name output, IDN task, Name byUser, Gist conclusion) {
+		return (t, tx) -> { tx.put(resolve, t.resolve(tx.task(output, task), tx.user(byUser), conclusion)); };
 	}
 	
-	static Change dissolve(Name product, IDN task, Name byUser, Gist conclusion) {
-		return (t, tx) -> { tx.put(dissolve, t.dissolve(tx.task(product, task), tx.user(byUser), conclusion)); };
+	static Change dissolve(Name output, IDN task, Name byUser, Gist conclusion) {
+		return (t, tx) -> { tx.put(dissolve, t.dissolve(tx.task(output, task), tx.user(byUser), conclusion)); };
 	}
 	
-	static Change archive(Name product, IDN task, Name byUser) {
-		return (t, tx) -> { tx.put(archive, t.archive(tx.task(product, task), tx.user(byUser))); };
+	static Change archive(Name output, IDN task, Name byUser) {
+		return (t, tx) -> { tx.put(archive, t.archive(tx.task(output, task), tx.user(byUser))); };
 	}
 	
-	static Change emphasise(Name product, IDN task, Name voter) {
-		return (t, tx) -> { tx.put(emphasise, t.emphasise(tx.task(product, task), tx.user(voter))); };
+	static Change emphasise(Name output, IDN task, Name voter) {
+		return (t, tx) -> { tx.put(emphasise, t.emphasise(tx.task(output, task), tx.user(voter))); };
 	}
 	
-	static Change attach(Name product, IDN task, Name byUser, URL attachment) {
-		return (t, tx) -> { tx.put(attach, t.attach(tx.task(product, task), tx.user(byUser), attachment)); };
+	static Change attach(Name output, IDN task, Name byUser, URL attachment) {
+		return (t, tx) -> { tx.put(attach, t.attach(tx.task(output, task), tx.user(byUser), attachment)); };
 	}
 	
-	static Change detach(Name product, IDN task, Name byUser, URL attachment) {
-		return (t, tx) -> { tx.put(detach, t.detach(tx.task(product, task), tx.user(byUser), attachment)); };
+	static Change detach(Name output, IDN task, Name byUser, URL attachment) {
+		return (t, tx) -> { tx.put(detach, t.detach(tx.task(output, task), tx.user(byUser), attachment)); };
 	}
 	
-	static Change poll(Matter matter, Gist motivation, Name product, Name area, Name actor, Name affected) {
-		return (t, tx) -> { tx.put(poll, t.poll(matter, motivation, tx.area(product, area), tx.user(actor), tx.user(affected))); };
+	static Change poll(Matter matter, Gist motivation, Name output, Name area, Name actor, Name affected) {
+		return (t, tx) -> { tx.put(poll, t.poll(matter, motivation, tx.area(output, area), tx.user(actor), tx.user(affected))); };
 	}
 	
-	static Change consent(Name product, Name area, IDN serial, Name voter) {
+	static Change consent(Name output, Name area, IDN serial, Name voter) {
 		return (t, tx) -> { 
-			Poll poll = t.consent(tx.poll(product, area, serial), tx.user(voter));
+			Poll poll = t.consent(tx.poll(output, area, serial), tx.user(voter));
 			tx.put(consent, poll);
 			if (poll.isConcluded() && poll.matter == Matter.resignation) {
-				recount(consent, t, tx, product, area, poll.affected, voter);
+				recount(consent, t, tx, output, area, poll.affected, voter);
 			}
 		};
 	}
 	
-	static Change dissent(Name product, Name area, IDN serial, Name voter) {
-		return (t, tx) -> { tx.put(dissent, t.dissent(tx.poll(product, area, serial), tx.user(voter))); };
+	static Change dissent(Name output, Name area, IDN serial, Name voter) {
+		return (t, tx) -> { tx.put(dissent, t.dissent(tx.poll(output, area, serial), tx.user(voter))); };
 	}
 	
-	static Change aspire(Name product, IDN task, Name user) {
-		return (t, tx) -> { tx.put(aspire, t.aspire(tx.task(product, task), tx.user(user))); };
+	static Change aspire(Name output, IDN task, Name user) {
+		return (t, tx) -> { tx.put(aspire, t.aspire(tx.task(output, task), tx.user(user))); };
 	}
 
-	static Change participate(Name product, IDN task, Name user) {
-		return (t, tx) -> { tx.put(participate, t.participate(tx.task(product, task), tx.user(user))); };
+	static Change participate(Name output, IDN task, Name user) {
+		return (t, tx) -> { tx.put(participate, t.participate(tx.task(output, task), tx.user(user))); };
 	}
 	
-	static Change abandon(Name product, IDN task, Name user) {
-		return (t, tx) -> { tx.put(abandon, t.abandon(tx.task(product, task), tx.user(user))); };
+	static Change abandon(Name output, IDN task, Name user) {
+		return (t, tx) -> { tx.put(abandon, t.abandon(tx.task(output, task), tx.user(user))); };
 	}
 
-	static Change watch(Name product, IDN task, Name user) {
-		return (t, tx) -> { tx.put(watch, t.watch(tx.task(product, task), tx.user(user))); };
+	static Change watch(Name output, IDN task, Name user) {
+		return (t, tx) -> { tx.put(watch, t.watch(tx.task(output, task), tx.user(user))); };
 	}
 	
-	static Change unwatch(Name product, IDN task, Name user) {
-		return (t, tx) -> { tx.put(unwatch, t.unwatch(tx.task(product, task), tx.user(user))); };
+	static Change unwatch(Name output, IDN task, Name user) {
+		return (t, tx) -> { tx.put(unwatch, t.unwatch(tx.task(output, task), tx.user(user))); };
 	}
 	
-	static Change compose(Name user, Name site, Template template) {
-		return (t, tx) -> { tx.put(compose, t.compose(tx.user(user), site, template, tx.sites(Name.ORIGIN, user))); };
+	static Change compose(Name user, Name page, Template template) {
+		return (t, tx) -> { tx.put(compose, t.compose(tx.user(user), page, template, tx.pages(Name.ORIGIN, user))); };
 	}
 	
-	static Change compose(Name product, Name area, Name site, Template template, Name user) {
-		return (t, tx) -> { tx.put(compose, t.compose(tx.area(product, area), site, template, tx.user(user), tx.sites(product, area))); };
+	static Change compose(Name output, Name area, Name page, Template template, Name user) {
+		return (t, tx) -> { tx.put(compose, t.compose(tx.area(output, area), page, template, tx.user(user), tx.pages(output, area))); };
 	}
 	
-	static Change recompose(Name user, Name site, Template template) {
-		return (t, tx) -> { tx.put(recompose, t.recompose(tx.site(Name.ORIGIN, user, site), template, tx.user(user))); };
+	static Change recompose(Name user, Name page, Template template) {
+		return (t, tx) -> { tx.put(recompose, t.recompose(tx.page(Name.ORIGIN, user, page), template, tx.user(user))); };
 	}
 	
-	static Change recompose(Name product, Name area, Name site, Template template, Name user) {
-		return (t, tx) -> { tx.put(recompose, t.recompose(tx.site(product, area, site), tx.area(product, area), template, tx.user(user))); };
+	static Change recompose(Name output, Name area, Name page, Template template, Name user) {
+		return (t, tx) -> { tx.put(recompose, t.recompose(tx.page(output, area, page), tx.area(output, area), template, tx.user(user))); };
 	}
 	
-	static Change erase(Name user, Name site) {
-		return (t, tx) -> { tx.put(erase, t.erase(tx.site(Name.ORIGIN, user, site), tx.user(user))); };
+	static Change erase(Name user, Name page) {
+		return (t, tx) -> { tx.put(erase, t.erase(tx.page(Name.ORIGIN, user, page), tx.user(user))); };
 	}
 	
-	static Change erase(Name product, Name area, Name site, Name user) {
-		return (t, tx) -> { tx.put(erase, t.erase(tx.site(product, area, site), tx.area(product, area), tx.user(user))); };
+	static Change erase(Name output, Name area, Name page, Name user) {
+		return (t, tx) -> { tx.put(erase, t.erase(tx.page(output, area, page), tx.area(output, area), tx.user(user))); };
 	}
 	
-	static void recount(Operation op, Tracker t, Tx tx, Name product, Name area, Name resignedUser, Name actor) {
+	static void recount(Operation op, Tracker t, Tx tx, Name output, Name area, Name resignedUser, Name actor) {
+		//FIXME sadly not that simple. Recounting can exclude more maintainers and so forth. 
+		// So first we have to recount all that potentially could cause that always removing all maintainer removed so far
+		// than we remove all removed from all the other polls and see if those are settled
 		User user = tx.user(actor);
-		for (Poll p : tx.polls(product, area))
+		for (Poll p : tx.polls(output, area))
 			tx.put(op, t.recount(p, resignedUser, user));
 	}
 }

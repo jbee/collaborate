@@ -20,7 +20,7 @@ public final class User extends Entity<User> {
 	public static enum Notification {
 		// user
 		authenticated(Mail.Delivery.never), // a login occurred
-		// product
+		// output
 		constituted(Mail.Delivery.daily),
 		// area
 		opened(Mail.Delivery.daily),    // for user that are origin maintainers
@@ -72,7 +72,7 @@ public final class User extends Entity<User> {
 	public int resolved;
 	public int dissolved;
 	public int abandoned;
-	public Names contributesToProducts;
+	public Names contributesToOutputs;
 	
 	// voting tasks
 	public long millisEmphasised;
@@ -97,7 +97,7 @@ public final class User extends Entity<User> {
 	}
 	
 	@Override
-	public Name product() {
+	public Name output() {
 		return Name.ORIGIN;
 	}
 	

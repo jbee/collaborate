@@ -1,8 +1,8 @@
 package se.jbee.track.html;
 
 import static se.jbee.track.model.Date.date;
-import se.jbee.track.api.ListPage;
-import se.jbee.track.api.Page;
+import se.jbee.track.api.ListView;
+import se.jbee.track.api.View;
 import se.jbee.track.api.Param.Command;
 import se.jbee.track.cache.Matches;
 import se.jbee.track.model.Criteria;
@@ -10,36 +10,36 @@ import se.jbee.track.model.Criteria.Coloration;
 import se.jbee.track.model.Criteria.Property;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
-import se.jbee.track.model.Site;
+import se.jbee.track.model.Page;
 import se.jbee.track.model.Task;
 
-public class ListPageHtmlRenderer implements HtmlPageRenderer<ListPage> {
+public class ListViewHtmlRenderer implements HtmlRenderer<ListView> {
 
 	@Override
-	public void render(ListPage page, HtmlWriter out) {
+	public void render(ListView view, HtmlWriter out) {
 		out.header();
-		renderMenu(page.menu, out);
-		renderList(page, page.results, out);
+		renderMenu(view.menu, out);
+		renderList(view, view.results, out);
 
 		out.legend();
 		out.footer();
 	}
 
-	public void renderMenu(Site[] entries, HtmlWriter out) {
+	public void renderMenu(Page[] pages, HtmlWriter out) {
 		out.append("<div class='menu'><span class='group'>").append("<h1>collaborate!</h1>").append("</span><ul>");
-		for (Site site : entries) {
+		for (Page page : pages) {
 			out.append("<li>");
-			out.append("<a href='/").append(site.menu).append("/").append(site.name).append("/");
-			if (!site.name.equalTo(Name.as("@home"))) {
-				out.append(site.name).append("/");
+			out.append("<a href='/").append(page.menu).append("/").append(page.name).append("/");
+			if (!page.name.equalTo(Name.as("@home"))) {
+				out.append(page.name).append("/");
 			}
-			out.append("'>").append(site.name.display()).append("</a>");
+			out.append("'>").append(page.name.display()).append("</a>");
 			out.append("</li>");
 		}
 		out.append("</ul></div>");
 	}
 
-	public void renderList(ListPage page, Matches[] matches, HtmlWriter out) {
+	public void renderList(ListView page, Matches[] matches, HtmlWriter out) {
 		Object[] seq = page.page.template.elements();
 		out.append("<div class='column'>");
 		int i = 0;
@@ -55,7 +55,7 @@ public class ListPageHtmlRenderer implements HtmlPageRenderer<ListPage> {
 		out.append("</div>");
 	}
 
-	public void render(ListPage page, Criteria criteria, Matches matches, HtmlWriter out) {
+	public void render(ListView page, Criteria criteria, Matches matches, HtmlWriter out) {
 		out.append("<h3>").append(criteria.toString()).append("</h3>");
 		Coloration scheme = Coloration.heat;
 		if (criteria.indexOf(Property.coloration) > 0) {
@@ -72,7 +72,7 @@ public class ListPageHtmlRenderer implements HtmlPageRenderer<ListPage> {
 		out.append("</table>");
 	}
 
-	private void render(ListPage page, Task task, HtmlWriter out) {
+	private void render(ListView page, Task task, HtmlWriter out) {
 		out.append("<tr");
 		renderCssClasses(page, task, out);
 		out.append(" data-heat='").append(String.valueOf(task.emphasis)).append("'");
@@ -132,7 +132,7 @@ public class ListPageHtmlRenderer implements HtmlPageRenderer<ListPage> {
 		}
 	}
 
-	private void renderCssClasses(Page page, Task task, HtmlWriter out) {
+	private void renderCssClasses(View page, Task task, HtmlWriter out) {
 		out.append(" class='");
 		out.append(" status-").append(task.status.name());
 		out.append(" goal-").append(task.purpose.name());

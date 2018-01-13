@@ -38,17 +38,17 @@ import se.jbee.track.model.IDN;
 import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
+import se.jbee.track.model.Output;
+import se.jbee.track.model.Page;
 import se.jbee.track.model.Poll;
-import se.jbee.track.model.Product;
 import se.jbee.track.model.Purpose;
-import se.jbee.track.model.Site;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
 
 /**
- * Each worker is responsible for a single {@link Product}.
+ * Each worker is responsible for a single {@link Output}.
  * 
  * This way there is only 1 thread working with the data what makes it trivial
  * to not have inconsistent states leaving the cache while updating the cached
@@ -56,7 +56,7 @@ import se.jbee.track.model.Version;
  */
 final class CacheWorker implements Cache {
 
-	private final Name product;
+	private final Name output;
 	private final Date today;
 	private final ExecutorService es;
 
@@ -88,9 +88,9 @@ final class CacheWorker implements Cache {
 	// special caches:
 	private TaskSet[] byTemperature = new TaskSet[100]; // not fix, has to be recomputed every day
 	
-	public CacheWorker(Name product, DB db, Date today) {
+	public CacheWorker(Name output, DB db, Date today) {
 		super();
-		this.product = product;
+		this.output = output;
 		this.today = today;
 		this.byIDN = new Task[128]; // initial capacity
 		this.es = Executors.newSingleThreadExecutor(this::factory);
@@ -105,19 +105,19 @@ final class CacheWorker implements Cache {
 	private Thread factory(Runnable target) {
 		Thread t = new Thread(target);
 		t.setDaemon(true);
-		t.setName("cache-worker:"+product);
+		t.setName("cache-worker:"+output);
 		return t;
 	}
 	
 	@Override
 	public String toString() {
-		return "cache:"+product.toString()+"["+usage+"]";
+		return "cache:"+output.toString()+"["+usage+"]";
 	}
 	
 	private void init(DB db) {
 		try (TxR tx = db.read()) {
 			try (Repository rep = new DAO(tx)) {
-				rep.tasks(product, (t) -> { index(t, TaskSet::init); return true; });
+				rep.tasks(output, (t) -> { index(t, TaskSet::init); return true; });
 			}
 		}
 	}
@@ -329,12 +329,12 @@ final class CacheWorker implements Cache {
 	/**
 	 * Changes to take care of:
 	 * 
-	 * - change to the{@link Product}, {@link Area}s and {@link Poll}s.
+	 * - change to the{@link Output}, {@link Area}s and {@link Poll}s.
 	 * - {@link Task} changes (obviously)
 	 * 
 	 * Changes to ignore:
 	 * 
-	 * - change to {@link User}, {@link Site} and {@link Version}
+	 * - change to {@link User}, {@link Page} and {@link Version}
 	 * - new {@link Event}s or {@link History}
 	 */
 	@SuppressWarnings("unchecked")
@@ -342,7 +342,7 @@ final class CacheWorker implements Cache {
 		for (Changes.Entry<?> e : changes) {
 			switch (e.type()) {
 			case Area: updateArea((Entry<Area>) e); break;
-			case Product: updateProduct((Entry<Product>) e); break;
+			case Output: updateOutput((Entry<Output>) e); break;
 			case Task: updateTask((Entry<Task>) e); break;
 			default: // just ignore those changes
 			}
@@ -430,7 +430,7 @@ final class CacheWorker implements Cache {
 				Task t = after;
 				t.area = cacheInstanceOf(t.area);
 				t.base = cacheInstanceOf(t.base);
-				t.product = cacheInstanceOf(t.product);
+				t.output = cacheInstanceOf(t.output);
 				index(t, TaskSet::add);
 				break;
 			case archive:
@@ -438,6 +438,7 @@ final class CacheWorker implements Cache {
 				break;
 			}
 		}
+		// TODO maybe it is easier to just replace the full task in byID with after
 	}
 	
 	private Version cacheInstanceOf(Version v) {
@@ -456,8 +457,8 @@ final class CacheWorker implements Cache {
 		return idx < 0 ? a : byIDN[idx].area;
 	}
 	
-	private Product cacheInstanceOf(Product p) {
-		return byIDN[1].product;
+	private Output cacheInstanceOf(Output p) {
+		return byIDN[1].output;
 	}
 	
 	private static void removeMissing(Names a, Names b, Map<Name, TaskSet> map, IDN idn) {
@@ -472,9 +473,9 @@ final class CacheWorker implements Cache {
 		}
 	}
 	
-	private void updateProduct(Entry<Product> e) {
-		Product after = e.after;
-		Product p = cacheInstanceOf(after);
+	private void updateOutput(Entry<Output> e) {
+		Output after = e.after;
+		Output p = cacheInstanceOf(after);
 		if (after.isMoreRecent(p)) { 
 			// just do that no matter what has changed as it is simpler
 			p.integrations = after.integrations;

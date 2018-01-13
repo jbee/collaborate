@@ -36,7 +36,7 @@ public final class HtmlWriter {
 	}
 
 	public void versionLink(Task task) {
-		out.append("<a class='vn' href='/view/").append(task.product.name).append("/v/").append(task.base.name).append("/'>").append(task.base.name).append("</a>");
+		out.append("<a class='vn' href='/view/").append(task.output.name).append("/v/").append(task.base.name).append("/'>").append(task.base.name).append("</a>");
 	}
 
 	public void userLink(Name user) {
@@ -48,7 +48,7 @@ public final class HtmlWriter {
 	}
 
 	public void areaLink(Area area) {
-		out.append("<a href='/view/").append(area.product).append("/").append(area.name).append("/'>").append(area.name).append("</a>");
+		out.append("<a href='/view/").append(area.output).append("/").append(area.name).append("/'>").append(area.name).append("</a>");
 	}
 
 	public void taskLink(Task task) {
@@ -60,7 +60,7 @@ public final class HtmlWriter {
 	}
 
 	public void commandLink(Task task, String cssClasses, Command command, String label) {
-		out.append("<a class='").append(cssClasses).append("' href='/").append(command.name()).append("/").append(task.product.name).append("/").append(task.id.toString()).append("/'>").append(label).append("</a>");
+		out.append("<a class='").append(cssClasses).append("' href='/").append(command.name()).append("/").append(task.output.name).append("/").append(task.id.toString()).append("/'>").append(label).append("</a>");
 	}
 	
 	public void legend() {

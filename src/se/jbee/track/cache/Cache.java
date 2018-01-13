@@ -4,6 +4,7 @@ import java.util.concurrent.Future;
 
 import se.jbee.track.engine.Changes;
 import se.jbee.track.model.Criteria;
+import se.jbee.track.model.Output;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 
@@ -21,7 +22,7 @@ import se.jbee.track.model.User;
 public interface Cache {
 
 	/**
-	 * Note: To cause indexing of a specific product use
+	 * Note: To cause indexing of a specific {@link Output} use
 	 * {@link Criteria#index(se.jbee.track.model.Name)}.
 	 */
 	Future<Matches> matchesFor(User inquirer, Criteria criteria);

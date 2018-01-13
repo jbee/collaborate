@@ -1,7 +1,7 @@
 package se.jbee.track.model;
 
 /**
- * An {@link IDN} is an identity number that is unique for a {@link Product} (but not globally unique!).
+ * An {@link IDN} is an identity number that is unique for a {@link Output} (but not globally unique!).
  *
  * @author jan
  */

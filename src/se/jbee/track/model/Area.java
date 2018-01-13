@@ -7,7 +7,7 @@ package se.jbee.track.model;
  */
 public final class Area extends Entity<Area> {
 
-	public Name product;
+	public Name output;
 	public Name name;
 	/**
 	 * The 'parent' area. Something that contains this area in some way.
@@ -73,11 +73,11 @@ public final class Area extends Entity<Area> {
 
 	@Override
 	public ID computeID() {
-		return ID.areaId(product, name);
+		return ID.areaId(output, name);
 	}
 	
 	@Override
-	public Name product() {
-		return product;
+	public Name output() {
+		return output;
 	}
 }

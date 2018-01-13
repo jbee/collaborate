@@ -3,8 +3,8 @@ package se.jbee.track.engine;
 import static java.lang.Math.max;
 import static se.jbee.track.engine.Bincoder.area2bin;
 import static se.jbee.track.engine.Bincoder.poll2bin;
-import static se.jbee.track.engine.Bincoder.product2bin;
-import static se.jbee.track.engine.Bincoder.site2bin;
+import static se.jbee.track.engine.Bincoder.output2bin;
+import static se.jbee.track.engine.Bincoder.page2bin;
 import static se.jbee.track.engine.Bincoder.task2bin;
 import static se.jbee.track.engine.Bincoder.user2bin;
 import static se.jbee.track.engine.Bincoder.version2bin;
@@ -28,8 +28,8 @@ import se.jbee.track.model.Entity;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Poll;
-import se.jbee.track.model.Product;
-import se.jbee.track.model.Site;
+import se.jbee.track.model.Output;
+import se.jbee.track.model.Page;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Transitory;
 import se.jbee.track.model.User;
@@ -143,11 +143,11 @@ public final class Transaction extends DAO implements Tx, Limits {
 			put(op, ((Poll) e).area);
 		} else if (e instanceof Task) {
 			Task t = (Task) e;
-			put(op, t.product);
+			put(op, t.output);
 			put(op, t.area);
 			put(op, t.base);
-		} else if (e instanceof Product && e.version() == 1) {
-			Product p = (Product)e;
+		} else if (e instanceof Output && e.version() == 1) {
+			Output p = (Output)e;
 			put(op, p.origin);
 			put(op, p.somewhere);
 			put(op, p.somewhen);
@@ -197,10 +197,10 @@ public final class Transaction extends DAO implements Tx, Limits {
 			switch (id.type) {
 			case poll:    write(tx, id, (Poll)val, poll2bin, buf); break;
 			case Area:    write(tx, id, (Area)val, area2bin, buf); break;
-			case Site:    write(tx, id, (Site)val, site2bin, buf); break;
+			case Page:    write(tx, id, (Page)val, page2bin, buf); break;
 			case Task:    write(tx, id, (Task)val, task2bin, buf); break;
 			case User:    write(tx, id, (User)val, user2bin, buf); break;
-			case Product: write(tx, id, (Product)val, product2bin, buf); break;
+			case Output: write(tx, id, (Output)val, output2bin, buf); break;
 			case Version: write(tx, id, (Version)val, version2bin, buf); break;
 			default: throw new UnsupportedOperationException("Cannot store entities of type: "+id);
 			}

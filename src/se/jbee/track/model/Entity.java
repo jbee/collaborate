@@ -11,11 +11,11 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	protected abstract ID computeID();
 	
 	/**
-	 * @return name of the {@link Product} this entity is related to or
+	 * @return name of the {@link Output} this entity is related to or
 	 *         {@link Name#ORIGIN} if the entity is not related to any
-	 *         particular product like a user or a user site.
+	 *         particular {@link Output} like a user or a user {@link Page}.
 	 */
-	public abstract Name product();
+	public abstract Name output();
 	
 	public Entity(int initalVersion) {
 		super();

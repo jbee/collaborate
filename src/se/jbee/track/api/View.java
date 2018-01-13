@@ -2,7 +2,7 @@ package se.jbee.track.api;
 
 import se.jbee.track.model.User;
 
-public abstract class Page {
+public abstract class View {
 	/**
 	 * The user looking at the {@link #page}.
 	 * This is always the user that has authorized himself. 
@@ -12,7 +12,7 @@ public abstract class Page {
 	
 	public final long now;
 
-	public Page(User actor, long now) {
+	public View(User actor, long now) {
 		super();
 		this.actor = actor;
 		this.now = now;

@@ -83,11 +83,11 @@ import java.util.regex.Pattern;
 public final class Criteria implements Iterable<Criteria.Criterium> {
 
 	/**
-	 * To trigger indexing of a specific product in a cache we build a request
-	 * that only filters on the product and on nothing else. 
+	 * To trigger indexing of a specific {@link Output} in a cache we build a
+	 * request that only filters on the {@link Output} and on nothing else.
 	 */
-	public static Criteria index(Name product) {
-		return new Criteria(new Criterium(Property.product, eq, product));
+	public static Criteria index(Name output) {
+		return new Criteria(new Criterium(Property.output, eq, output));
 	}
 	
 	private final Criterium[] criteria;
@@ -98,7 +98,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	}
 	
 	public boolean isIndexRequest() {
-		return criteria.length == 1 && criteria[0].left == Property.product && criteria[0].op == eq;
+		return criteria.length == 1 && criteria[0].left == Property.output && criteria[0].op == eq;
 	}
 
 	public int count() {
@@ -475,7 +475,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	
 	/**
 	 * Pages not using a {@link #list} {@link Layout} usually only use a single
-	 * query in the {@link Site} {@link Template} as these layouts require
+	 * query in the {@link Page} {@link Template} as these layouts require
 	 * horizontal space.
 	 * 
 	 * @author jan
@@ -552,7 +552,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		participant(name, 45, eq, neq, in, nin),
 		area(name, 20, eq, neq, in, nin),
 		category(name, 8, eq, neq, in, nin),
-		product(name, 1, eq, neq, in, nin),
+		output(name, 1, eq, neq, in, nin),
 		url(text, 70, eq, gt, lt, in, nin), //TODO when eq, gt or lt is used and the value is not an URL (starts with http) then we somehow have to know what kind of integration URL is meant and look for that
 		gist(text, 70, eq, gt, lt, in, nin),
 		conclusion(text, 70, eq, gt, lt, in, nin);
@@ -642,7 +642,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			case maintainer: return t.area.maintainers;
 			case watcher: return t.watchers;
 			case area: return t.area.name;
-			case product: return t.product.name;
+			case output: return t.output.name;
 			case gist: return t.gist; 
 			case conclusion: return t.conclusion;
 			}

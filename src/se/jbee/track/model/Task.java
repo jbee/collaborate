@@ -6,7 +6,7 @@ import static java.lang.Math.min;
 public class Task extends Entity<Task> {
 
 	// creating a task
-	public Product product; // needs to be a object since it changes when new task is created
+	public Output output; // needs to be a object since it changes when new task is created
 	public IDN id;
 	public IDN serial = IDN.ZERO; // within an board
 	// opening record
@@ -67,12 +67,12 @@ public class Task extends Entity<Task> {
 	
 	@Override
 	public ID computeID() {
-		return ID.taskId(product.name, id);
+		return ID.taskId(output.name, id);
 	}
 	
 	@Override
-	public Name product() {
-		return product.name;
+	public Name output() {
+		return output.name;
 	}
 	
 	/**

@@ -33,7 +33,7 @@ import se.jbee.track.model.Email;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.ID.Type;
 import se.jbee.track.model.Name;
-import se.jbee.track.model.Site;
+import se.jbee.track.model.Page;
 import se.jbee.track.model.User;
 
 public class TestLMDB {
@@ -49,7 +49,7 @@ public class TestLMDB {
 				.setMaxDbs(10)
 				.open(path)) {
 
-			Dbi<ByteBuffer> db = env.openDbi(Type.Site.name(), DbiFlags.MDB_CREATE);
+			Dbi<ByteBuffer> db = env.openDbi(Type.Page.name(), DbiFlags.MDB_CREATE);
 			ByteBuffer key = ByteBuffer.allocateDirect(env.getMaxKeySize());
 			key.put("foo".getBytes()).flip();
 			ByteBuffer val = ByteBuffer.allocateDirect(env.getMaxKeySize());
@@ -73,15 +73,15 @@ public class TestLMDB {
 		try (DB db = new LMDB(Env.create().setMapSize(1014*1024*10), path)) {
 			User u1 = tracker.register(null, as("user1"), email("pass1@ex.de"));
 			u1 = tracker.authenticate(u1, u1.otp);
-			Site s1 = tracker.compose(u1, as("def"), template("ghi"));
-			Site s2 = tracker.compose(u1, as("mno"), template("pqr"));
+			Page s1 = tracker.compose(u1, as("def"), template("ghi"));
+			Page s2 = tracker.compose(u1, as("mno"), template("pqr"));
 			try (TxRW tx = db.write()) {
 				ByteBuffer buf = ByteBuffer.allocateDirect(1024);
-				Bincoder.site2bin.convert(s1, buf);
+				Bincoder.page2bin.convert(s1, buf);
 				buf.flip();
 				tx.put(s1.uniqueID(), buf);
 				buf.clear();
-				Bincoder.site2bin.convert(s2, buf);
+				Bincoder.page2bin.convert(s2, buf);
 				buf.flip();
 				tx.put(s2.uniqueID(), buf);
 				buf.clear();
@@ -91,14 +91,14 @@ public class TestLMDB {
 				buf.clear();
 				tx.commit();
 			}
-			Site s1r;
-			Site s2r;
+			Page s1r;
+			Page s2r;
 			User u1r;
 			try (TxR tx = db.read()) {
 				ByteBuffer buf = tx.get(s1.uniqueID());
-				s1r = Bincoder.bin2site.convert(null, buf);
+				s1r = Bincoder.bin2page.convert(null, buf);
 				buf = tx.get(s2.uniqueID());
-				s2r = Bincoder.bin2site.convert(null, buf);
+				s2r = Bincoder.bin2page.convert(null, buf);
 				buf = tx.get(u1.uniqueID());
 				u1r = Bincoder.bin2user.convert(null, buf);
 			}
@@ -113,7 +113,7 @@ public class TestLMDB {
 		final File path = tmp.newFolder();
 		try (DB db = new LMDB(Env.create().setMapSize(1014*1024*10), path)) {
 			Name user = as("abc");
-			Name site = as("def");
+			Name page = as("def");
 			Clock realTime = () -> System.currentTimeMillis();
 			LinearLimits limits = new LinearLimits(5);
 			Server server = new Server(Email.email("admin@example.com"), realTime, limits);
@@ -128,7 +128,7 @@ public class TestLMDB {
 			assertNotNull(changed.get(0).after);
 
 			User usr = (User)changed.get(0).after;
-			change = authenticate(user, usr.otp).and(compose(user, site, template("ghi")));
+			change = authenticate(user, usr.otp).and(compose(user, page, template("ghi")));
 			changed = Transaction.run(change, db, server);
 					
 			assertEquals(2, changed.length());
@@ -137,15 +137,15 @@ public class TestLMDB {
 			assertNull(changed.get(1).before);
 			assertNotNull(changed.get(1).after);
 			assertSame(User.class, changed.get(0).after.getClass());
-			assertSame(Site.class, changed.get(1).after.getClass());
+			assertSame(Page.class, changed.get(1).after.getClass());
 			
-			Site s;
+			Page s;
 			User u;
 			History sh;
 			Event e;
 			try (TxR tx = db.read()) {
-				ByteBuffer buf = tx.get(ID.siteId(user, site));
-				s = Bincoder.bin2site.convert(null, buf);
+				ByteBuffer buf = tx.get(ID.pageId(user, page));
+				s = Bincoder.bin2page.convert(null, buf);
 				buf = tx.get(ID.userId(user));
 				u = Bincoder.bin2user.convert(null, buf);
 				ID hid = ID.historyId(s.uniqueID());
@@ -154,7 +154,7 @@ public class TestLMDB {
 				buf = tx.get(ID.eventId(changed.timestamp));
 				e = Bincoder.bin2event.convert(null, buf);
 			}
-			assertEquals(site, s.name);
+			assertEquals(page, s.name);
 			assertEquals(user, u.alias);
 			assertNotNull(sh);
 			assertEquals(1, sh.length());

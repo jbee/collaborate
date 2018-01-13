@@ -37,12 +37,12 @@ public final class Poll extends Entity<Poll> {
 	
 	@Override
 	public ID computeID() {
-		return ID.pollId(area.product, area.name, serial);
+		return ID.pollId(area.output, area.name, serial);
 	}
 	
 	@Override
-	public Name product() {
-		return area.product;
+	public Name output() {
+		return area.output;
 	}
 	
 	public boolean canVote(Name voter) {

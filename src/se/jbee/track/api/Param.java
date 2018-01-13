@@ -2,16 +2,16 @@ package se.jbee.track.api;
 
 public enum Param {
 
-	command, //WHAT: view a user/area site, version, task or do something
+	command, //WHAT: view a user/area page, version, task or do something
 	
 	/**
 	 * The acting (authenticated) user (this may be set to session ID)
 	 */
 	actor,
-	viewed, // user (whose site do we use)
+	viewed, // user (whose page do we use)
 	role, // as user X (who is @)
-	site, // name of the site
-	product, // name of the product
+	page, // name of the page
+	output, // name of the output
 	area, // name of the area
 	version, // name of the version
 	task, // IDN of a task

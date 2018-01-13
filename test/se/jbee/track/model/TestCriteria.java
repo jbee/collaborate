@@ -70,9 +70,9 @@ public class TestCriteria {
 	}
 	
 	@Test
-	public void parsingReplacesActualProduct() {
-		Criteria criteria = Criteria.parse("[product=@]", singletonMap(Property.product, as("foo")));
-		assertEquals("[product = foo]", criteria.toString());
+	public void parsingReplacesActualOutput() {
+		Criteria criteria = Criteria.parse("[output=@]", singletonMap(Property.output, as("foo")));
+		assertEquals("[output = foo]", criteria.toString());
 	}
 
 	@Test

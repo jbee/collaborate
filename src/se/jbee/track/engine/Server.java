@@ -6,6 +6,7 @@ import static se.jbee.track.engine.Server.Switch.OPEN;
 import java.util.EnumSet;
 
 import se.jbee.track.model.Email;
+import se.jbee.track.model.Output;
 import se.jbee.track.model.User;
 
 /**
@@ -20,8 +21,8 @@ public final class Server {
 
 	public static enum Switch { 
 		/**
-		 * If set any register {@link User} may create products otherwise only
-		 * the {@link Server#admin} can.
+		 * If set any register {@link User} may create {@link Output}s otherwise
+		 * only the {@link Server#admin} can.
 		 */
 		OPEN, 
 		
@@ -38,7 +39,7 @@ public final class Server {
 	
 	/**
 	 * This is the user that is considered as an administrator. Only the
-	 * administrator may create new products on a server that is not
+	 * administrator may create new {@link Output}s on a server that is not
 	 * {@link Switch#OPEN}
 	 */
 	public final Email admin;

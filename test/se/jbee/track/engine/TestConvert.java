@@ -5,16 +5,16 @@ import static org.junit.Assert.assertTrue;
 import static se.jbee.track.engine.Bincoder.area2bin;
 import static se.jbee.track.engine.Bincoder.bin2area;
 import static se.jbee.track.engine.Bincoder.bin2event;
+import static se.jbee.track.engine.Bincoder.bin2output;
+import static se.jbee.track.engine.Bincoder.bin2page;
 import static se.jbee.track.engine.Bincoder.bin2poll;
-import static se.jbee.track.engine.Bincoder.bin2product;
-import static se.jbee.track.engine.Bincoder.bin2site;
 import static se.jbee.track.engine.Bincoder.bin2task;
 import static se.jbee.track.engine.Bincoder.bin2user;
 import static se.jbee.track.engine.Bincoder.bin2version;
 import static se.jbee.track.engine.Bincoder.event2bin;
+import static se.jbee.track.engine.Bincoder.output2bin;
+import static se.jbee.track.engine.Bincoder.page2bin;
 import static se.jbee.track.engine.Bincoder.poll2bin;
-import static se.jbee.track.engine.Bincoder.product2bin;
-import static se.jbee.track.engine.Bincoder.site2bin;
 import static se.jbee.track.engine.Bincoder.task2bin;
 import static se.jbee.track.engine.Bincoder.user2bin;
 import static se.jbee.track.engine.Bincoder.version2bin;
@@ -36,10 +36,10 @@ import se.jbee.track.model.Gist;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Name;
+import se.jbee.track.model.Output;
+import se.jbee.track.model.Page;
 import se.jbee.track.model.Poll;
 import se.jbee.track.model.Poll.Matter;
-import se.jbee.track.model.Product;
-import se.jbee.track.model.Site;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Template;
 import se.jbee.track.model.User;
@@ -62,23 +62,23 @@ public class TestConvert {
 	}
 	
 	@Test
-	public void siteConversion() {
+	public void pageConversion() {
 		User user1 = newTestUser();
-		Site site1 = tracker.compose(user1, as("my-tasks"), template("foobar"));
-		assertConsistentConversion(bin2site, site2bin, site1);
+		Page page1 = tracker.compose(user1, as("my-tasks"), template("foobar"));
+		assertConsistentConversion(bin2page, page2bin, page1);
 	}
 
 	@Test
-	public void productConversion() {
+	public void outputConversion() {
 		User user1 = newTestUser();
-		Product prod1 = tracker.constitute(as("p1"), user1);
-		assertConsistentConversion(bin2product, product2bin, prod1);
+		Output prod1 = tracker.constitute(as("p1"), user1);
+		assertConsistentConversion(bin2output, output2bin, prod1);
 	}
 
 	@Test
 	public void areaConversion() {
 		User user1 = newTestUser();
-		Product prod1 = tracker.constitute(as("p1"), user1);
+		Output prod1 = tracker.constitute(as("p1"), user1);
 		Area area1 = tracker.compart(prod1, as("area1"), user1);
 		assertConsistentConversion(bin2area, area2bin, area1);
 	}
@@ -86,7 +86,7 @@ public class TestConvert {
 	@Test
 	public void versionConversion() {
 		User user1 = newTestUser();
-		Product prod1 = tracker.constitute(as("p1"), user1);
+		Output prod1 = tracker.constitute(as("p1"), user1);
 		Version v1 = tracker.tag(prod1, as("v1"), user1);
 		assertConsistentConversion(bin2version, version2bin, v1);
 	}
@@ -94,7 +94,7 @@ public class TestConvert {
 	@Test
 	public void pollConversion() {
 		User user1 = newTestUser();
-		Product prod1 = tracker.constitute(as("p1"), user1);
+		Output prod1 = tracker.constitute(as("p1"), user1);
 		User user2 = tracker.register(null, as("user2"), email("user2@example.com"));
 		Poll poll1 = tracker.poll(Matter.inclusion, Gist.gist("foo"), prod1.origin, user1, user2);
 		assertConsistentConversion(bin2poll, poll2bin, poll1);
@@ -103,7 +103,7 @@ public class TestConvert {
 	@Test
 	public void taskConversion() {
 		User user1 = newTestUser();
-		Product prod1 = tracker.constitute(as("p1"), user1);
+		Output prod1 = tracker.constitute(as("p1"), user1);
 		Task task1 = tracker.reportDefect(prod1, gist("broken"), user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentConversion(bin2task, task2bin, task1);
 	}
@@ -149,46 +149,46 @@ public class TestConvert {
 		}
 		
 		@Override
-		public Site site(Name product, Name user, Name site) {
-			return new Site(1, product, user, site, Template.BLANK_PAGE);
+		public Page page(Name output, Name user, Name page) {
+			return new Page(1, output, user, page, Template.BLANK_PAGE);
 		}
 
 		@Override
-		public Product product(Name product) {
-			Product res = new Product(1);
-			res.name = product;
+		public Output output(Name output) {
+			Output res = new Output(1);
+			res.name = output;
 			return res;
 		}
 
 		@Override
-		public Area area(Name product, Name area) {
+		public Area area(Name output, Name area) {
 			Area res = new Area(1);
-			res.product = product;
+			res.output = output;
 			res.name = area;
 			return res;
 		}
 
 		@Override
-		public Version version(Name product, Name version) {
+		public Version version(Name output, Name version) {
 			Version res = new Version(1);
-			res.product = product;
+			res.output = output;
 			res.name = version;
 			return res;
 		}
 
 		@Override
-		public Task task(Name product, IDN id) {
+		public Task task(Name output, IDN id) {
 			Task res = new Task(1);
-			res.product = product(product);
+			res.output = output(output);
 			res.id = id;
 			return res;
 		}
 
 		@Override
-		public Poll poll(Name product, Name area, IDN serial) {
+		public Poll poll(Name output, Name area, IDN serial) {
 			Poll res = new Poll(1);
 			res.serial = serial;
-			res.area = area(product, area);
+			res.area = area(output, area);
 			return res;
 		}
 		
@@ -203,25 +203,25 @@ public class TestConvert {
 		}
 		
 		@Override
-		public void tasks(Name product, Predicate<Task> consumer) {
+		public void tasks(Name output, Predicate<Task> consumer) {
 			// TODO Auto-generated method stub
 			
 		}
 
 		@Override
-		public Product[] products() {
+		public Output[] outputs() {
 			// TODO Auto-generated method stub
 			return null;
 		}
 		
 		@Override
-		public Site[] sites(Name product, Name menu) {
+		public Page[] pages(Name output, Name menu) {
 			// TODO Auto-generated method stub
 			return null;
 		}
 		
 		@Override
-		public Poll[] polls(Name product, Name area) {
+		public Poll[] polls(Name output, Name area) {
 			// TODO Auto-generated method stub
 			return null;
 		}

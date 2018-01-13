@@ -4,7 +4,7 @@ import static se.jbee.track.model.Criteria.Operator.eq;
 import static se.jbee.track.model.Criteria.Operator.in;
 import static se.jbee.track.model.Criteria.Operator.neq;
 import static se.jbee.track.model.Criteria.Operator.nin;
-import static se.jbee.track.model.Criteria.Property.product;
+import static se.jbee.track.model.Criteria.Property.output;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -22,21 +22,21 @@ import se.jbee.track.engine.Changes;
 import se.jbee.track.engine.Changes.Entry;
 import se.jbee.track.engine.Clock;
 import se.jbee.track.model.Criteria;
+import se.jbee.track.model.Criteria.Property;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
-import se.jbee.track.model.Product;
+import se.jbee.track.model.Output;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
-import se.jbee.track.model.Criteria.Property;
 
 /**
- * A {@link CacheCluster} is a fully functional multi-{@link Product}
+ * A {@link CacheCluster} is a fully functional multi-{@link Output}
  * {@link Cache}.
  * 
- * It has an {@link ExecutorService} to run and merge cross-product queries.
- * Product-specific queries are delegated to a {@link CacheWorker}. Each
- * {@link CacheWorker} caches a specific product.
+ * It has an {@link ExecutorService} to run and merge cross-output queries.
+ * {@link Output}-specific queries are delegated to a {@link CacheWorker}. Each
+ * {@link CacheWorker} caches a specific {@link Output}.
  * 
  * The content of a {@link CacheWorker} is valid one day. On a new day now
  * outdated caches are {@link #shutdown()} and a fresh {@link CacheWorker}
@@ -50,7 +50,7 @@ public class CacheCluster implements Cache {
 	private final ExecutorService es;
 	private final DB db;
 	private final Clock clock;
-	private final Map<Name, Cache> productCaches = new ConcurrentHashMap<>();
+	private final Map<Name, Cache> outputCaches = new ConcurrentHashMap<>();
 
 	/**
 	 * The date the existing caches have been build for.
@@ -67,8 +67,8 @@ public class CacheCluster implements Cache {
 	@Override
 	public void shutdown() {
 		es.shutdown();
-		for (Cache c : productCaches.values()) c.shutdown();
-		productCaches.clear();
+		for (Cache c : outputCaches.values()) c.shutdown();
+		outputCaches.clear();
 	}
 	
 	private Thread factory(Runnable target) {
@@ -85,82 +85,82 @@ public class CacheCluster implements Cache {
 		Date today = Date.date(clock.time());
 		if (today.after(before)) {
 			if (cacheValidity.compareAndSet(before, today)) { // make sure only one thread does the shutdown
-				for (Cache cache : productCaches.values()) {
+				for (Cache cache : outputCaches.values()) {
 					cache.shutdown();
 				}
-				productCaches.clear();
+				outputCaches.clear();
 			}
 		}
 		// might be a indexing request
 		if (criteria.isIndexRequest()) {
-			Name product = (Name) criteria.get(0).rvalues[0];
-			if (productCaches.containsKey(product)) {
+			Name output = (Name) criteria.get(0).rvalues[0];
+			if (outputCaches.containsKey(output)) {
 				return readyFuture(Matches.none());
 			}
-			Cache cache = productCaches.computeIfAbsent(product, (k) -> {
+			Cache cache = outputCaches.computeIfAbsent(output, (k) -> {
 				return new CacheWorker(k, db, before);
 			});
-			return cache.matchesFor(inquirer, criteria.without(Property.product));
+			return cache.matchesFor(inquirer, criteria.without(Property.output));
 		}
 		// lookup request
-		Names products = criteria.collect(Names.empty(), Name.class, Names::add, product, eq, in);
-		if (products.isEmpty()) {
+		Names outputs = criteria.collect(Names.empty(), Name.class, Names::add, output, eq, in);
+		if (outputs.isEmpty()) {
 			//TODO what about user bound queries that do not refer to actual user?
-			products = inquirer.contributesToProducts;
-			Names ignore = criteria.collect(Names.empty(), Name.class, Names::add, product, neq, nin);
+			outputs = inquirer.contributesToOutputs;
+			Names ignore = criteria.collect(Names.empty(), Name.class, Names::add, output, neq, nin);
 			if (!ignore.isEmpty()) {
-				for (Name n : ignore) { products = products.remove(n);	}
+				for (Name n : ignore) { outputs = outputs.remove(n);	}
 			}
 		}
-		if (products.isEmpty())
-			return readyFuture(Matches.none()); // if no products are involved there cannot be any matches
-		criteria = criteria.without(product);
-		if (products.count() == 1) {
-			Cache cache = productCaches.get(products.first());
+		if (outputs.isEmpty())
+			return readyFuture(Matches.none()); // if no outputs are involved there cannot be any matches
+		criteria = criteria.without(output);
+		if (outputs.count() == 1) {
+			Cache cache = outputCaches.get(outputs.first());
 			if (cache == null)
-				return readyFuture(Matches.none().exlcuded(products)); // there was just 1 product but it was not cached yet
+				return readyFuture(Matches.none().exlcuded(outputs)); // there was just 1 output but it was not cached yet
 			return cache.matchesFor(inquirer, criteria);
 		}
 		final Criteria lookupCriteria = criteria;
-		final Names lookupProducts = products;
-		return es.submit(() -> lookup(inquirer, lookupProducts, lookupCriteria));
+		final Names lookupOutputs = outputs;
+		return es.submit(() -> lookup(inquirer, lookupOutputs, lookupCriteria));
 	}
 	
 	/**
-	 * This is a multi-product lookup that fetches results from the individual
-	 * product caches and then joins them to a single result.
+	 * This is a multi-output lookup that fetches results from the individual
+	 * output caches and then joins them to a single result.
 	 * 
-	 * Like the lookup within a product this is ran by an
+	 * Like the lookup within a output this is ran by an
 	 * {@link ExecutorService} so that {@link #matchesFor(User, Criteria)}
 	 * returns without doing the actual work or waiting for other {@link Future}
 	 * s.
 	 */
-	private Matches lookup(User inquirer, Names products, Criteria criteria) {
+	private Matches lookup(User inquirer, Names outputs, Criteria criteria) {
 		Criteria filterCriteria = criteria.without(Property.order, Property.length, Property.offset);
 		Names uncached = Names.empty();
 		List<Future<Matches>> futures = new ArrayList<>();
-		for (Name p : products) {
-			Cache cache = productCaches.get(p);
+		for (Name p : outputs) {
+			Cache cache = outputCaches.get(p);
 			if (cache == null) {
 				uncached = uncached.add(p);
 			} else {
 				futures.add(cache.matchesFor(inquirer, filterCriteria));
 			}
 		}
-		List<Matches> productMatches = new ArrayList<>();
+		List<Matches> outputMatches = new ArrayList<>();
 		for (Future<Matches> f : futures) {
 			try {
-				productMatches.add(f.get());
+				outputMatches.add(f.get());
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 		}
 		int len = 0;
-		for (Matches m : productMatches) 
+		for (Matches m : outputMatches) 
 			len += m.tasks.length;
 		Task[] tmp = new Task[len];
 		int s = 0;
-		for (Matches m : productMatches) {
+		for (Matches m : outputMatches) {
 			System.arraycopy(m.tasks, 0, tmp, s, m.tasks.length);
 			s+=m.tasks.length;
 		}
@@ -170,11 +170,11 @@ public class CacheCluster implements Cache {
 	@Override
 	public Future<Void> invalidate(Changes changes) {
 		Iterator<Entry<?>> iter = changes.iterator();
-		Name product = Name.ORIGIN;
-		while (iter.hasNext() && product.isOrigin())
-			product = iter.next().after.product();
-		if (!product.isOrigin()) {
-			Cache cache = productCaches.get(product);
+		Name output = Name.ORIGIN;
+		while (iter.hasNext() && output.isOrigin())
+			output = iter.next().after.output();
+		if (!output.isOrigin()) {
+			Cache cache = outputCaches.get(output);
 			if (cache != null)
 				return cache.invalidate(changes);
 		}

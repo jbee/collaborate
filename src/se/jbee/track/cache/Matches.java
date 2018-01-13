@@ -1,6 +1,7 @@
 package se.jbee.track.cache;
 
 import se.jbee.track.model.Names;
+import se.jbee.track.model.Output;
 import se.jbee.track.model.Task;
 
 public final class Matches {
@@ -12,24 +13,24 @@ public final class Matches {
 	public final Task[] tasks;
 	public final int total;
 	/**
-	 * The set of products that were not included in the matches even though
+	 * The set of outputs that were not included in the matches even though
 	 * the user has an affiliation with them. Usually the reason is that a
-	 * product is not indexed yet. This has to be requested by the user
+	 * {@link Output} is not indexed yet. This has to be requested by the user
 	 * explicitly.
 	 */
-	public final Names excludedProducts;
+	public final Names excludedOutputs;
 	
 	public Matches(Task[] matches, int totalMatches) {
 		this(matches, totalMatches, Names.empty());
 	}
-	private Matches(Task[] matches, int totalMatches, Names excludedProducts) {
+	private Matches(Task[] matches, int totalMatches, Names excludedOutputs) {
 		super();
 		this.tasks = matches;
 		this.total = totalMatches;
-		this.excludedProducts = excludedProducts;
+		this.excludedOutputs = excludedOutputs;
 	}
 	
-	public Matches exlcuded(Names products) {
-		return new Matches(tasks, total, products);
+	public Matches exlcuded(Names outputs) {
+		return new Matches(tasks, total, outputs);
 	}
 }

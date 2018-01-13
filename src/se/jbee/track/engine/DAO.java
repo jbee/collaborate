@@ -2,16 +2,16 @@ package se.jbee.track.engine;
 
 import static se.jbee.track.engine.Bincoder.bin2area;
 import static se.jbee.track.engine.Bincoder.bin2event;
+import static se.jbee.track.engine.Bincoder.bin2page;
 import static se.jbee.track.engine.Bincoder.bin2poll;
-import static se.jbee.track.engine.Bincoder.bin2product;
-import static se.jbee.track.engine.Bincoder.bin2site;
+import static se.jbee.track.engine.Bincoder.bin2output;
 import static se.jbee.track.engine.Bincoder.bin2task;
 import static se.jbee.track.engine.Bincoder.bin2user;
 import static se.jbee.track.engine.Bincoder.bin2version;
 import static se.jbee.track.model.ID.areaId;
+import static se.jbee.track.model.ID.outputId;
+import static se.jbee.track.model.ID.pageId;
 import static se.jbee.track.model.ID.pollId;
-import static se.jbee.track.model.ID.productId;
-import static se.jbee.track.model.ID.siteId;
 import static se.jbee.track.model.ID.userId;
 import static se.jbee.track.model.ID.versionId;
 import static se.jbee.track.model.Name.as;
@@ -29,9 +29,9 @@ import se.jbee.track.model.Entity;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Name;
+import se.jbee.track.model.Output;
+import se.jbee.track.model.Page;
 import se.jbee.track.model.Poll;
-import se.jbee.track.model.Product;
-import se.jbee.track.model.Site;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
@@ -81,33 +81,33 @@ public class DAO implements Repository {
 	}
 	
 	@Override
-	public Site site(Name product, Name user, Name site) {
-		return load(siteId(product, user, site), bin2site);
+	public Page page(Name output, Name user, Name page) {
+		return load(pageId(output, user, page), bin2page);
 	}
 
 	@Override
-	public Poll poll(Name product, Name area, IDN serial) {
-		return load(pollId(product, area, serial), bin2poll);
+	public Poll poll(Name output, Name area, IDN serial) {
+		return load(pollId(output, area, serial), bin2poll);
 	}
 
 	@Override
-	public Product product(Name product) {
-		return load(productId(product), bin2product);
+	public Output output(Name output) {
+		return load(outputId(output), bin2output);
 	}
 
 	@Override
-	public Area area(Name product, Name area) {
-		return load(areaId(product, area), bin2area);
+	public Area area(Name output, Name area) {
+		return load(areaId(output, area), bin2area);
 	}
 
 	@Override
-	public Version version(Name product, Name version) {
-		return load(versionId(product, version), bin2version);
+	public Version version(Name output, Name version) {
+		return load(versionId(output, version), bin2version);
 	}
 
 	@Override
-	public Task task(Name product, IDN id) {
-		return load(ID.taskId(product, id), bin2task);
+	public Task task(Name output, IDN id) {
+		return load(ID.taskId(output, id), bin2task);
 	}
 	
 	@Override
@@ -134,26 +134,26 @@ public class DAO implements Repository {
 	}
 	
 	@Override
-	public void tasks(Name product, Predicate<Task> consumer) {
-		range(bin2task, ID.taskId(product, IDN.ZERO), 
-				(t) -> t.product.name.equalTo(product) && consumer.test(t));
+	public void tasks(Name output, Predicate<Task> consumer) {
+		range(bin2task, ID.taskId(output, IDN.ZERO), 
+				(t) -> t.output.name.equalTo(output) && consumer.test(t));
 	}
 	
 	@Override
-	public Product[] products() {
-		return range(bin2product, new Product[0], ID.productId(as("0")), 
+	public Output[] outputs() {
+		return range(bin2output, new Output[0], ID.outputId(as("0")), 
 				(p) -> true);
 	}
 	
 	@Override
-	public Site[] sites(Name product, Name menu) {
-		return range(bin2site, new Site[0], ID.siteId(product, menu, as("0")),
+	public Page[] pages(Name output, Name menu) {
+		return range(bin2page, new Page[0], ID.pageId(output, menu, as("0")),
 				(s) -> s.menu.equalTo(menu));
 	}
 	
 	@Override
-	public Poll[] polls(Name product, Name area) {
-		return range(bin2poll, new Poll[0], ID.pollId(product, area, IDN.ZERO), 
+	public Poll[] polls(Name output, Name area) {
+		return range(bin2poll, new Poll[0], ID.pollId(output, area, IDN.ZERO), 
 				(p) -> p.area.name.equalTo(area));
 	}
 	

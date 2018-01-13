@@ -23,9 +23,9 @@ import se.jbee.track.model.Names;
 import se.jbee.track.model.Outcome;
 import se.jbee.track.model.Poll;
 import se.jbee.track.model.Poll.Matter;
-import se.jbee.track.model.Product;
+import se.jbee.track.model.Output;
 import se.jbee.track.model.Purpose;
-import se.jbee.track.model.Site;
+import se.jbee.track.model.Page;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Template;
@@ -84,8 +84,8 @@ public interface Bincoder<I,O> {
 	byte POLL_EVN = 1;
 	byte AREA_EVN = 1;
 	byte VERSION_EVN = 1;
-	byte PRODUCT_EVN = 1;
-	byte SITE_EVN = 1;
+	byte OUTPUT_EVN = 1;
+	byte PAGE_EVN = 1;
 	byte EVENT_EVN = 1;
 	
 	Bincoder<Repository, User> bin2user = (tx,from) -> { 
@@ -106,7 +106,7 @@ public interface Bincoder<I,O> {
 		u.abandoned = from.getInt();
 		u.millisEmphasised = from.getLong();
 		u.emphasisedToday = from.getInt();
-		u.contributesToProducts = bin2names(from);
+		u.contributesToOutputs = bin2names(from);
 		return u;
 	};
 	
@@ -128,14 +128,14 @@ public interface Bincoder<I,O> {
 		to.putInt(u.abandoned);
 		to.putLong(u.millisEmphasised);
 		to.putInt(u.emphasisedToday);
-		names2bin(u.contributesToProducts, to);
+		names2bin(u.contributesToOutputs, to);
 		return to; 
 	};
 
 	Bincoder<Repository, Version> bin2version = (tx,from) -> { 
 		byte evn = from.get(); // ignore so far
 		Version v = new Version(from.getInt());
-		v.product = bin2name(from);
+		v.output = bin2name(from);
 		v.name = bin2name(from);
 		v.changeset = bin2names(from);
 		return v;
@@ -144,7 +144,7 @@ public interface Bincoder<I,O> {
 	Bincoder<Version,ByteBuffer> version2bin = (v,to) -> { 
 		to.put(VERSION_EVN);
 		to.putInt(v.version());
-		name2bin(v.product, to);
+		name2bin(v.output, to);
 		name2bin(v.name, to);
 		names2bin(v.changeset, to);
 		return to;
@@ -153,8 +153,8 @@ public interface Bincoder<I,O> {
 	Bincoder<Repository, Task> bin2task = (tx,from) -> { 
 		byte evn = from.get(); // ignore so far
 		Task t = new Task(from.getInt());
-		t.product = tx.product(bin2name(from));
-		t.area = tx.area(t.product.name, bin2name(from));
+		t.output = tx.output(bin2name(from));
+		t.area = tx.area(t.output.name, bin2name(from));
 		t.id = bin2IDN(from);
 		t.serial = bin2IDN(from);
 		t.reporter = bin2name(from);
@@ -169,7 +169,7 @@ public interface Bincoder<I,O> {
 		t.basis = bin2IDN(from);
 		t.origin = bin2IDN(from);
 		t.emphasis = from.getInt();
-		t.base = tx.version(t.product.name, bin2name(from));
+		t.base = tx.version(t.output.name, bin2name(from));
 		t.aspirants = bin2names(from);
 		t.participants = bin2names(from);
 		t.watchers = bin2names(from);
@@ -183,7 +183,7 @@ public interface Bincoder<I,O> {
 	Bincoder<Task,ByteBuffer> task2bin = (t,to) -> { 
 		to.put(TASK_EVN);
 		to.putInt(t.version());
-		name2bin(t.product.name, to);
+		name2bin(t.output.name, to);
 		name2bin(t.area.name, to);
 		IDN2bin(t.id, to);
 		IDN2bin(t.serial, to);
@@ -210,47 +210,47 @@ public interface Bincoder<I,O> {
 		return to;
 	};
 
-	Bincoder<Repository, Site> bin2site = (tx,from) -> { 
+	Bincoder<Repository, Page> bin2page = (tx,from) -> { 
 		byte evn = from.get(); // ignore so far
 		int version = from.getInt();
-		Name product = bin2name(from);
+		Name output = bin2name(from);
 		Name menu = bin2name(from);
 		Name name = bin2name(from);
 		Template template = Template.fromBytes(getIntBytes(from));
-		return new Site(version, product, menu, name, template);
+		return new Page(version, output, menu, name, template);
 	};
 
-	Bincoder<Site,ByteBuffer> site2bin = (site,to) -> { 
-		to.put(SITE_EVN);
-		to.putInt(site.version());
-		name2bin(site.product, to);
-		name2bin(site.menu, to);
-		name2bin(site.name, to);
-		putIntBytes(site.template, to);
+	Bincoder<Page,ByteBuffer> page2bin = (page,to) -> { 
+		to.put(PAGE_EVN);
+		to.putInt(page.version());
+		name2bin(page.output, to);
+		name2bin(page.menu, to);
+		name2bin(page.name, to);
+		putIntBytes(page.template, to);
 		return to;
 	};
 	
-	Bincoder<Repository, Product> bin2product = (tx,from) -> { 
+	Bincoder<Repository, Output> bin2output = (tx,from) -> { 
 		byte evn = from.get(); // ignore so far
-		Product p = new Product(from.getInt());
-		p.name = bin2name(from);
-		p.tasks = from.getInt();
-		p.categories = bin2names(from);
+		Output res = new Output(from.getInt());
+		res.name = bin2name(from);
+		res.tasks = from.getInt();
+		res.categories = bin2names(from);
 		int c = from.get();
-		p.integrations = new Product.Integration[c];
+		res.integrations = new Output.Integration[c];
 		for (int i = 0; i < c; i++) {
-			p.integrations[i] = new Product.Integration(bin2name(from), bin2url(from));
+			res.integrations[i] = new Output.Integration(bin2name(from), bin2url(from));
 		}
 		
 		// non stored computable fields
-		p.origin = tx.area(p.name, Name.ORIGIN);
-		p.somewhere = tx.area(p.name, Name.UNKNOWN);
-		p.somewhen = tx.version(p.name, Name.UNKNOWN);
-		return p;
+		res.origin = tx.area(res.name, Name.ORIGIN);
+		res.somewhere = tx.area(res.name, Name.UNKNOWN);
+		res.somewhen = tx.version(res.name, Name.UNKNOWN);
+		return res;
 	};
 
-	Bincoder<Product,ByteBuffer> product2bin = (p,to) -> { 
-		to.put(PRODUCT_EVN);
+	Bincoder<Output,ByteBuffer> output2bin = (p,to) -> { 
+		to.put(OUTPUT_EVN);
 		to.putInt(p.version());
 		name2bin(p.name, to);
 		to.putInt(p.tasks);
@@ -285,7 +285,7 @@ public interface Bincoder<I,O> {
 		to.put(POLL_EVN);
 		to.putInt(p.version());
 		IDN2bin(p.serial, to);
-		name2bin(p.area.product, to);
+		name2bin(p.area.output, to);
 		name2bin(p.area.name, to);
 		enum2bin(p.matter, to);
 		gist2bin(p.motivation, to);
@@ -303,7 +303,7 @@ public interface Bincoder<I,O> {
 	Bincoder<Repository, Area> bin2area = (tx,from) -> { 
 		byte evn = from.get(); // ignore so far
 		Area a = new Area(from.getInt());
-		a.product = bin2name(from);
+		a.output = bin2name(from);
 		a.name = bin2name(from);
 		a.basis = bin2name(from);
 		a.category = bin2name(from);
@@ -321,7 +321,7 @@ public interface Bincoder<I,O> {
 	Bincoder<Area,ByteBuffer> area2bin = (a,to) -> { 
 		to.put(AREA_EVN);
 		to.putInt(a.version());
-		name2bin(a.product, to);
+		name2bin(a.output, to);
 		name2bin(a.name, to);
 		name2bin(a.basis, to);
 		name2bin(a.category, to);

@@ -7,9 +7,9 @@ import se.jbee.track.model.Area;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.IDN;
 import se.jbee.track.model.Name;
+import se.jbee.track.model.Output;
+import se.jbee.track.model.Page;
 import se.jbee.track.model.Poll;
-import se.jbee.track.model.Product;
-import se.jbee.track.model.Site;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
@@ -17,21 +17,20 @@ import se.jbee.track.model.Version;
 public interface Repository extends AutoCloseable {
 
 	User user(Name user) throws UnknownEntity;
-	Product product(Name product) throws UnknownEntity;
-	Area area(Name product, Name area) throws UnknownEntity;
-	Version version(Name product, Name version) throws UnknownEntity;
-	Task task(Name product, IDN id) throws UnknownEntity;
-	
-	Site site(Name product, Name user, Name site) throws UnknownEntity;
-	Poll poll(Name product, Name area, IDN serial) throws UnknownEntity;
+	Output output(Name output) throws UnknownEntity;
+	Area area(Name output, Name area) throws UnknownEntity;
+	Version version(Name output, Name version) throws UnknownEntity;
+	Task task(Name output, IDN id) throws UnknownEntity;
+	Page page(Name output, Name user, Name page) throws UnknownEntity;
+	Poll poll(Name output, Name area, IDN serial) throws UnknownEntity;
 	Event event(long timestamp) throws UnknownEntity;
 	History history(ID entity) throws UnknownEntity;
 
-	void tasks(Name product, Predicate<Task> consumer);
+	void tasks(Name output, Predicate<Task> consumer);
 	
-	Product[] products();
-	Site[] sites(Name product, Name menu);
-	Poll[] polls(Name product, Name area);
+	Output[] outputs();
+	Page[] pages(Name output, Name menu);
+	Poll[] polls(Name output, Name area);
 	
 	/**
 	 * No {@link Exception} here!

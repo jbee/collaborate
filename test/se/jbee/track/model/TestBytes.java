@@ -42,7 +42,7 @@ public class TestBytes {
 		assertTrue(isText("1<2"));
 		assertTrue(isText("a < b"));
 		assertTrue(isText("[age<80]"));
-		assertTrue(isText("[product=@]"));
+		assertTrue(isText("[output=@]"));
 		assertTrue(isText("äöüあ"));
 	}
 	

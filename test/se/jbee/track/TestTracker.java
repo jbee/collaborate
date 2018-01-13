@@ -17,7 +17,7 @@ import se.jbee.track.engine.Server.Switch;
 import se.jbee.track.engine.Tracker;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Email;
-import se.jbee.track.model.Product;
+import se.jbee.track.model.Output;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.User;
 
@@ -37,8 +37,8 @@ public class TestTracker {
 		Date today = date(now);
 		User user = tracker.register(null, as("moos"), email("moos@example.com"));
 		user = tracker.authenticate(user, user.otp);
-		Product product = tracker.constitute(as("test"), user);
-		Task task = tracker.reportDefect(product, gist("A problem"), user, product.somewhere, product.somewhen, false);
+		Output output = tracker.constitute(as("test"), user);
+		Task task = tracker.reportDefect(output, gist("A problem"), user, output.somewhere, output.somewhen, false);
 
 		task = tracker.emphasise(task, user);
 

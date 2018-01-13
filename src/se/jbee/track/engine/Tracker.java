@@ -34,12 +34,12 @@ import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
 import se.jbee.track.model.Outcome;
+import se.jbee.track.model.Output;
+import se.jbee.track.model.Output.Integration;
+import se.jbee.track.model.Page;
 import se.jbee.track.model.Poll;
 import se.jbee.track.model.Poll.Matter;
-import se.jbee.track.model.Product;
-import se.jbee.track.model.Product.Integration;
 import se.jbee.track.model.Purpose;
-import se.jbee.track.model.Site;
 import se.jbee.track.model.Status;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Template;
@@ -103,7 +103,7 @@ public final class Tracker {
 		user.alias = alias;
 		user.email = email;
 		user.notificationSettings=new EnumMap<>(Notification.class);
-		user.contributesToProducts = Names.empty();
+		user.contributesToOutputs = Names.empty();
 		user.watches = 0;
 		user.millisLastActive=now(); // cannot use touch as version should stay same
 		confirmOTP(user, AuthState.registered);
@@ -190,99 +190,99 @@ public final class Tracker {
 		user.touch(now());
 	}
 
-	/* Products */
+	/* Outputs */
 
-	public Product constitute(Name product, User actor) {
+	public Output constitute(Name output, User actor) {
 		if (server.isOpen()) {
 			expectRegistered(actor);
 			expectAuthenticated(actor);
 		} else {
 			expectAdmin(server, actor);
 		}
-		expectRegular(product);
-		stressNewProduct(actor);
-		Product p = new Product(1);
-		p.name = product;
+		expectRegular(output);
+		stressNewOutput(actor);
+		Output p = new Output(1);
+		p.name = output;
 		p.tasks = 0;
 		p.categories = Names.empty();
-		p.integrations = new Product.Integration[0];
+		p.integrations = new Output.Integration[0];
 		p.origin = compart(p.name, Name.ORIGIN, actor);
 		p.somewhere = compart(p.name, Name.UNKNOWN, actor);
 		p.somewhen = tag(p, Name.UNKNOWN, actor);
-		actor.contributesToProducts = actor.contributesToProducts.add(product);
+		actor.contributesToOutputs = actor.contributesToOutputs.add(output);
 		touch(actor);
 		return p;
 	}
 	
-	public Product connect(Product product, Integration endpoint, User actor) {
+	public Output connect(Output output, Integration endpoint, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
-		expectOriginMaintainer(product, actor);
-		expectCanConnect(product);
-		stressDoConnect(product, actor);
-		int c = Array.indexOf(product.integrations, endpoint, Integration::equalTo);
-		Integration[] source = product.integrations;
+		expectOriginMaintainer(output, actor);
+		expectCanConnect(output);
+		stressDoConnect(output, actor);
+		int c = Array.indexOf(output.integrations, endpoint, Integration::equalTo);
+		Integration[] source = output.integrations;
 		if (c >= 0) {
 			if (source[c].same(endpoint))
-				return product;
+				return output;
 			source = Array.remove(source, endpoint, Integration::equalTo);
 		}
-		product = product.clone();
-		product.integrations = Array.add(source, endpoint, Integration::equalTo);
+		output = output.clone();
+		output.integrations = Array.add(source, endpoint, Integration::equalTo);
 		touch(actor);
-		return product;
+		return output;
 	}
 	
-	public Product disconnect(Product product, Name integration, User actor) {
+	public Output disconnect(Output output, Name integration, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
-		expectOriginMaintainer(product, actor);
-		stressDoConnect(product, actor);
+		expectOriginMaintainer(output, actor);
+		stressDoConnect(output, actor);
 		Integration endpoint = new Integration(integration, null);
-		int c = Array.indexOf(product.integrations, endpoint, Integration::equalTo);
+		int c = Array.indexOf(output.integrations, endpoint, Integration::equalTo);
 		if (c < 0)
-			return product;
-		product = product.clone();
-		product.integrations = Array.remove(product.integrations, endpoint, Integration::equalTo);
+			return output;
+		output = output.clone();
+		output.integrations = Array.remove(output.integrations, endpoint, Integration::equalTo);
 		touch(actor);
-		return product;
+		return output;
 	}
 	
-	public Product suggest(Product product, Name category, User actor) {
+	public Output suggest(Output output, Name category, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
-		expectOriginMaintainer(product, actor);
-		if (!product.categories.contains(category)) {
-			if (product.categories.count() >= 10)
+		expectOriginMaintainer(output, actor);
+		if (!output.categories.contains(category)) {
+			if (output.categories.count() >= 10)
 				denyTransition(Error.E28_CATEGORY_LIMIT, 10);
 			stressUser(actor);
-			product = product.clone();
-			product.categories = product.categories.add(category);
+			output = output.clone();
+			output.categories = output.categories.add(category);
 			touch(actor);
 		}
-		return product;
+		return output;
 	}
 
 	/* Areas */
 
-	public Area open(Product product, Name boardArea, User actor, Motive motive, Purpose purpose) {
-		Area area = compart(product, boardArea, actor);
+	public Area open(Output output, Name boardArea, User actor, Motive motive, Purpose purpose) {
+		Area area = compart(output, boardArea, actor);
 		area.board=true;
 		area.motive=motive;
 		area.purpose=purpose;
 		return area;
 	}
 
-	public Area compart(Product product, Name area, User actor) {
-		expectOriginMaintainer(product, actor);
-		Area a = compart(product.name, area, actor);
-		a.safeguarded = product.origin.safeguarded;
+	public Area compart(Output output, Name area, User actor) {
+		expectOriginMaintainer(output, actor);
+		Area a = compart(output.name, area, actor);
+		a.safeguarded = output.origin.safeguarded;
 		return a;
 	}
 
 	public Area compart(Area basis, Name partition, User actor, boolean subarea) {
 		expectMaintainer(basis, actor);
-		Area area = compart(basis.product, partition, actor);
+		Area area = compart(basis.output, partition, actor);
 		area.basis=basis.name;
 		area.safeguarded=basis.safeguarded;
 		if (subarea) {
@@ -291,22 +291,22 @@ public final class Tracker {
 		return area;
 	}
 
-	private Area compart(Name product, Name area, User actor) {
+	private Area compart(Name output, Name area, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
 		if (area.isEditable()) {
 			expectRegular(area);
 		}
-		stressNewArea(product, actor);
+		stressNewArea(output, actor);
 		Area a = new Area(1);
 		a.name = area;
-		a.product = product;
+		a.output = output;
 		a.maintainers=new Names(actor.alias);
 		a.tasks = 0;
 		a.polls = 0;
 		a.safeguarded = true;
 		a.category = Name.UNKNOWN;
-		actor.contributesToProducts = actor.contributesToProducts.add(product);
+		actor.contributesToOutputs = actor.contributesToOutputs.add(output);
 		touch(actor);
 		return a;
 	}
@@ -371,16 +371,16 @@ public final class Tracker {
 	
 	/* Versions */
 
-	public Version tag(Product product, Name version, User actor) {
+	public Version tag(Output output, Name version, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
 		if (version.isEditable()) {
 			expectVersion(version);
 		}
-		expectOriginMaintainer(product, actor);
-		stressNewVersion(product, actor);
+		expectOriginMaintainer(output, actor);
+		stressNewVersion(output, actor);
 		Version v = new Version(1);
-		v.product = product.name;
+		v.output = output.name;
 		v.name = version;
 		v.changeset = Names.empty();
 		touch(actor);
@@ -389,34 +389,34 @@ public final class Tracker {
 
 	/* Tasks */
 
-	public Task reportProposal(Product product, Gist gist, User reporter, Area area) {
+	public Task reportProposal(Output output, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
-		return report(product, proposal, clarification, gist, reporter, area, product.somewhen, false);
+		return report(output, proposal, clarification, gist, reporter, area, output.somewhen, false);
 	}
 
-	public Task reportNecessity(Product product, Gist gist, User reporter, Area area) {
+	public Task reportNecessity(Output output, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
-		return report(product, necessity, clarification, gist, reporter, area, product.somewhen, false);
+		return report(output, necessity, clarification, gist, reporter, area, output.somewhen, false);
 	}
 	
-	public Task reportThought(Product product, Gist gist, User reporter, Area area) {
+	public Task reportThought(Output output, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
-		return report(product, reminder, clarification, gist, reporter, area, product.somewhen, false);
+		return report(output, reminder, clarification, gist, reporter, area, output.somewhen, false);
 	}
 
-	public Task reportDefect(Product product, Gist gist, User reporter, Area area, Version version, boolean exploitable) {
+	public Task reportDefect(Output output, Gist gist, User reporter, Area area, Version version, boolean exploitable) {
 		expectNoBoard(area);
-		return report(product, defect, clarification, gist, reporter, area, version, exploitable);
+		return report(output, defect, clarification, gist, reporter, area, version, exploitable);
 	}
 
-	public Task reportRequest(Product product, Gist gist, User reporter, Area board) {
+	public Task reportRequest(Output output, Gist gist, User reporter, Area board) {
 		expectBoard(board);
-		return report(product, board.motive, board.purpose, gist, reporter, board, product.somewhen, false);
+		return report(output, board.motive, board.purpose, gist, reporter, board, output.somewhen, false);
 	}
 
 	public Task reportSegment(Task basis, Purpose why, Gist gist, User reporter, Names changeset) {
-		Area area = basis.area.board ? basis.product.somewhere : basis.area;
-		Task task = report(basis.product, basis.motive, why, gist, reporter, area, basis.base, basis.exploitable);
+		Area area = basis.area.board ? basis.output.somewhere : basis.area;
+		Task task = report(basis.output, basis.motive, why, gist, reporter, area, basis.base, basis.exploitable);
 		task.basis = basis.id;
 		task.origin = !basis.origin.isZero() ? basis.origin : basis.id;
 		if (changeset != null && !changeset.isEmpty()) {
@@ -426,17 +426,17 @@ public final class Tracker {
 		return task;
 	}
 
-	private Task report(Product product, Motive motive, Purpose purpose, Gist gist, User reporter, Area area, Version version, boolean exploitable) {
+	private Task report(Output output, Motive motive, Purpose purpose, Gist gist, User reporter, Area area, Version version, boolean exploitable) {
 		if (!area.isOpen()) {
 			expectAuthenticated(reporter);
 			expectMaintainer(area, reporter);
 		}
 		expectCanReport(reporter);
-		stressNewTask(product, reporter);
+		stressNewTask(output, reporter);
 		Task task = new Task(1);
-		task.product = product.clone();
-		task.product.tasks++;
-		task.id = IDN.idn(task.product.tasks);
+		task.output = output.clone();
+		task.output.tasks++;
+		task.id = IDN.idn(task.output.tasks);
 		if (area.board) {
 			task.area = area.clone();
 			task.area.tasks++;
@@ -457,7 +457,7 @@ public final class Tracker {
 		task.watchers = new Names(reporter.alias);
 		task.changeset = Names.empty();
 		task.attachments = Attachments.NONE;
-		reporter.contributesToProducts = reporter.contributesToProducts.add(task.product.name);
+		reporter.contributesToOutputs = reporter.contributesToOutputs.add(task.output.name);
 		touch(reporter);
 		return task;
 	}
@@ -474,10 +474,10 @@ public final class Tracker {
 		stressDoAttach(task, actor);
 		task = task.clone();
 		if (!attachment.isIntegrated()) {
-			attachment = task.product.integrate(attachment);
+			attachment = task.output.integrate(attachment);
 		}
 		task.attachments = task.attachments.add(attachment); 
-		actor.contributesToProducts = actor.contributesToProducts.add(task.product.name);
+		actor.contributesToOutputs = actor.contributesToOutputs.add(task.output.name);
 		touch(actor);
 		return task;
 	}
@@ -490,7 +490,7 @@ public final class Tracker {
 		stressDoAttach(task, actor);
 		task = task.clone();
 		task.attachments = task.attachments.remove(attachment); 
-		actor.contributesToProducts = actor.contributesToProducts.add(task.product.name);
+		actor.contributesToOutputs = actor.contributesToOutputs.add(task.output.name);
 		touch(actor);
 		return task;
 	}
@@ -556,7 +556,7 @@ public final class Tracker {
 		task.conclusion = conclusion;
 		task.participants = Names.empty();
 		task.aspirants = Names.empty();
-		by.contributesToProducts = by.contributesToProducts.add(task.product.name);
+		by.contributesToOutputs = by.contributesToOutputs.add(task.output.name);
 		touch(by);
 		return task;
 	}
@@ -604,7 +604,7 @@ public final class Tracker {
 		poll.consenting = Names.empty();
 		poll.dissenting = Names.empty();
 		poll.expiry = poll.start.plusDays(min(14, area.maintainers.count()));
-		actor.contributesToProducts = actor.contributesToProducts.add(area.product);
+		actor.contributesToOutputs = actor.contributesToOutputs.add(area.output);
 		touch(actor);
 		return poll;
 	}
@@ -696,7 +696,7 @@ public final class Tracker {
 			task = task.clone();
 			task.participants = task.participants.remove(user);
 			task.aspirants = task.aspirants.add(user);
-			user.contributesToProducts = user.contributesToProducts.add(task.product.name);
+			user.contributesToOutputs = user.contributesToOutputs.add(task.output.name);
 			touch(user);
 		}
 		return task;
@@ -728,7 +728,7 @@ public final class Tracker {
 			task = task.clone();
 			task.participants = task.participants.add(user);
 			task.aspirants = task.aspirants.remove(user);
-			user.contributesToProducts = user.contributesToProducts.add(task.product.name);
+			user.contributesToOutputs = user.contributesToOutputs.add(task.output.name);
 			touch(user);
 		}
 		return task;
@@ -745,7 +745,7 @@ public final class Tracker {
 			task = task.clone();
 			task.watchers = task.watchers.add(user);
 			user.watches++;
-			user.contributesToProducts = user.contributesToProducts.add(task.product.name);
+			user.contributesToOutputs = user.contributesToOutputs.add(task.output.name);
 			touch(user);
 		}
 		return task;
@@ -762,51 +762,51 @@ public final class Tracker {
 		return task;
 	}
 
-	/* A user's or area's sites */
+	/* A user's or area's pages */
 
-	public Site compose(User owner, Name site, Template template, Site...inSameMenu) {
-		return compose(null, site, template, owner, inSameMenu);
+	public Page compose(User owner, Name page, Template template, Page...inSameMenu) {
+		return compose(null, page, template, owner, inSameMenu);
 	}
 	
-	public Site compose(Area area, Name site, Template template, User actor, Site...inSameMenu) {
+	public Page compose(Area area, Name page, Template template, User actor, Page...inSameMenu) {
 		expectAuthenticated(actor);
-		expectSiteDoesNotExist(site, inSameMenu);
-		expectCanHaveMoreSites(inSameMenu);
+		expectPageDoesNotExist(page, inSameMenu);
+		expectCanHaveMorePages(inSameMenu);
 		if (area != null) {
 			expectMaintainer(area, actor);
 		}
-		stessNewSite(actor);
-		Site s = area == null
-				? new Site(1, Name.ORIGIN, actor.alias, site, template)
-				: new Site(1, area.product, area.name, site, template);
+		stessNewPage(actor);
+		Page res = area == null
+				? new Page(1, Name.ORIGIN, actor.alias, page, template)
+				: new Page(1, area.output, area.name, page, template);
 		touch(actor);
-		return s;
+		return res;
 	}
 
-	public Site recompose(Site site, Template template, User owner) {
-		return recompose(site, null, template, owner);
+	public Page recompose(Page page, Template template, User owner) {
+		return recompose(page, null, template, owner);
 	}
-	public Site recompose(Site site, Area area, Template template, User actor) {
+	public Page recompose(Page page, Area area, Template template, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
-		if (site.isUserSite()) {
-			expectOwner(site, actor);
+		if (page.isUserPage()) {
+			expectOwner(page, actor);
 		} else {
 			expectMaintainer(area, actor);
 		}
-		stressDoUpdate(site, actor);
-		site = site.clone();
-		site.template = template;
+		stressDoUpdate(page, actor);
+		page = page.clone();
+		page.template = template;
 		touch(actor);
-		return site;
+		return page;
 	}
 	
-	public Site erase(Site site, User actor) {
-		return erase(site, null, actor);
+	public Page erase(Page page, User actor) {
+		return erase(page, null, actor);
 	}
 	
-	public Site erase(Site site, Area area, User actor) {
-		return recompose(site, area, Template.BLANK_PAGE, actor);
+	public Page erase(Page page, Area area, User actor) {
+		return recompose(page, area, Template.BLANK_PAGE, actor);
 	}
 
 	/* limit checks */
@@ -827,33 +827,33 @@ public final class Tracker {
 		stressLimit(limit("user", reporter.alias), "Too many changes by user: "+reporter.alias);
 	}
 
-	private void stressNewProduct(User actor) {
-		stressLimit(limit("product@user", actor.alias), "Too many recent products by user: "+actor.alias);
+	private void stressNewOutput(User actor) {
+		stressLimit(limit("output@user", actor.alias), "Too many recent outputs by user: "+actor.alias);
 		stressUser(actor);
-		stressLimit(limit("product", ORIGIN), "Too many new products.");
+		stressLimit(limit("output", ORIGIN), "Too many new outputs.");
 		stressNewContent();
 	}
 
-	private void stressNewArea(Name product, User actor) {
+	private void stressNewArea(Name output, User actor) {
 		stressLimit(limit("area@user", actor.alias), "Too many recent areas by user: "+actor.alias);
 		stressUser(actor);
-		stressLimit(limit("area@product", product), "Too many new areas for product: "+product);
+		stressLimit(limit("area@output", output), "Too many new areas for output: "+output);
 		stressLimit(limit("area", ORIGIN), "Too many new areas.");
 		stressNewContent();
 	}
 
-	private void stressNewVersion(Product product, User actor) {
+	private void stressNewVersion(Output output, User actor) {
 		stressLimit(limit("version@user", actor.alias), "Too many recent versions by user: "+actor.alias);
 		stressUser(actor);
-		stressLimit(limit("version@product", product.name), "Too many new versions for product: "+product.name);
+		stressLimit(limit("version@output", output.name), "Too many new versions for output: "+output.name);
 		stressLimit(limit("version", ORIGIN), "Too many new versions.");
 		stressNewContent();
 	}
 
-	private void stressNewTask(Product product, User reporter) {
+	private void stressNewTask(Output output, User reporter) {
 		stressLimit(limit("task@user", reporter.alias), "Too many recent tasks by user: "+reporter.alias);
 		stressUser(reporter);
-		stressLimit(limit("task@product", product.name), "Too many new task for product: "+product.name);
+		stressLimit(limit("task@output", output.name), "Too many new task for output: "+output.name);
 		stressLimit(limit("task", ORIGIN), "Too many new tasks.");
 		stressNewContent();
 	}
@@ -866,10 +866,10 @@ public final class Tracker {
 		stressNewContent();
 	}
 
-	private void stessNewSite(User owner) {
-		stressLimit(limit("site@user", owner.alias), "Too many new sites by user: "+owner.alias);
+	private void stessNewPage(User owner) {
+		stressLimit(limit("page@user", owner.alias), "Too many new pages by user: "+owner.alias);
 		stressUser(owner);
-		stressLimit(limit("site", ORIGIN), "Too many new sites.");
+		stressLimit(limit("page", ORIGIN), "Too many new pages.");
 		stressNewContent();
 	}
 	
@@ -880,18 +880,18 @@ public final class Tracker {
 		stressAction();
 	}
 	
-	private void stressDoConnect(Product product, User actor) {
+	private void stressDoConnect(Output output, User actor) {
 		stressLimit(limit("connect@user", actor.alias), "Too many recent connections by user: "+actor.alias);
 		stressUser(actor);
 		stressLimit(limit("connect", ORIGIN), "Too many recent connections.");
 		stressNewContent();
 	}
 	
-	private void stressDoUpdate(Site site, User owner) {
-		stressLimit(limit("update@user", owner.alias), "Too many recent site updates by user: "+owner.alias);
+	private void stressDoUpdate(Page page, User owner) {
+		stressLimit(limit("update@user", owner.alias), "Too many recent page updates by user: "+owner.alias);
 		stressUser(owner);
-		stressLimit(limit("update", site.name), "Too many site updates for site: "+site.name);
-		stressLimit(limit("update", ORIGIN), "Too many site updates recently.");
+		stressLimit(limit("update", page.name), "Too many page updates for page: "+page.name);
+		stressLimit(limit("update", ORIGIN), "Too many page updates recently.");
 		stressAction();		
 	}
 
@@ -979,25 +979,25 @@ public final class Tracker {
 			denyTransition(Error.E4_VERSION_RELEASED, version.name);
 	}
 
-	private static void expectCanHaveMoreSites(Site[] inSameMenu) {
+	private static void expectCanHaveMorePages(Page[] inSameMenu) {
 		if (inSameMenu.length >= 10)
-			denyTransition(Error.E5_SITE_LIMIT_REACHED, 10);
+			denyTransition(Error.E5_PAGE_LIMIT_REACHED, 10);
 	}
 
-	private static void expectOwner(Site site, User actor) {
-		if (!site.menu.equalTo(actor.alias))
-			denyTransition(Error.E6_SITE_OWNERSHIP_REQUIRED, site.name);
+	private static void expectOwner(Page page, User actor) {
+		if (!page.menu.equalTo(actor.alias))
+			denyTransition(Error.E6_PAGE_OWNERSHIP_REQUIRED, page.name);
 	}
 
-	private static void expectSiteDoesNotExist(Name site, Site[] inSameMenu) {
-		for (Site s : inSameMenu)
-			if (s.name.equalTo(site))
-				denyTransition(Error.E7_SITE_EXISTS, site);
+	private static void expectPageDoesNotExist(Name page, Page[] inSameMenu) {
+		for (Page s : inSameMenu)
+			if (s.name.equalTo(page))
+				denyTransition(Error.E7_PAGE_EXISTS, page);
 	}
 
-	private static void expectOriginMaintainer(Product product, User user) {
-		if (!product.origin.maintainers.contains(user.alias))
-			denyTransition(Error.E8_PRODUCT_OWNERSHIP_REQUIRED, product.name, product.origin.name);
+	private static void expectOriginMaintainer(Output output, User user) {
+		if (!output.origin.maintainers.contains(user.alias))
+			denyTransition(Error.E8_OUTPUT_OWNERSHIP_REQUIRED, output.name, output.origin.name);
 	}
 
 	private static void expectRegistered(User user) {
@@ -1033,8 +1033,8 @@ public final class Tracker {
 	}
 	
 	private static void expectConform(Task task, URL url) {
-		if (!task.product.isIntegrated(url) && task.area.safeguarded)
-			denyTransition(Error.E15_URL_NOT_INTEGRATED, url, task.product.integrations());
+		if (!task.output.isIntegrated(url) && task.area.safeguarded)
+			denyTransition(Error.E15_URL_NOT_INTEGRATED, url, task.output.integrations());
 	}
 
 	private static void expectVersion(Name name) {
@@ -1057,9 +1057,9 @@ public final class Tracker {
 			denyTransition(Error.E10_REQUIRES_AUTHENTICATION);
 	}
 	
-	private static void expectCanConnect(Product product) {
-		if (product.integrations.length >= 8)
-			denyTransition(Error.E19_PRODUCT_INTEGRATION_LIMIT_REACHED, 8, product.name, product.integrations());
+	private static void expectCanConnect(Output output) {
+		if (output.integrations.length >= 8)
+			denyTransition(Error.E19_OUTPUT_INTEGRATION_LIMIT_REACHED, 8, output.name, output.integrations());
 	}
 
 	private static void expectCanWatch(User user) {

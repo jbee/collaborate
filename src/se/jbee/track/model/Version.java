@@ -2,7 +2,7 @@ package se.jbee.track.model;
 
 public final class Version extends Entity<Version> {
 
-	public Name product;
+	public Name output;
 	public Name name;
 	/**
 	 * The names of all versions that are included (but had not been included previously).
@@ -24,11 +24,11 @@ public final class Version extends Entity<Version> {
 	
 	@Override
 	public ID computeID() {
-		return ID.versionId(product, name);
+		return ID.versionId(output, name);
 	}
 	
 	@Override
-	public Name product() {
-		return product;
+	public Name output() {
+		return output;
 	}
 }

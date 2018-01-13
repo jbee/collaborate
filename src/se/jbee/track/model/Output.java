@@ -5,22 +5,22 @@ import static se.jbee.track.model.Bytes.join;
 
 
 /**
- * A {@link Product}'s "counter" change when new {@link Task}s for that product
- * are created.
+ * A {@link Output}'s "counter" change when new {@link Task}s for that
+ * {@link Output} are created.
  *
  * @author jan
  */
-public final class Product extends Entity<Product> {
+public final class Output extends Entity<Output> {
 
 	public Name name;
 	public Integration[] integrations;
 	
-	//TODO there should be hard limits for the amount of versions and area possible to have for a product
+	//TODO there should be hard limits for the amount of versions and area possible to have
 	
 	/**
-	 * The area used to manage a product's areas and versions.
+	 * The area used to manage a {@link Output}'s areas and versions.
 	 * 
-	 * If the origin is abandoned the product is abandoned. 
+	 * If the origin is abandoned the {@link Output} is abandoned. 
 	 *
 	 * <pre>*</pre>
 	 */
@@ -51,17 +51,17 @@ public final class Product extends Entity<Product> {
 	
 	public int tasks;
 	
-	public Product(int version) {
+	public Output(int version) {
 		super(version);
 	}
 	
 	@Override
 	public ID computeID() {
-		return ID.productId(name);
+		return ID.outputId(name);
 	}
 	
 	@Override
-	public Name product() {
+	public Name output() {
 		return name;
 	}
 	

@@ -4,11 +4,11 @@ import java.io.PrintWriter;
 import java.net.HttpURLConnection;
 import java.util.Map;
 
-import se.jbee.track.api.ListPage;
-import se.jbee.track.api.Page;
-import se.jbee.track.api.PageService;
+import se.jbee.track.api.ListView;
+import se.jbee.track.api.View;
+import se.jbee.track.api.ViewService;
 import se.jbee.track.api.Params;
-import se.jbee.track.html.HtmlPageRenderer;
+import se.jbee.track.html.HtmlRenderer;
 import se.jbee.track.html.HtmlWriter;
 
 /**
@@ -19,10 +19,10 @@ import se.jbee.track.html.HtmlWriter;
  */
 public class TrackerHttpUI implements HttpUI {
 
-	private final PageService ps;
-	private final Map<Class<?>, HtmlPageRenderer<?>> renderers;
+	private final ViewService ps;
+	private final Map<Class<?>, HtmlRenderer<?>> renderers;
 
-	public TrackerHttpUI(PageService ps, Map<Class<?>, HtmlPageRenderer<?>> renderers) {
+	public TrackerHttpUI(ViewService ps, Map<Class<?>, HtmlRenderer<?>> renderers) {
 		super();
 		this.ps = ps;
 		this.renderers = renderers;
@@ -30,17 +30,17 @@ public class TrackerHttpUI implements HttpUI {
 
 	@Override
 	public int respond(Params params, PrintWriter out) {
-		runAndRender(ListPage.class, params, out);
+		runAndRender(ListView.class, params, out);
 		//TODO render page
 		if (true)
 			return HttpURLConnection.HTTP_OK;
 		return HttpURLConnection.HTTP_NOT_FOUND;
 	}
 
-	private <T extends Page> void runAndRender(Class<T> pageType, Params params, PrintWriter out) {
+	private <T extends View> void runAndRender(Class<T> pageType, Params params, PrintWriter out) {
 		T page = ps.run(params, pageType);
 		@SuppressWarnings("unchecked")
-		HtmlPageRenderer<T> renderer = (HtmlPageRenderer<T>) renderers.get(pageType);
+		HtmlRenderer<T> renderer = (HtmlRenderer<T>) renderers.get(pageType);
 		renderer.render(page, new HtmlWriter(out));
 	}
 	
