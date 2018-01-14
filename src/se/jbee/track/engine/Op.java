@@ -48,6 +48,7 @@ import java.util.Set;
 
 import se.jbee.track.engine.Change.Operation;
 import se.jbee.track.engine.Change.Tx;
+import se.jbee.track.model.Area;
 import se.jbee.track.model.Email;
 import se.jbee.track.model.Gist;
 import se.jbee.track.model.IDN;
@@ -263,6 +264,14 @@ public final class Op {
 		return (t, tx) -> { tx.put(erase, t.erase(tx.page(output, area, page), tx.area(output, area), tx.user(user))); };
 	}
 	
+	/**
+	 * This takes care of the fact that a leaving maintainer can indirectly
+	 * decide {@link Poll}s for that area since the set of
+	 * {@link Area#maintainers} has changed. In the worst case this settles more
+	 * {@link Poll}s that cause maintainers to leave. And so forth. This is
+	 * handled so that no {@link Poll} is left undecided if it effectively was
+	 * decided indirectly.
+	 */
 	private static void recount(Operation op, Tracker t, Tx tx, Name output, Name area, Name resignedUser, Name actor) {
 		List<Poll> resignations = new ArrayList<>();
 		List<Poll> others = new ArrayList<>();
@@ -289,13 +298,11 @@ public final class Op {
 			}
 			if (r.isAccepted()) {
 				resigned.add(r.affected);
-				resignations.remove(i);
+				resignations.remove(i); // this poll is definitely handled
 				i = 0;
-				tx.put(op, r);
-			}
+			} 
+			tx.put(op, r);
 		}
-		for (Poll p : resignations)
-			tx.put(op, p);
 		for (Poll p : others) {
 			for (Name n : resigned) 
 				p = t.recount(p, n, user);
