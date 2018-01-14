@@ -1088,7 +1088,7 @@ public final class Tracker {
 	
 	private static void expectAdmin(Server server, User actor) {
 		if (!server.isAdmin(actor)) {
-			denyTransition(Error.E25_ADMIN_REQUIRED);
+			denyTransition(Error.E25_ADMIN_REQUIRED, server.admin());
 		}
 	}
 

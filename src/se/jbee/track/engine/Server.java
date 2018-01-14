@@ -2,6 +2,7 @@ package se.jbee.track.engine;
 
 import static se.jbee.track.engine.Server.Switch.LOCKDOWN;
 import static se.jbee.track.engine.Server.Switch.OPEN;
+import static se.jbee.track.engine.Server.Switch.PRIVATE;
 
 import java.util.EnumSet;
 
@@ -33,7 +34,13 @@ public final class Server {
 		 * This is used to correct installations after major problems or before
 		 * first use.
 		 */
-		LOCKDOWN 
+		LOCKDOWN,
+		
+		/**
+		 * If set user may see/get the admins email so that they can contact the
+		 * admin in case it is needed.
+		 */
+		PRIVATE,
 		
 	}
 	
@@ -76,6 +83,10 @@ public final class Server {
 	
 	public Server with(Clock clock, Limits limits) {
 		return new Server(admin, clock, limits, switches);
+	}
+
+	public Email admin() {
+		return switches.contains(PRIVATE) ? admin : null;
 	}
 	
 }

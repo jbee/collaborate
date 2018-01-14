@@ -13,13 +13,13 @@ import static se.jbee.track.engine.Change.Operation.configure;
 import static se.jbee.track.engine.Change.Operation.confirm;
 import static se.jbee.track.engine.Change.Operation.connect;
 import static se.jbee.track.engine.Change.Operation.consent;
-import static se.jbee.track.engine.Change.Operation.envision;
 import static se.jbee.track.engine.Change.Operation.detach;
 import static se.jbee.track.engine.Change.Operation.disclose;
 import static se.jbee.track.engine.Change.Operation.disconnect;
 import static se.jbee.track.engine.Change.Operation.dissent;
 import static se.jbee.track.engine.Change.Operation.dissolve;
 import static se.jbee.track.engine.Change.Operation.emphasise;
+import static se.jbee.track.engine.Change.Operation.envision;
 import static se.jbee.track.engine.Change.Operation.erase;
 import static se.jbee.track.engine.Change.Operation.indicate;
 import static se.jbee.track.engine.Change.Operation.leave;
@@ -40,7 +40,11 @@ import static se.jbee.track.engine.Change.Operation.unwatch;
 import static se.jbee.track.engine.Change.Operation.warn;
 import static se.jbee.track.engine.Change.Operation.watch;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import se.jbee.track.engine.Change.Operation;
 import se.jbee.track.engine.Change.Tx;
@@ -260,11 +264,42 @@ public final class Op {
 	}
 	
 	private static void recount(Operation op, Tracker t, Tx tx, Name output, Name area, Name resignedUser, Name actor) {
-		//FIXME sadly not that simple. Recounting can exclude more maintainers and so forth. 
-		// So first we have to recount all that potentially could cause that always removing all maintainer removed so far
-		// than we remove all removed from all the other polls and see if those are settled
+		List<Poll> resignations = new ArrayList<>();
+		List<Poll> others = new ArrayList<>();
+		for (Poll p : tx.polls(output, area)) {
+			if (!p.isConcluded()) {
+				if (p.matter == Matter.resignation) {
+					resignations.add(p);
+				} else {
+					others.add(p);
+				}
+			}
+		}
+		if (resignations.isEmpty() && others.isEmpty())
+			return;
 		User user = tx.user(actor);
-		for (Poll p : tx.polls(output, area))
-			tx.put(op, t.recount(p, resignedUser, user));
+		Set<Name> resigned = new HashSet<>();
+		resigned.add(resignedUser);
+		for (int i = 0; i < resignations.size(); i++) {
+			Poll r = resignations.get(i);
+			for (Name n : resigned) {
+				if (r.hasVoted(n)) {
+					r = t.recount(r, n, user);
+				}
+			}
+			if (r.isAccepted()) {
+				resigned.add(r.affected);
+				resignations.remove(i);
+				i = 0;
+				tx.put(op, r);
+			}
+		}
+		for (Poll p : resignations)
+			tx.put(op, p);
+		for (Poll p : others) {
+			for (Name n : resigned) 
+				p = t.recount(p, n, user);
+			tx.put(op, p);
+		}
 	}
 }

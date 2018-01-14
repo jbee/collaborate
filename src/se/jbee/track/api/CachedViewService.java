@@ -8,6 +8,8 @@ import se.jbee.track.cache.Cache;
 import se.jbee.track.cache.Matches;
 import se.jbee.track.db.DB;
 import se.jbee.track.engine.Server;
+import se.jbee.track.engine.TransitionDenied;
+import se.jbee.track.engine.TransitionDenied.Error;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
 import se.jbee.track.model.Page;
@@ -46,11 +48,17 @@ public class CachedViewService implements ViewService {
 	
 	private SampleView sample(Params request) {
 		User actor = user(request.get(Param.actor));
+		expectAdmin(actor);
 		Names outputs = request.names(Param.output);
 		Names areas = request.names(Param.area);
 		Names users = request.names(Param.role);
-		
+		//TODO sample change itself can be a Change, pass the converted params (names and so forth)
 		return new SampleView(actor, server.clock.time());
+	}
+
+	private void expectAdmin(User actor) {
+		if (!server.isAdmin(actor)) 
+			throw new TransitionDenied(Error.E25_ADMIN_REQUIRED, server.admin());
 	}
 	
 	private ListView list(Params request) {
