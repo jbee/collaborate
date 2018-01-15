@@ -32,7 +32,8 @@ public final class TransitionDenied extends IllegalStateException {
 		E25_ADMIN_REQUIRED(25, "Sorry! Only the administrator %s may perform this action for this installation."), 
 		E26_LOCKDOWN(26, "Sorry! Server is undergoing maintenance work. Access is restricted to administrators. Please try again later."), 
 		E27_LIMIT_OCCUPIED( 27, "Sorry! Another user just changed the same data (%s). Please reload the page and redo your actions if they still apply."), 
-		E28_CATEGORY_LIMIT(28, "Sorry! Categories per output are limited to %d.")
+		E28_CATEGORY_LIMIT(28, "Sorry! Categories per output are limited to %d."), 
+		E29_CHANGESET_REQUIRED(29, "Oops! Please provide the names of the versions released.")
 		
 		;
 		public final int code;

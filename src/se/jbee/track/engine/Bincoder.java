@@ -164,7 +164,7 @@ public interface Bincoder<I,O> {
 		t.motive = bin2enum(motives, from);
 		t.purpose = bin2enum(purposes, from);
 		t.status = bin2enum(status, from);
-		t.changeset = bin2names(from);
+		t.baseVersions = bin2names(from);
 		t.exploitable = from.get() > 0;
 		t.disclosed = from.get() > 0;
 		t.archived = from.get() > 0;
@@ -195,7 +195,7 @@ public interface Bincoder<I,O> {
 		enum2bin(t.motive, to);
 		enum2bin(t.purpose, to);
 		enum2bin(t.status, to);
-		names2bin(t.changeset, to);
+		names2bin(t.baseVersions, to);
 		to.put((byte) (t.exploitable ? 1 : 0));
 		to.put((byte) (t.disclosed ? 1 : 0));
 		to.put((byte) (t.archived ? 1 : 0));

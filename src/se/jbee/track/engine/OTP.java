@@ -60,7 +60,7 @@ public final class OTP {
 	}
 	
 	public static boolean isToken(byte[] token, byte[] encryptedToken) {
-		return Arrays.equals(md5(token), encryptedToken);
+		return Arrays.equals(encrypt(token), encryptedToken);
 	}
 	
 	private static byte[] md5(byte[] val) {

@@ -426,7 +426,7 @@ final class CacheWorker implements Cache {
 			case indicate:
 			case warn:
 			case request:
-			case segment:
+			case advance:
 				Task t = after;
 				t.area = cacheInstanceOf(t.area);
 				t.base = cacheInstanceOf(t.base);

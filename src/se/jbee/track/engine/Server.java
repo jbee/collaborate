@@ -50,12 +50,10 @@ public final class Server {
 	 * {@link Switch#OPEN}
 	 */
 	public final Email admin;
+	public final Clock clock;
+	public final Limits limits;
 
 	private final EnumSet<Switch> switches;
-	
-	public final Clock clock;
-	
-	public final Limits limits;
 	
 	public Server(Email admin, Clock clock, Limits limits, Switch...switches) {
 		this(admin, clock, limits, switches.length == 0 ? EnumSet.noneOf(Switch.class) : EnumSet.of(switches[0], switches));
@@ -82,6 +80,14 @@ public final class Server {
 	}
 	
 	public Server with(Clock clock, Limits limits) {
+		return new Server(admin, clock, limits, switches);
+	}
+	
+	public Server with(Switch s) {
+		if (switches.contains(s))
+			return this;
+		EnumSet<Switch> switches = this.switches.clone();
+		switches.add(s);
 		return new Server(admin, clock, limits, switches);
 	}
 

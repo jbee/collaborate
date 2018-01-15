@@ -17,7 +17,7 @@ public class Task extends Entity<Task> {
 	public Motive motive;
 	public Purpose purpose;
 	public Status status;
-	public Names changeset;
+	public Names baseVersions;
 	public boolean exploitable;
 	public boolean disclosed;
 	

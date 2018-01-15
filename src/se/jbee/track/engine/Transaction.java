@@ -2,9 +2,9 @@ package se.jbee.track.engine;
 
 import static java.lang.Math.max;
 import static se.jbee.track.engine.Bincoder.area2bin;
-import static se.jbee.track.engine.Bincoder.poll2bin;
 import static se.jbee.track.engine.Bincoder.output2bin;
 import static se.jbee.track.engine.Bincoder.page2bin;
+import static se.jbee.track.engine.Bincoder.poll2bin;
 import static se.jbee.track.engine.Bincoder.task2bin;
 import static se.jbee.track.engine.Bincoder.user2bin;
 import static se.jbee.track.engine.Bincoder.version2bin;
@@ -12,10 +12,8 @@ import static se.jbee.track.engine.Bincoder.version2bin;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 import se.jbee.track.db.DB;
@@ -23,13 +21,14 @@ import se.jbee.track.db.DB.TxRW;
 import se.jbee.track.engine.Change.Operation;
 import se.jbee.track.engine.Change.Tx;
 import se.jbee.track.engine.Event.Transition;
+import se.jbee.track.engine.Limits.ConcurrentUsage;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.Entity;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.Name;
-import se.jbee.track.model.Poll;
 import se.jbee.track.model.Output;
 import se.jbee.track.model.Page;
+import se.jbee.track.model.Poll;
 import se.jbee.track.model.Task;
 import se.jbee.track.model.Transitory;
 import se.jbee.track.model.User;
@@ -44,7 +43,7 @@ import se.jbee.track.model.Version;
  * returned. It will also keep track of updated user entities without the need
  * to {@link #put(Entity)} them explicitly.
  */
-public final class Transaction extends DAO implements Tx, Limits {
+public final class Transaction extends DAO implements Tx {
 
 	/**
 	 * Applies the changes to the DB.
@@ -55,12 +54,13 @@ public final class Transaction extends DAO implements Tx, Limits {
 	public static Changes run(Change set, DB db, Server server) throws ConcurrentUsage {
 		final long now = max(lastTick.incrementAndGet(), server.clock.time());
 		final Clock fixedNow = () -> now;
-		try (Transaction tx = new Transaction(fixedNow, server.limits, db)) {
+		Limits limits = new OccupySpecificLimits(server.limits);
+		try (Transaction tx = new Transaction(fixedNow, db)) {
 			try {
-				set.apply(new Tracker(server.with(fixedNow, tx)), tx);
+				set.apply(new Tracker(server.with(fixedNow, limits)), tx);
 				return tx.commit();
 			} finally {
-				tx.freeOccupiedLimits();
+				limits.free(null);
 			}
 		}
 	}
@@ -75,18 +75,15 @@ public final class Transaction extends DAO implements Tx, Limits {
 	private final LinkedHashMap<ID, Entity<?>> changed = new LinkedHashMap<>();
 	private final HashMap<ID, ArrayList<Change.Operation>> changeTypes = new HashMap<>();
 	private final HashMap<ID, User> loadedUsers = new HashMap<>();
-	private final Set<Limit> occupied = new HashSet<>();
 	
 	private final Clock clock;
-	private final Limits limits;
 	private final DB db;
 
 	private ID actor;
 	
-	private Transaction(Clock clock, Limits limits, DB db) {
+	private Transaction(Clock clock, DB db) {
 		super(db.read());
 		this.clock = clock;
-		this.limits = limits;
 		this.db = db;
 	}
 	
@@ -244,36 +241,4 @@ public final class Transaction extends DAO implements Tx, Limits {
 		}
 	}
 	
-	private void freeOccupiedLimits() {
-		for (Limit l : occupied) {
-			limits.free(l);
-		}
-		occupied.clear();
-	}
-	
-	@Override
-	public boolean stress(Limit limit, Clock clock) throws ConcurrentUsage {
-		if (!limit.isSpecific()) {
-			return limits.stress(limit, clock);
-		}
-		return occupy(limit, clock);
-	}
-
-	@Override
-	public boolean occupy(Limit limit, Clock clock) throws ConcurrentUsage {
-		if (occupied.contains(limit))
-			return true;
-		if (limits.occupy(limit, clock)) {
-			occupied.add(limit);
-			return true;
-		}
-		return false;
-	}
-	
-	@Override
-	public void free(Limit l) {
-		if (!occupied.contains(l)) {
-			throw new ConcurrentUsage(l);
-		}
-	}
 }

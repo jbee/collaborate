@@ -1,5 +1,7 @@
 package se.jbee.track.api;
 
+import static se.jbee.track.engine.Server.Switch.LOCKDOWN;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -7,7 +9,10 @@ import se.jbee.track.api.Param.Command;
 import se.jbee.track.cache.Cache;
 import se.jbee.track.cache.Matches;
 import se.jbee.track.db.DB;
+import se.jbee.track.engine.Changes;
+import se.jbee.track.engine.Sample;
 import se.jbee.track.engine.Server;
+import se.jbee.track.engine.Transaction;
 import se.jbee.track.engine.TransitionDenied;
 import se.jbee.track.engine.TransitionDenied.Error;
 import se.jbee.track.model.Name;
@@ -52,8 +57,10 @@ public class CachedViewService implements ViewService {
 		Names outputs = request.names(Param.output);
 		Names areas = request.names(Param.area);
 		Names users = request.names(Param.role);
-		//TODO sample change itself can be a Change, pass the converted params (names and so forth)
-		return new SampleView(actor, server.clock.time());
+		// this is run as if we are on lockdown so that limits won't apply - also this makes sure again one has to be admin
+		Changes changes = Transaction.run(Sample.sample(outputs, areas, users, 50, actor.alias), db, server.with(LOCKDOWN));
+		cache.invalidate(changes);
+		return new SampleView(actor, changes);
 	}
 
 	private void expectAdmin(User actor) {

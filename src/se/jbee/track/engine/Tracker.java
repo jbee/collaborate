@@ -284,15 +284,15 @@ public final class Tracker {
 		return a;
 	}
 
-	public Area compart(Area basis, Name partition, User actor, boolean subarea) {
+	public Area compart(Area basis, Name area, User actor, boolean subarea) {
 		expectMaintainer(basis, actor);
-		Area area = compart(basis.output, partition, actor);
-		area.basis=basis.name;
-		area.safeguarded=basis.safeguarded;
+		Area a = compart(basis.output, area, actor);
+		a.basis=basis.name;
+		a.safeguarded=basis.safeguarded;
 		if (subarea) {
-			area.maintainers = basis.maintainers;
+			a.maintainers = basis.maintainers;
 		}
-		return area;
+		return a;
 	}
 
 	private Area compart(Name output, Name area, User actor) {
@@ -393,19 +393,11 @@ public final class Tracker {
 
 	/* Tasks */
 
+	/* 3 classic starting points */
+	
 	public Task reportProposal(Output output, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
 		return report(output, proposal, clarification, gist, reporter, area, output.somewhen, false);
-	}
-
-	public Task reportNecessity(Output output, Gist gist, User reporter, Area area) {
-		expectNoBoard(area);
-		return report(output, necessity, clarification, gist, reporter, area, output.somewhen, false);
-	}
-	
-	public Task reportThought(Output output, Gist gist, User reporter, Area area) {
-		expectNoBoard(area);
-		return report(output, reminder, clarification, gist, reporter, area, output.somewhen, false);
 	}
 
 	public Task reportDefect(Output output, Gist gist, User reporter, Area area, Version version, boolean exploitable) {
@@ -418,15 +410,34 @@ public final class Tracker {
 		return report(output, board.motive, board.purpose, gist, reporter, board, output.somewhen, false);
 	}
 
-	public Task reportSegment(Task basis, Purpose why, Gist gist, User reporter, Names changeset) {
+	/* 2 starting points looking in the future (might also be advancements?) */
+	
+	public Task reportNecessity(Output output, Gist gist, User reporter, Area area) {
+		expectNoBoard(area);
+		return report(output, necessity, clarification, gist, reporter, area, output.somewhen, false);
+	}
+	
+	public Task reportReminder(Output output, Gist gist, User reporter, Area area) {
+		expectNoBoard(area);
+		return report(output, reminder, clarification, gist, reporter, area, output.somewhen, false);
+	}	
+
+	/* 2 ways to continue a task - build a chain or tree */
+	
+	public Task reportAdvancement(Task basis, Purpose why, Gist gist, User reporter) {
 		Area area = basis.area.board ? basis.output.somewhere : basis.area;
 		Task task = report(basis.output, basis.motive, why, gist, reporter, area, basis.base, basis.exploitable);
 		task.basis = basis.id;
 		task.origin = !basis.origin.isZero() ? basis.origin : basis.id;
-		if (changeset != null && !changeset.isEmpty()) {
-			expectNotYetPublished(task.base);
-			task.changeset = changeset;
-		}
+		return task;
+	}
+	
+	public Task reportRelease(Task basis, Version released, Gist gist, Names baseVersions, User reporter) {
+		expectNotYetPublished(basis.base);
+		expectNonEmptyChangeset(baseVersions);
+		Task task = reportAdvancement(basis, Purpose.publication, gist, reporter);
+		task.base = released;
+		task.baseVersions = baseVersions;
 		return task;
 	}
 
@@ -459,7 +470,7 @@ public final class Tracker {
 		task.aspirants = Names.empty();
 		task.participants = Names.empty();
 		task.watchers = new Names(reporter.alias);
-		task.changeset = Names.empty();
+		task.baseVersions = Names.empty();
 		task.attachments = Attachments.NONE;
 		reporter.contributesToOutputs = reporter.contributesToOutputs.add(task.output.name);
 		touch(reporter);
@@ -543,9 +554,9 @@ public final class Tracker {
 		task.status = resolved;
 		by.xp += xp(task, 2);
 		by.resolved++;
-		if (!task.changeset.isEmpty()) { // publishing is something that is resolved when its done
+		if (!task.baseVersions.isEmpty()) { // publishing is something that is resolved when its done
 			task.base = task.base.clone();
-			task.base.changeset = task.changeset; // transfer the released versions 
+			task.base.changeset = task.baseVersions; // transfer the released versions 
 		}
 		return task;
 	}
@@ -1087,9 +1098,13 @@ public final class Tracker {
 	}
 	
 	private static void expectAdmin(Server server, User actor) {
-		if (!server.isAdmin(actor)) {
+		if (!server.isAdmin(actor))
 			denyTransition(Error.E25_ADMIN_REQUIRED, server.admin());
-		}
+	}
+	
+	private static void expectNonEmptyChangeset(Names changeset) {
+		if (changeset == null || changeset.isEmpty())
+			denyTransition(Error.E29_CHANGESET_REQUIRED);
 	}
 
 	private static void denyTransition(Error error, Object...args) {

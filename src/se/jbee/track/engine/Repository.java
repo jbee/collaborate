@@ -2,6 +2,7 @@ package se.jbee.track.engine;
 
 import java.util.NoSuchElementException;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import se.jbee.track.model.Area;
 import se.jbee.track.model.ID;
@@ -44,6 +45,30 @@ public interface Repository extends AutoCloseable {
 			super(id.toString());
 		}
 		
+	}
+	
+	/*
+	 * default methods for convenience
+	 */
+	
+	default Output outputOrNull(Name output) {
+		return orNull( () -> output(output));
+	}
+	
+	default User userOrNull(Name user) {
+		return orNull( () -> user(user));
+	}
+	
+	default Area areaOrNull(Name output, Name area) {
+		return orNull( () -> area(output, area));
+	}
+	
+	static <T> T orNull(Supplier<T> s) {
+		try {
+			return s.get();
+		} catch (UnknownEntity e) {
+			return null;
+		}
 	}
 
 }

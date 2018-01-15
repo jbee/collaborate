@@ -1,5 +1,6 @@
 package se.jbee.track.api;
 
+import se.jbee.track.engine.Changes;
 import se.jbee.track.model.User;
 
 /**
@@ -7,10 +8,13 @@ import se.jbee.track.model.User;
  *  
  * @author jan
  */
-public class SampleView extends View {
+public final class SampleView extends View {
 
-	public SampleView(User actor, long now) {
-		super(actor, now);
+	public final Changes changes;
+	
+	public SampleView(User actor, Changes changes) {
+		super(actor, changes.timestamp);
+		this.changes = changes;
 	}
 
 }
