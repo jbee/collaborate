@@ -63,6 +63,10 @@ public interface Repository extends AutoCloseable {
 		return orNull( () -> area(output, area));
 	}
 	
+	default Version versionOrNull(Name output, Name version) {
+		return orNull( () -> version(output, version));
+	}
+	
 	static <T> T orNull(Supplier<T> s) {
 		try {
 			return s.get();

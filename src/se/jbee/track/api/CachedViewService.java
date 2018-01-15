@@ -57,8 +57,10 @@ public class CachedViewService implements ViewService {
 		Names outputs = request.names(Param.output);
 		Names areas = request.names(Param.area);
 		Names users = request.names(Param.role);
+		Names versions = request.names(Param.version);
+		Names categories = request.names(Param.category);
 		// this is run as if we are on lockdown so that limits won't apply - also this makes sure again one has to be admin
-		Changes changes = Transaction.run(Sample.sample(outputs, areas, users, 50, actor.alias), db, server.with(LOCKDOWN));
+		Changes changes = Transaction.run(Sample.sample(users, outputs, versions, areas, categories, 50, actor.alias), db, server.with(LOCKDOWN));
 		cache.invalidate(changes);
 		return new SampleView(actor, changes);
 	}

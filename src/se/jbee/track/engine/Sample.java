@@ -37,16 +37,20 @@ public class Sample {
 	
 	private static final EnumMap<Mail.Notification, Mail.Delivery> NO_MAILS = new EnumMap<>(Mail.Notification.class); 
 	
-	public static Change sample(Names outputs, Names areas, Names users, int tasks, Name actor) {
+	public static Change sample(Names users, Names outputs, Names versions, Names areas, Names categories, int tasks, Name actor) {
 		return (t, tx) -> { 
 			
 			User admin = user(t, tx, actor);
 			User[] ux = users(t, tx, users);
-			Output[] ox = outputs(t, tx, outputs, admin);
+			Output[] ox = outputs(t, tx, outputs, categories, admin);
+			Version[] vx = versions(t, tx, ox, versions, ux);
 			Area[] ax = areas(t, tx, ox, areas, ux);
 			Map<Name, Output> omap = new HashMap<>();
 			for (Output o : ox)
 				omap.put(o.name, o);
+			Map<Name, List<Version>> versionByOutput = new HashMap<>();
+			for (Version v : vx)
+				versionByOutput.computeIfAbsent(v.output, (name) -> new ArrayList<>()).add(v);
 			for (int i = 0; i < tasks; i++) {
 				Area a = ax[RND.nextInt(ax.length)];
 				User reporter = ux[RND.nextInt(ux.length)];
@@ -64,6 +68,28 @@ public class Sample {
 		};
 	}
 
+	private static Version[] versions(Tracker t, Tx tx, Output[] outputs, Names versions, User[] users) {
+		Version[] vx = new Version[versions.count()];
+		int i = 0; 
+		for (Name version : versions)
+			vx[i++] = version(t, tx, outputs, version, users);
+		return vx;
+	}
+
+	private static Version version(Tracker t, Tx tx, Output[] outputs, Name version, User[] users) {
+		for (Output o : outputs) {
+			Version res = tx.versionOrNull(o.name, version);
+			if (res != null)
+				return res;
+		}
+		// does not exist
+		User actor = users[RND.nextInt(users.length)];
+		Output output = outputs[RND.nextInt(outputs.length)];
+		Version res = t.tag(output, version, actor);
+		tx.put(sample, res);
+		return res;
+	}
+
 	private static Gist randomGist() {
 		return Gist.gist("");
 	}
@@ -73,7 +99,6 @@ public class Sample {
 		int i = 0;
 		for (Name area : areas)
 			ax[i++] = area(t, tx, outputs, area, users, ax);
-		//TODO to have a difference on sub-area maintainers need to join before all areas are done...
 		return ax;
 	}
 
@@ -88,10 +113,12 @@ public class Sample {
 		User actor = users[RND.nextInt(users.length)];
 		Output output = outputs[RND.nextInt(outputs.length)];
 		Area basis = basis(output, bases);
-		if (bases == null) {
-			return t.compart(output, area, actor);
-		}
-		return t.compart(basis, area, actor, RND.nextBoolean());
+		Area res = bases == null
+			? t.compart(output, area, actor)
+			: t.compart(basis, area, actor, RND.nextBoolean());
+		//TODO to have a difference on sub-area maintainers need to join before all areas are done...
+		tx.put(sample, res);
+		return res;
 	}
 	
 	private static Area basis(Output output, Area[] bases) {
@@ -123,18 +150,20 @@ public class Sample {
 		return res;
 	}
 
-	private static Output[] outputs(Tracker t, Tx tx, Names outputs, User actor) {
+	private static Output[] outputs(Tracker t, Tx tx, Names outputs, Names categories, User actor) {
 		Output[] ox = new Output[outputs.count()];
 		int i = 0;
 		for (Name output : outputs)
-			ox[i++] = output(t, tx, output, actor);
+			ox[i++] = output(t, tx, output, categories, actor);
 		return ox;
 	}
 
-	private static Output output(Tracker t, Tx tx, Name output, User actor) {
+	private static Output output(Tracker t, Tx tx, Name output, Names categories, User actor) {
 		Output res = tx.outputOrNull(output);
 		if (res == null) {
-			res = t.envision(output, actor); 
+			res = t.envision(output, actor);
+			for (Name c : categories)
+				res = t.suggest(res, c, actor);
 			tx.put(sample, res);
 		}
 		return res;

@@ -17,7 +17,7 @@ public enum Param {
 	task, // IDN of a task
 	serial, // IDN of a board task
 	menu, // enum: none, user, area
-	// then we use a EnumMap<Param,String> to pass them from e.g. HTTP or a CLI
+	category,
 	;
 	
 	public static enum Command {
