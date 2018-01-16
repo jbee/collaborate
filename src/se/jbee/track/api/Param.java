@@ -3,7 +3,7 @@ package se.jbee.track.api;
 public enum Param {
 
 	command, //WHAT: view a user/area page, version, task or do something
-	
+
 	/**
 	 * The acting (authenticated) user (this may be set to session ID)
 	 */
@@ -19,18 +19,18 @@ public enum Param {
 	menu, // enum: none, user, area
 	category,
 	;
-	
+
 	public static enum Command {
 
 		//GETS
-		list, 
-		details, 
-		version,
-		
-		
+		query,   // a page
+		examine, // a particular task
+		oversee, // a particular version
+
+
 		// PUTS/POSTS
 		enlist, approach, abandon, stress,
-		
+
 		// generates testdata
 		sample
 	};

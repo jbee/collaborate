@@ -4,6 +4,7 @@ import static se.jbee.track.engine.Change.Operation.sample;
 import static se.jbee.track.model.Email.email;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +40,6 @@ public class Sample {
 	
 	public static Change sample(Names users, Names outputs, Names versions, Names areas, Names categories, int tasks, Name actor) {
 		return (t, tx) -> { 
-			
 			User admin = user(t, tx, actor);
 			User[] ux = users(t, tx, users);
 			Output[] ox = outputs(t, tx, outputs, categories, admin);
@@ -55,7 +55,12 @@ public class Sample {
 				Area a = ax[RND.nextInt(ax.length)];
 				User reporter = ux[RND.nextInt(ux.length)];
 				Output o = omap.get(a.output);
-				Version version = null; //FIXME
+				List<Version> candidates = versionByOutput.get(a.output);
+				if (candidates == null) { // we just register a new version for that product as well
+					candidates = Collections.singletonList(version(t, tx, new Output[] {o}, versions.at(RND.nextInt(versions.count())), ux));
+					versionByOutput.put(a.output, candidates);
+				}
+				Version version = candidates.get(RND.nextInt(candidates.size()));
 				if (a.board) {
 					t.reportRequest(o, randomGist(), reporter, a);
 				} else {
@@ -116,6 +121,9 @@ public class Sample {
 		Area res = bases == null
 			? t.compart(output, area, actor)
 			: t.compart(basis, area, actor, RND.nextBoolean());
+		if (!output.categories.isEmpty()) {
+			res = t.categorise(res, output.categories.at(RND.nextInt(output.categories.count())), actor);
+		}
 		//TODO to have a difference on sub-area maintainers need to join before all areas are done...
 		tx.put(sample, res);
 		return res;

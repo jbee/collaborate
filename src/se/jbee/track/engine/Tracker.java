@@ -74,15 +74,15 @@ public final class Tracker {
 
 	/**
 	 * When a user is registered with just an email the alias is also the email.
-	 * 
+	 *
 	 * Users never provide a password. Instead an {@link OTP} is set each time
 	 * the user wants to log in. The {@link OTP} needs to be
 	 * {@link #authenticate(User, byte[])} d.
-	 * 
+	 *
 	 * After {@link #register(User, Name, Email)} the user uses
 	 * {@link #confirm(User)} to request a new {@link OTP} (that is send to him
 	 * via email).
-	 * 
+	 *
 	 * This is actually more secure than using passwords. A users password can
 	 * never be stolen or hacked. Each OTP is only usable once. To steal an
 	 * account an attacker has to steal the users email account or perform a
@@ -112,17 +112,17 @@ public final class Tracker {
 		confirmOTP(user, AuthState.registered);
 		return user;
 	}
-	
+
 	/**
-	 * Used to initialize a "log in" for a registered user. 
+	 * Used to initialize a "log in" for a registered user.
 	 * He confirms that he still (or now) has control over the email connected
 	 * to the user account.
 	 */
 	public User confirm(User user) {
 		return confirm(user, AuthState.confirming);
 	}
-		
-	private User confirm(User user, AuthState state) {	
+
+	private User confirm(User user, AuthState state) {
 		long now = now();
 		//TODO increase time - make cool-down grow with power of 2?
 		// 1min cool-down protection against requesting to many tokens
@@ -144,7 +144,7 @@ public final class Tracker {
 	}
 
 	/**
-	 * Used to confirm the users identity and complete a "log in". 
+	 * Used to confirm the users identity and complete a "log in".
 	 */
 	public User authenticate(User user, byte[] token) {
 		if (server.isOnLockdown() && !server.isAdmin(user)) {
@@ -166,9 +166,9 @@ public final class Tracker {
 		touch(user);
 		return user;
 	}
-	
+
 	/**
-	 * Name a user later on when first just an email was used. 
+	 * Name a user later on when first just an email was used.
 	 */
 	public User name(User user, Name name) {
 		expectAuthenticated(user);
@@ -180,7 +180,7 @@ public final class Tracker {
 		touch(user);
 		return user;
 	}
-	
+
 	public User configure(User user, EnumMap<Mail.Notification, Mail.Delivery> notifications) {
 		expectAuthenticated(user);
 		stressDoConfiguration(user);
@@ -217,7 +217,7 @@ public final class Tracker {
 		touch(actor);
 		return p;
 	}
-	
+
 	public Output connect(Output output, Integration endpoint, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
@@ -236,7 +236,7 @@ public final class Tracker {
 		touch(actor);
 		return output;
 	}
-	
+
 	public Output disconnect(Output output, Name integration, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
@@ -251,7 +251,7 @@ public final class Tracker {
 		touch(actor);
 		return output;
 	}
-	
+
 	public Output suggest(Output output, Name category, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
@@ -325,7 +325,7 @@ public final class Tracker {
 		}
 		return area;
 	}
-	
+
 	public Area categorise(Area area, Name category, User actor) {
 		expectRegistered(actor);
 		expectAuthenticated(actor);
@@ -359,7 +359,7 @@ public final class Tracker {
 		touch(actor);
 		return task;
 	}
-	
+
 	public Task rebase(Task task, Version to, User actor) {
 		if (task.base.name.equalTo(to.name))
 			return task; //NOOP
@@ -372,7 +372,7 @@ public final class Tracker {
 		touch(actor);
 		return task;
 	}
-	
+
 	/* Versions */
 
 	public Version tag(Output output, Name version, User actor) {
@@ -394,7 +394,7 @@ public final class Tracker {
 	/* Tasks */
 
 	/* 3 classic starting points */
-	
+
 	public Task reportProposal(Output output, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
 		return report(output, proposal, clarification, gist, reporter, area, output.somewhen, false);
@@ -411,31 +411,31 @@ public final class Tracker {
 	}
 
 	/* 2 starting points looking in the future (might also be advancements?) */
-	
+
 	public Task reportNecessity(Output output, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
 		return report(output, necessity, clarification, gist, reporter, area, output.somewhen, false);
 	}
-	
+
 	public Task reportReminder(Output output, Gist gist, User reporter, Area area) {
 		expectNoBoard(area);
 		return report(output, reminder, clarification, gist, reporter, area, output.somewhen, false);
-	}	
+	}
 
 	/* 2 ways to continue a task - build a chain or tree */
-	
-	public Task reportAdvancement(Task basis, Purpose why, Gist gist, User reporter) {
+
+	public Task reportAdvancement(Task basis, Motive cause, Purpose why, Gist gist, User reporter) {
 		Area area = basis.area.board ? basis.output.somewhere : basis.area;
-		Task task = report(basis.output, basis.motive, why, gist, reporter, area, basis.base, basis.exploitable);
+		Task task = report(basis.output, cause, why, gist, reporter, area, basis.base, basis.exploitable);
 		task.basis = basis.id;
 		task.origin = !basis.origin.isZero() ? basis.origin : basis.id;
 		return task;
 	}
-	
+
 	public Task reportRelease(Task basis, Version released, Gist gist, Names baseVersions, User reporter) {
 		expectNotYetPublished(basis.base);
 		expectNonEmptyChangeset(baseVersions);
-		Task task = reportAdvancement(basis, Purpose.publication, gist, reporter);
+		Task task = reportAdvancement(basis, basis.motive, Purpose.publication, gist, reporter);
 		task.base = released;
 		task.baseVersions = baseVersions;
 		return task;
@@ -476,7 +476,7 @@ public final class Tracker {
 		touch(reporter);
 		return task;
 	}
-	
+
 	public Task disclose(Task task, User actor) {
 		expectAuthenticated(actor);
 		expectOriginMaintainer(task.output, actor);
@@ -487,7 +487,7 @@ public final class Tracker {
 		}
 		return task;
 	}
-	
+
 	public Task attach(Task task, User actor, URL attachment) {
 		expectAuthenticated(actor);
 		if (!task.area.isOpen()) {
@@ -502,12 +502,12 @@ public final class Tracker {
 		if (!attachment.isIntegrated()) {
 			attachment = task.output.integrate(attachment);
 		}
-		task.attachments = task.attachments.add(attachment); 
+		task.attachments = task.attachments.add(attachment);
 		actor.contributesToOutputs = actor.contributesToOutputs.add(task.output.name);
 		touch(actor);
 		return task;
 	}
-	
+
 	public Task detach(Task task, User actor, URL attachment) {
 		expectAuthenticated(actor);
 		expectMaintainer(task.area, actor);
@@ -515,7 +515,7 @@ public final class Tracker {
 			return task;
 		stressDoAttach(task, actor);
 		task = task.clone();
-		task.attachments = task.attachments.remove(attachment); 
+		task.attachments = task.attachments.remove(attachment);
 		actor.contributesToOutputs = actor.contributesToOutputs.add(task.output.name);
 		touch(actor);
 		return task;
@@ -537,7 +537,7 @@ public final class Tracker {
 		if (task.temperature(today) < 50) xp /= 2;
 		return max(1, xp);
 	}
-	
+
 	public Task absolve(Task task, User by, Gist conclusion) {
 		if (!task.area.name.isUnknown()) { // no change is a resolution even if no area has been specified before
 			expectMaintainer(task.area, by);
@@ -556,7 +556,7 @@ public final class Tracker {
 		by.resolved++;
 		if (!task.baseVersions.isEmpty()) { // publishing is something that is resolved when its done
 			task.base = task.base.clone();
-			task.base.changeset = task.baseVersions; // transfer the released versions 
+			task.base.changeset = task.baseVersions; // transfer the released versions
 		}
 		return task;
 	}
@@ -586,7 +586,7 @@ public final class Tracker {
 		touch(by);
 		return task;
 	}
-	
+
 	public Task archive(Task task, User by) {
 		expectAuthenticated(by);
 		expectMaintainer(task.area, by);
@@ -642,10 +642,10 @@ public final class Tracker {
 	public Poll dissent(Poll poll, User voter) {
 		return vote(poll, voter, false);
 	}
-	
+
 	/**
 	 * When users leave an area as a maintainer the polls of that area might be
-	 * affected by the change. This method is used to process ALL {@link Poll}s 
+	 * affected by the change. This method is used to process ALL {@link Poll}s
 	 * of the area left by a maintainer. As this is a passive effect of another
 	 * event there are no checks on the authentification of the actor or likewise.
 	 */
@@ -675,7 +675,7 @@ public final class Tracker {
 				poll.dissenting = poll.dissenting.remove(voter);
 			} else {
 				poll.dissenting = poll.dissenting.add(voter);
-				poll.consenting = poll.consenting.remove(voter);				
+				poll.consenting = poll.consenting.remove(voter);
 			}
 			touch(voter);
 			if (poll.isEffectivelySettled()) {
@@ -793,7 +793,7 @@ public final class Tracker {
 	public Page compose(User owner, Name page, Template template, Page...inSameMenu) {
 		return compose(null, page, template, owner, inSameMenu);
 	}
-	
+
 	public Page compose(Area area, Name page, Template template, User actor, Page...inSameMenu) {
 		expectAuthenticated(actor);
 		expectPageDoesNotExist(page, inSameMenu);
@@ -826,21 +826,21 @@ public final class Tracker {
 		touch(actor);
 		return page;
 	}
-	
+
 	public Page erase(Page page, User actor) {
 		return erase(page, null, actor);
 	}
-	
+
 	public Page erase(Page page, Area area, User actor) {
 		return recompose(page, area, Template.BLANK_PAGE, actor);
 	}
 
 	/* limit checks */
-	
+
 	private void stressAction() {
 		stressLimit(limit("action", ORIGIN), "Too many actions lately.");
 	}
-	
+
 	private void stressNewContent() {
 		stressLimit(limit("content", ORIGIN), "Too many new entities.");
 	}
@@ -898,27 +898,27 @@ public final class Tracker {
 		stressLimit(limit("page", ORIGIN), "Too many new pages.");
 		stressNewContent();
 	}
-	
+
 	private void stressDoConfiguration(User user) {
 		stressLimit(limit("configure@user", user.alias), "Too many recent configuration changes by user: "+user.alias);
 		stressUser(user);
 		stressLimit(limit("configure", ORIGIN), "Too many recent configuration changes.");
 		stressAction();
 	}
-	
+
 	private void stressDoConnect(Output output, User actor) {
 		stressLimit(limit("connect@user", actor.alias), "Too many recent connections by user: "+actor.alias);
 		stressUser(actor);
 		stressLimit(limit("connect", ORIGIN), "Too many recent connections.");
 		stressNewContent();
 	}
-	
+
 	private void stressDoUpdate(Page page, User owner) {
 		stressLimit(limit("update@user", owner.alias), "Too many recent page updates by user: "+owner.alias);
 		stressUser(owner);
 		stressLimit(limit("update", page.name), "Too many page updates for page: "+page.name);
 		stressLimit(limit("update", ORIGIN), "Too many page updates recently.");
-		stressAction();		
+		stressAction();
 	}
 
 	private void stressDoRelocate(Task task, Area to, User actor) {
@@ -929,7 +929,7 @@ public final class Tracker {
 		stressLimit(limit("move", ORIGIN), "Too many relocations recently.");
 		stressAction();
 	}
-	
+
 	private void stressDoRebase(Task task, Version to, User actor) {
 		stressLimit(limit("base@user", actor.alias), "Too many recent rebase actions by user: "+actor.alias);
 		stressUser(actor);
@@ -954,7 +954,7 @@ public final class Tracker {
 		stressLimit(limit("list", ORIGIN), "Too many queue activities recently.");
 		stressAction();
 	}
-	
+
 	private void stressDoSolve(Task task, User by) {
 		stressLimit(limit("solve@user", by.alias), "Too many solution activities by user: "+by.alias);
 		stressUser(by);
@@ -962,20 +962,20 @@ public final class Tracker {
 		stressLimit(limit("solve", ORIGIN), "Too many solution activities recently.");
 		stressAction();
 	}
-	
+
 	private void stressDoAttach(Task task, User by) {
 		stressLimit(limit("attach@user", by.alias), "Too many recent attachments by user: "+by.alias);
 		stressUser(by);
 		stressLimit(limit("attach@task", task.id.asName()), "Too many recent attachments for task: "+task.id);
 		stressLimit(limit("attach", ORIGIN), "Too many recent attachments.");
-		stressAction();		
+		stressAction();
 	}
-	
+
 	private void stressDoConfirm() {
 		stressLimit(limit("confirm", ORIGIN), "Too many recent confirm requests.");
 		stressAction();
 	}
-	
+
 	private void stressLimit(Limit limit, String msg) {
 		if (server.isOnLockdown())
 			return; // no limit checks for admins during the lockdown
@@ -1030,16 +1030,16 @@ public final class Tracker {
 		if (user.isAnonymous())
 			denyTransition(Error.E9_REQUIRES_REGISTRATION);
 	}
-	
+
 	private static void expectCanReport(User reporter) {
 		if (!reporter.isAuthenticated())
 			denyTransition(Error.E10_REQUIRES_AUTHENTICATION);
 	}
 
 	private static void expectCanBeInvolved(User user, Task task) {
-		if (task.participants() >= 5 
-				&& !task.aspirants.contains(user) 
-				&& !task.participants.contains(user)) 
+		if (task.participants() >= 5
+				&& !task.aspirants.contains(user)
+				&& !task.participants.contains(user))
 			denyTransition(Error.E11_TASK_USER_LIMIT_REACHED, task.id);
 	}
 
@@ -1052,12 +1052,12 @@ public final class Tracker {
 		if (task.status != unsolved)
 			denyTransition(Error.E13_TASK_ALREAD_SOLVED, task.id);
 	}
-	
+
 	private static void expectSolved(Task task) {
 		if (task.status == unsolved)
 			denyTransition(Error.E14_TASK_NOT_SOLVED, task.id);
 	}
-	
+
 	private static void expectConform(Task task, URL url) {
 		if (!task.output.isIntegrated(url) && task.area.safeguarded)
 			denyTransition(Error.E15_URL_NOT_INTEGRATED, url, task.output.integrations());
@@ -1067,14 +1067,14 @@ public final class Tracker {
 		if (!(name.isVersion() || name.isRegular()))
 			denyTransition(Error.E16_NAME_IS_NO_VERSION, name);
 	}
-	
+
 	private static void expectRegular(Name name) {
 		if (!name.isRegular())
 			denyTransition(Error.E17_NAME_IS_NOT_REGULAR, name);
 		if (name.equalTo(USER) || name.equals(DO)) // no object created by a user should be named "user" or "do"
 			denyTransition(Error.E24_NAME_OCCULIED, name);
 	}
-	
+
 	private static void expectEmail(Name name) {
 		if (!name.isEmail())
 			denyTransition(Error.E18_NAME_IS_NO_EMAIL, name);
@@ -1084,7 +1084,7 @@ public final class Tracker {
 		if (!user.isAuthenticated())
 			denyTransition(Error.E10_REQUIRES_AUTHENTICATION);
 	}
-	
+
 	private static void expectCanConnect(Output output) {
 		if (output.integrations.length >= 8)
 			denyTransition(Error.E19_OUTPUT_INTEGRATION_LIMIT_REACHED, 8, output.name, output.integrations());
@@ -1096,12 +1096,12 @@ public final class Tracker {
 		if (!user.canWatch())
 			denyTransition(Error.E20_USER_WATCH_LIMIT_REACHED);
 	}
-	
+
 	private static void expectAdmin(Server server, User actor) {
 		if (!server.isAdmin(actor))
 			denyTransition(Error.E25_ADMIN_REQUIRED, server.admin());
 	}
-	
+
 	private static void expectNonEmptyChangeset(Names changeset) {
 		if (changeset == null || changeset.isEmpty())
 			denyTransition(Error.E29_CHANGESET_REQUIRED);

@@ -101,4 +101,8 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 		return wrap(copyOf(res, k));
 	}
 
+	public Name at(int index) {
+		return names[index];
+	}
+
 }

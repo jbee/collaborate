@@ -38,7 +38,7 @@ import se.jbee.track.model.Version;
 /**
  * A binary de- and encoder (depending on the generic parameters and
  * implementation).
- * 
+ *
  * @author jan
  *
  * @param <I> additional input type
@@ -46,13 +46,13 @@ import se.jbee.track.model.Version;
  */
 @FunctionalInterface
 public interface Bincoder<I,O> {
-	
+
 	/**
 	 * Two way binary conversion.
-	 * 
+	 *
 	 * Entity to binary: Entity is input, the passed {@link ByteBuffer} the output
 	 * Binary to entity: {@link Tx} and {@link ByteBuffer} are input, a entity the output.
-	 * 
+	 *
 	 * @param from an entity (to binary) or a {@link Tx} context (from binary)
 	 * @param buf a buffer used for input or output depending on the case.
 	 * @return the passed buffer (to binary) or an entity (from binary)
@@ -62,7 +62,7 @@ public interface Bincoder<I,O> {
 	/*
 	 * Implementation below...
 	 */
-	
+
 	Motive[] motives = Motive.values();
 	Outcome[] outcomes = Outcome.values();
 	Purpose[] purposes = Purpose.values();
@@ -72,7 +72,7 @@ public interface Bincoder<I,O> {
 	Change.Operation[] operations = Change.Operation.values();
 	Mail.Notification[] notifications = Mail.Notification.values();
 	AuthState[] states = AuthState.values();
-	
+
 	/**
 	 * Entity Version Numbers (EVN) are used to indicate the format of an
 	 * binary entry so that the binary structure can change and older entries
@@ -86,9 +86,9 @@ public interface Bincoder<I,O> {
 	byte OUTPUT_EVN = 1;
 	byte PAGE_EVN = 1;
 	byte EVENT_EVN = 1;
-	
-	Bincoder<Repository, User> bin2user = (tx,from) -> { 
-		byte evn = from.get(); // ignore so far
+
+	Bincoder<Repository, User> bin2user = (tx,from) -> {
+		evn1(from.get()); // just check
 		User u = new User(from.getInt());
 		u.alias = bin2name(from);
 		u.email = Email.fromBytes(getShortBytes(from));
@@ -109,7 +109,7 @@ public interface Bincoder<I,O> {
 		u.contributesToOutputs = bin2names(from);
 		return u;
 	};
-	
+
 	Bincoder<User,ByteBuffer> user2bin = (u,to) -> {
 		to.put(USER_EVN);
 		to.putInt(u.version());
@@ -130,11 +130,11 @@ public interface Bincoder<I,O> {
 		to.putLong(u.millisEmphasised);
 		to.putInt(u.emphasisedToday);
 		names2bin(u.contributesToOutputs, to);
-		return to; 
+		return to;
 	};
 
-	Bincoder<Repository, Version> bin2version = (tx,from) -> { 
-		byte evn = from.get(); // ignore so far
+	Bincoder<Repository, Version> bin2version = (tx,from) -> {
+		evn1(from.get()); // just check
 		Version v = new Version(from.getInt());
 		v.output = bin2name(from);
 		v.name = bin2name(from);
@@ -142,7 +142,7 @@ public interface Bincoder<I,O> {
 		return v;
 	};
 
-	Bincoder<Version,ByteBuffer> version2bin = (v,to) -> { 
+	Bincoder<Version,ByteBuffer> version2bin = (v,to) -> {
 		to.put(VERSION_EVN);
 		to.putInt(v.version());
 		name2bin(v.output, to);
@@ -150,9 +150,9 @@ public interface Bincoder<I,O> {
 		names2bin(v.changeset, to);
 		return to;
 	};
-	
-	Bincoder<Repository, Task> bin2task = (tx,from) -> { 
-		byte evn = from.get(); // ignore so far
+
+	Bincoder<Repository, Task> bin2task = (tx,from) -> {
+		evn1(from.get()); // just check
 		Task t = new Task(from.getInt());
 		t.output = tx.output(bin2name(from));
 		t.area = tx.area(t.output.name, bin2name(from));
@@ -182,7 +182,7 @@ public interface Bincoder<I,O> {
 		return t;
 	};
 
-	Bincoder<Task,ByteBuffer> task2bin = (t,to) -> { 
+	Bincoder<Task,ByteBuffer> task2bin = (t,to) -> {
 		to.put(TASK_EVN);
 		to.putInt(t.version());
 		name2bin(t.output.name, to);
@@ -213,8 +213,8 @@ public interface Bincoder<I,O> {
 		return to;
 	};
 
-	Bincoder<Repository, Page> bin2page = (tx,from) -> { 
-		byte evn = from.get(); // ignore so far
+	Bincoder<Repository, Page> bin2page = (tx,from) -> {
+		evn1(from.get()); // just check
 		int version = from.getInt();
 		Name output = bin2name(from);
 		Name menu = bin2name(from);
@@ -223,7 +223,7 @@ public interface Bincoder<I,O> {
 		return new Page(version, output, menu, name, template);
 	};
 
-	Bincoder<Page,ByteBuffer> page2bin = (page,to) -> { 
+	Bincoder<Page,ByteBuffer> page2bin = (page,to) -> {
 		to.put(PAGE_EVN);
 		to.putInt(page.version());
 		name2bin(page.output, to);
@@ -232,9 +232,9 @@ public interface Bincoder<I,O> {
 		putIntBytes(page.template, to);
 		return to;
 	};
-	
-	Bincoder<Repository, Output> bin2output = (tx,from) -> { 
-		byte evn = from.get(); // ignore so far
+
+	Bincoder<Repository, Output> bin2output = (tx,from) -> {
+		evn1(from.get()); // just check
 		Output res = new Output(from.getInt());
 		res.name = bin2name(from);
 		res.tasks = from.getInt();
@@ -244,7 +244,7 @@ public interface Bincoder<I,O> {
 		for (int i = 0; i < c; i++) {
 			res.integrations[i] = new Output.Integration(bin2name(from), bin2url(from));
 		}
-		
+
 		// non stored computable fields
 		res.origin = tx.area(res.name, Name.ORIGIN);
 		res.somewhere = tx.area(res.name, Name.UNKNOWN);
@@ -252,7 +252,7 @@ public interface Bincoder<I,O> {
 		return res;
 	};
 
-	Bincoder<Output,ByteBuffer> output2bin = (p,to) -> { 
+	Bincoder<Output,ByteBuffer> output2bin = (p,to) -> {
 		to.put(OUTPUT_EVN);
 		to.putInt(p.version());
 		name2bin(p.name, to);
@@ -265,9 +265,9 @@ public interface Bincoder<I,O> {
 		}
 		return to;
 	};
-	
-	Bincoder<Repository, Poll> bin2poll = (tx,from) -> { 
-		byte evn = from.get(); // ignore so far
+
+	Bincoder<Repository, Poll> bin2poll = (tx,from) -> {
+		evn1(from.get()); // just check
 		Poll p = new Poll(from.getInt());
 		p.serial = IDN.idn(from.getInt());
 		p.area = tx.area(bin2name(from), bin2name(from));
@@ -284,7 +284,7 @@ public interface Bincoder<I,O> {
 		return p;
 	};
 
-	Bincoder<Poll,ByteBuffer> poll2bin = (p,to) -> { 
+	Bincoder<Poll,ByteBuffer> poll2bin = (p,to) -> {
 		to.put(POLL_EVN);
 		to.putInt(p.version());
 		IDN2bin(p.serial, to);
@@ -302,9 +302,9 @@ public interface Bincoder<I,O> {
 		enum2bin(p.outcome, to);
 		return to;
 	};
-	
-	Bincoder<Repository, Area> bin2area = (tx,from) -> { 
-		byte evn = from.get(); // ignore so far
+
+	Bincoder<Repository, Area> bin2area = (tx,from) -> {
+		evn1(from.get()); // just check
 		Area a = new Area(from.getInt());
 		a.output = bin2name(from);
 		a.name = bin2name(from);
@@ -321,7 +321,7 @@ public interface Bincoder<I,O> {
 		return a;
 	};
 
-	Bincoder<Area,ByteBuffer> area2bin = (a,to) -> { 
+	Bincoder<Area,ByteBuffer> area2bin = (a,to) -> {
 		to.put(AREA_EVN);
 		to.putInt(a.version());
 		name2bin(a.output, to);
@@ -338,9 +338,9 @@ public interface Bincoder<I,O> {
 		enum2bin(a.purpose, to);
 		return to;
 	};
-	
+
 	Bincoder<Repository, Event> bin2event = (tx, from) -> {
-		byte evn = from.get(); // ignore so far
+		evn1(from.get()); // just check
 		long timestamp = from.getLong();
 		ID user = bin2id(from);
 		int n = from.getShort();
@@ -356,7 +356,7 @@ public interface Bincoder<I,O> {
 		}
 		return new Event(timestamp, user, changes);
 	};
-	
+
 	Bincoder<Event, ByteBuffer> event2bin = (e,to) -> {
 		to.put(EVENT_EVN);
 		to.putLong(e.timestamp);
@@ -371,7 +371,7 @@ public interface Bincoder<I,O> {
 		}
 		return to;
 	};
-	
+
 	Bincoder<ID, History> bin2history = (id, from) -> {
 		long[] events = new long[from.remaining()/Long.BYTES];
 		for (int i = 0; i < events.length; i++) {
@@ -379,15 +379,15 @@ public interface Bincoder<I,O> {
 		}
 		return new History(id, events);
 	};
-	
+
 	/*
 	 * Utility helpers
 	 */
-	
+
 	static ID bin2id(ByteBuffer from) {
 		return ID.fromBytes(getByteBytes(from));
 	}
-	
+
 	static void id2bin(ID id, ByteBuffer to) {
 		putByteBytes(id, to);
 	}
@@ -430,7 +430,7 @@ public interface Bincoder<I,O> {
 		byte code = from.get();
 		if (code < 0)
 			return null;
-		// the extra check for range above 65 allows to introduce @UseCode later on 
+		// the extra check for range above 65 allows to introduce @UseCode later on
 		// ordinal values will most likely be below 64 and codes will definitely be above 64
 		// so when we move from ordinal to code we can read both ordinal and code correctly
 		// the next store will then change to code
@@ -440,10 +440,10 @@ public interface Bincoder<I,O> {
 					return c;
 			}
 			return null;
-		} 
+		}
 		return constants[code];
 	}
-	
+
 	static <K extends Enum<K>, V extends Enum<V>> void enumMap2bin(EnumMap<K, V> map, ByteBuffer to) {
 		if (map == null) {
 			to.put((byte) 0);
@@ -455,7 +455,7 @@ public interface Bincoder<I,O> {
 			enum2bin(e.getValue(), to);
 		}
 	}
-	
+
 	static <K extends Enum<K>, V extends Enum<V>> EnumMap<K, V> bin2enumMap(K[] keys, V[] values, ByteBuffer from) {
 		int l = from.get();
 		EnumMap<K, V> res = new EnumMap<>(keys[0].getDeclaringClass());
@@ -486,19 +486,19 @@ public interface Bincoder<I,O> {
 	static void gist2bin(Gist g, ByteBuffer to) {
 		putShortBytes(g, to);
 	}
-	
+
 	static Gist bin2gist(ByteBuffer from) {
 		return fromBytes(getShortBytes(from));
 	}
-	
+
 	static URL bin2url(ByteBuffer from) {
 		return URL.fromBytes(getShortBytes(from));
 	}
-	
+
 	static void url2bin(URL url, ByteBuffer to) {
 		putShortBytes(url, to);
 	}
-	
+
 	static Attachments bin2urls(ByteBuffer from) {
 		int c = from.get();
 		URL[] attachments = new URL[c];
@@ -507,26 +507,26 @@ public interface Bincoder<I,O> {
 		}
 		return attachments(attachments);
 	}
-	
+
 	static void urls2bin(Attachments urls, ByteBuffer to) {
 		to.put((byte) urls.length());
 		for (URL url : urls) {
 			url2bin(url, to);
 		}
-	}	
-	
+	}
+
 	static byte[] getByteBytes(ByteBuffer from) {
 		return getBytes(from.get(), from);
 	}
-	
+
 	static byte[] getShortBytes(ByteBuffer from) {
 		return getBytes(from.getShort(), from);
 	}
-	
+
 	static byte[] getIntBytes(ByteBuffer from) {
 		return getBytes(from.getInt(), from);
 	}
-	
+
 	static byte[] getBytes(int len, ByteBuffer from) {
 		if (len < 0)
 			return null;
@@ -536,7 +536,7 @@ public interface Bincoder<I,O> {
 		}
 		return bytes;
 	}
-	
+
 	static void putIntBytes(Bytes seq, ByteBuffer to) {
 		if (seq == null) {
 			to.putInt(-1);
@@ -546,7 +546,7 @@ public interface Bincoder<I,O> {
 			to.put(bytes);
 		}
 	}
-	
+
 	static void putShortBytes(Bytes seq, ByteBuffer to) {
 		putShortBytes(seq == null ? null : seq.bytes(), to);
 	}
@@ -561,7 +561,7 @@ public interface Bincoder<I,O> {
 			}
 		}
 	}
-	
+
 	static void putByteBytes(Bytes seq, ByteBuffer to) {
 		if (seq == null) {
 			to.put((byte) -1);
@@ -569,7 +569,13 @@ public interface Bincoder<I,O> {
 			byte[] bytes = seq.bytes();
 			to.put((byte) bytes.length);
 			to.put(bytes);
-		}		
+		}
 	}
-	
+
+	static void evn1(byte evn) {
+	    if (evn != 1) {
+	        System.err.println("Unknown object version: "+evn);
+	    }
+	}
+
 }

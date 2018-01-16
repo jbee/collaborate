@@ -71,7 +71,7 @@ public final class Params extends EnumMap<Param, String> {
 			String[] segments = path.split("[/?]");
 			String s0 = segments[0];
 			if ("user".equals(s0) || "*".equals(s0)) {
-				params.set(command, Command.list);
+				params.set(command, Command.query);
 				params.set(viewed, segments.length >= 2 ? segments[1] : "@");
 				if (segments.length >= 3) { params.set(Param.page, segments[2]); }
 			} else {
@@ -80,33 +80,33 @@ public final class Params extends EnumMap<Param, String> {
 					String s1 = segments[1];
 					if ("v".equals(s1)) { 
 						params.set(version, segments[2]);
-						params.set(command, Command.version);
+						params.set(command, Command.oversee);
 					} else if (s1.matches("\\d+")) {
 						params.set(task, s1);
-						params.set(command, Command.details);
+						params.set(command, Command.examine);
 					} else { 
 						params.set(Param.area, s1);
 						if (segments.length >= 3) {
 							String s2 = segments[2];
 							if (s2.matches("\\d+")) {
 								params.set(serial, s2);
-								params.set(command, Command.details);
+								params.set(command, Command.examine);
 							} else {
-								params.set(command, Command.list);
+								params.set(command, Command.query);
 								params.set(Param.page, s2);
 							}
 						} else {
 							if (s1.matches("^.+-\\d+$")) {
-								params.set(command, Command.details);
+								params.set(command, Command.examine);
 								params.set(Param.area, s1.substring(0, s1.lastIndexOf('-')));
 								params.set(Param.serial, s1.substring(s1.lastIndexOf('-')+1));
 							} else {
-								params.set(command, Command.list);
+								params.set(command, Command.query);
 							}
 						}
 					} 
 				} else {
-					params.set(Param.command, Command.list);
+					params.set(Param.command, Command.query);
 				}
 			}
 			if (segments.length >= 2 && "as".equals(segments[segments.length-2])) {

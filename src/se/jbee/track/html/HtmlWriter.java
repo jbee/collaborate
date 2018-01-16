@@ -52,7 +52,7 @@ public final class HtmlWriter {
 	}
 
 	public void taskLink(Task task) {
-		commandLink(task, "idn", Command.list, "#"+task.id);
+		commandLink(task, "idn", Command.query, "#"+task.id);
 	}
 
 	public void stressLink(Task task) {

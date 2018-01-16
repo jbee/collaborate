@@ -38,9 +38,9 @@ public class CachedViewService implements ViewService {
 	@Override
 	public <T extends View> T run(Params request, Class<T> response)
 			throws ViewNotAvailable {
-		Command cmd = request.value(Param.command, Command.list);
+		Command cmd = request.value(Param.command, Command.query);
 		switch (cmd) {
-		case list:  if (response == ListView.class) return (T)list(request); 
+		case query:  if (response == ListView.class) return (T)list(request); 
 		case sample:if (response == SampleView.class) return (T)sample(request);
 		default:
 			throw new ViewNotAvailable(request, response);

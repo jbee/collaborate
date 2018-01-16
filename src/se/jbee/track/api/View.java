@@ -4,7 +4,7 @@ import se.jbee.track.model.User;
 
 public abstract class View {
 	/**
-	 * The user looking at the {@link #page}.
+	 * The user looking at the {@link #query}.
 	 * This is always the user that has authorized himself. 
 	 * Not the "as" viewer. 
 	 */
