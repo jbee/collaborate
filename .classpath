@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/asm-all-5.0.3.jar"/>
+	<classpathentry kind="lib" path="lib/jetty-all-9.3.7.v20160115-uber.jar"/>
+	<classpathentry kind="lib" path="lib/jffi-1.2.13-native.jar"/>
+	<classpathentry kind="lib" path="lib/jffi-1.2.13.jar"/>
+	<classpathentry kind="lib" path="lib/jnr-constants-0.9.6.jar"/>
+	<classpathentry kind="lib" path="lib/jnr-ffi-2.1.1.jar"/>
+	<classpathentry kind="lib" path="lib/lmdbjava-0.0.5-20170104.024957-17-sources.jar"/>
+	<classpathentry kind="lib" path="lib/lmdbjava-0.0.5-20170104.024957-17.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
