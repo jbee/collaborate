@@ -7,34 +7,34 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	private int version;
 	private boolean corrupted = false;
 	private transient ID uniqueId;
-	
+
 	protected abstract ID computeID();
-	
+
 	/**
 	 * @return name of the {@link Output} this entity is related to or
 	 *         {@link Name#ORIGIN} if the entity is not related to any
 	 *         particular {@link Output} like a user or a user {@link Page}.
 	 */
 	public abstract Name output();
-	
+
 	public Entity(int initalVersion) {
 		super();
 		this.initalVersion = initalVersion;
 		this.version = initalVersion;
 	}
-	
+
 	public final int version() {
 		return version;
 	}
-	
+
 	public final boolean isModified() {
 		return version > initalVersion;
 	}
-	
+
 	public final boolean isCurrupted() {
 		return corrupted;
 	}
-	
+
 	/**
 	 * This is just visible at all to allow the user to increment its version
 	 * without cloning it.
@@ -42,11 +42,11 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	final void modified() {
 		version++;
 	}
-	
+
 	/**
 	 * This is a way to lift the other instance to the same version as this
 	 * version of the very same entity.
-	 * 
+	 *
 	 * If another or an older entity is passed no change is done. If the other
 	 * instance is changed it also is flagged as {@link #corrupted}. This way it
 	 * can be updated to a higher version but only by simultaneously making it
@@ -54,7 +54,7 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	 * 100% identical. We do this in the assumption that its state is a 100%
 	 * identical but a programming mistake could render this false and we do not
 	 * want to rely on that.
-	 * 
+	 *
 	 * Also the update will only be done if this entity itself is not yet
 	 * {@link #corrupted}.
 	 */
@@ -77,7 +77,7 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 		uniqueId = computeID();
 		return uniqueId;
 	}
-	
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public final T clone() {
@@ -90,19 +90,19 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 			throw new RuntimeException(e);
 		}
 	}
-	
+
 	@Override
 	public final int compareTo(T other) {
 		if (this == other)
 			return 0;
 		return uniqueID().compareTo(other.uniqueID());
 	}
-	
+
 	@Override
 	public final int hashCode() {
 		return uniqueID().hashCode();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public final boolean equals(Object obj) {
@@ -112,7 +112,7 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	public final boolean equalTo(T other) {
 		return uniqueID().equalTo(other.uniqueID());
 	}
-	
+
 	/**
 	 * @return two instances are the same if they have the same {@link ID} AND
 	 *         are of the same {@link #version()}. This does not compare them
@@ -121,13 +121,13 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	public final boolean sameAs(T other) {
 		return equalTo(other) && version == other.version();
 	}
-	
+
 	public final boolean isMoreRecent(T other) {
 		return equalTo(other) && version > other.version();
 	}
-	
+
 	@Override
 	public final String toString() {
-		return uniqueID().toString()+":"+version+":"+initalVersion;
+		return uniqueID().toString()+"["+initalVersion+"->"+version+"]";
 	}
 }

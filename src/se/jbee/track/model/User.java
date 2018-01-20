@@ -9,7 +9,7 @@ public final class User extends Entity<User> {
 
 	@UseCode
 	public static enum AuthState { unregistered, registered, confirming, authenticated }
-	
+
 	private static final int INITIAL_WATCH_LIMIT = 20;
 
 	public static final User ANONYMOUS = anonymousUser();
@@ -22,15 +22,15 @@ public final class User extends Entity<User> {
 	public transient byte[] otp; // mem only
 	public byte[] encryptedOtp; // persisted
 	public long millisOtpExprires;
-	
+
 	// user data
 	public int watches; // n tasks
 	public EnumMap<Mail.Notification,Mail.Delivery> notificationSettings;
 	//TODO preferred page size?
-	
+
 	// change log
 	public long millisLastActive;
-	
+
 	// activity statistics
 	public int xp;
 	public int absolved;
@@ -38,7 +38,7 @@ public final class User extends Entity<User> {
 	public int dissolved;
 	public int abandoned;
 	public Names contributesToOutputs;
-	
+
 	// voting tasks
 	public long millisEmphasised;
 	public int emphasisedToday;
@@ -46,7 +46,7 @@ public final class User extends Entity<User> {
 	public User(int version) {
 		super(version);
 	}
-	
+
 	private static User anonymousUser() {
 		User a  = new User(0);
 		a.alias=Name.ANONYMOUS;
@@ -60,19 +60,20 @@ public final class User extends Entity<User> {
 	 */
 	public void touch(long now) {
 		millisLastActive = now;
-		modified();
+		if (!isModified())
+			modified();
 	}
-	
+
 	@Override
 	public ID computeID() {
 		return ID.userId(alias);
 	}
-	
+
 	@Override
 	public Name output() {
 		return Name.ORIGIN;
 	}
-	
+
 	public boolean isAnonymous() {
 		return alias.isEmail();
 	}
@@ -107,7 +108,7 @@ public final class User extends Entity<User> {
 	public boolean canWatch() {
 		return watches < INITIAL_WATCH_LIMIT + (xp / 10);
 	}
-	
+
 	/**
 	 * A dubious user has never been confirmed. After the OTP expired another
 	 * user can claim this account name and effectively replace the dubious user.

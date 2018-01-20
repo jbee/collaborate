@@ -4,6 +4,7 @@ import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static se.jbee.track.engine.Server.Switch.OPEN;
 import static se.jbee.track.model.Date.date;
 import static se.jbee.track.model.Email.email;
 import static se.jbee.track.model.Gist.gist;
@@ -13,7 +14,6 @@ import org.junit.Test;
 
 import se.jbee.track.engine.NoLimits;
 import se.jbee.track.engine.Server;
-import se.jbee.track.engine.Server.Switch;
 import se.jbee.track.engine.Tracker;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Email;
@@ -24,8 +24,8 @@ import se.jbee.track.model.User;
 public class TestTracker {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(new Server(Email.email("admin@example.com"), TestTracker.this::tick, new NoLimits(), Switch.OPEN));
-	
+	private Tracker tracker = new Tracker(new Server().with(Email.email("admin@example.com")).with(TestTracker.this::tick).with(new NoLimits()).with(OPEN));
+
 	private long tick() {
 		now += 60000;
 		return now;

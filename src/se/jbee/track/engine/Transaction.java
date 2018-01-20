@@ -37,7 +37,7 @@ import se.jbee.track.model.Version;
 /**
  * A {@link Transaction} keeps track of a change applied as a whole or not at
  * all.
- * 
+ *
  * It is "smart" in the sense that it will keep track of entities already
  * changed so that when they are loaded more then once the changed entity is
  * returned. It will also keep track of updated user entities without the need
@@ -47,8 +47,8 @@ public final class Transaction extends DAO implements Tx {
 
 	/**
 	 * Applies the changes to the DB.
-	 * 
-	 * @return a list of changed entities each given as a pair: before and after the change 
+	 *
+	 * @return a list of changed entities each given as a pair: before and after the change
 	 * @throws ConcurrentUsage when trying to change an entity already changed by an ongoing transaction (in another thread)
 	 */
 	public static Changes run(Change set, DB db, Server server) throws ConcurrentUsage {
@@ -57,42 +57,42 @@ public final class Transaction extends DAO implements Tx {
 		Limits limits = new OccupySpecificLimits(server.limits);
 		try (Transaction tx = new Transaction(fixedNow, db)) {
 			try {
-				set.apply(new Tracker(server.with(fixedNow, limits)), tx);
+				set.apply(new Tracker(server.with(fixedNow).with(limits)), tx);
 				return tx.commit();
 			} finally {
 				limits.free(null);
 			}
 		}
 	}
-	
+
 	/**
 	 * With this we do our little tick so that we can guarantee each transaction has a unique {@link Clock#time()}.
 	 * Each time transaction {@link #run(Change, DB, se.jbee.track.engine.Limits.Assurances)} is called the constant time
-	 * used during the whole transaction is at least one (ms) larger than the last timestamp used.  
+	 * used during the whole transaction is at least one (ms) larger than the last timestamp used.
 	 */
 	private static final AtomicLong lastTick = new AtomicLong(Long.MIN_VALUE);
-	
+
 	private final LinkedHashMap<ID, Entity<?>> changed = new LinkedHashMap<>();
 	private final HashMap<ID, ArrayList<Change.Operation>> changeTypes = new HashMap<>();
 	private final HashMap<ID, User> loadedUsers = new HashMap<>();
-	
+
 	private final Clock clock;
 	private final DB db;
 
 	private ID actor;
-	
+
 	private Transaction(Clock clock, DB db) {
 		super(db.read());
 		this.clock = clock;
 		this.db = db;
 	}
-	
+
 	@Override
 	protected Object transactionObject(ID id) {
 		Object res = changed.get(id);
 		return res != null ? res : loaded.get(id);
 	}
-	
+
 	@Override
 	public void put(Operation op, Entity<?> e) {
 		if (e.isCurrupted())
@@ -108,7 +108,7 @@ public final class Transaction extends DAO implements Tx {
 
 	/**
 	 * Since users are normally not explicitly "put" we do keep track of loaded users.
-	 * They might have changed in place (except when they are stored explicitly).   
+	 * They might have changed in place (except when they are stored explicitly).
 	 */
 	private void putUser(Entity<?> e, final ID id) {
 		if (loadedUsers.isEmpty()) {
@@ -150,7 +150,7 @@ public final class Transaction extends DAO implements Tx {
 			put(op, p.somewhen);
 		}
 	}
-	
+
 	@Override
 	public User user(Name user) {
 		User res = super.user(user);
@@ -175,22 +175,24 @@ public final class Transaction extends DAO implements Tx {
 			return new Changes(timestamp, serial.incrementAndGet(), log);
 		}
 	}
-	
+
 	/**
 	 * Each {@link Changes} change-set get a incrementing serial attached.
 	 * This serial is unique within a run of the application. It is not
-	 * persisted but it helps further processing to reorder {@link Changes} 
+	 * persisted but it helps further processing to reorder {@link Changes}
 	 * if necessary as they can identify (and wait) missing sets.
 	 */
 	private static final AtomicLong serial = new AtomicLong();
-	
+
 	private Changes.Entry<?>[] writeEntities(TxRW tx, ByteBuffer buf) {
 		Changes.Entry<?>[] res = new Changes.Entry[changed.size()];
 		int i = 0;
 		for (Entry<ID,Entity<?>> e : changed.entrySet()) {
 			ID id = e.getKey();
 			Entity<?> val = e.getValue();
-			res[i++] = new Changes.Entry(loaded.get(id), changeTypes.get(id).toArray(new Change.Operation[0]), val);
+			ArrayList<Operation> transitions = changeTypes.get(id);
+			Operation[] ops = transitions == null ? new Operation[0] : transitions.toArray(new Operation[0]);
+			res[i++] = new Changes.Entry(loaded.get(id), ops, val);
 			switch (id.type) {
 			case poll:    write(tx, id, (Poll)val, poll2bin, buf); break;
 			case Area:    write(tx, id, (Area)val, area2bin, buf); break;
@@ -230,7 +232,7 @@ public final class Transaction extends DAO implements Tx {
 		Event e = new Event(timestamp, actor, transitions);
 		write(tx, e.uniqueID() , e, Bincoder.event2bin, buf);
 	}
-	
+
 	private static <T> void write(TxRW tx, ID id, T e, Bincoder<T, ByteBuffer> encoder, ByteBuffer buf) {
 		if (e instanceof Transitory && ((Transitory) e).obsolete()) {
 			tx.delete(id);
@@ -240,5 +242,5 @@ public final class Transaction extends DAO implements Tx {
 			buf.clear();
 		}
 	}
-	
+
 }

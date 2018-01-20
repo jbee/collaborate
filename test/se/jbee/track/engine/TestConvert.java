@@ -48,7 +48,7 @@ import se.jbee.track.model.Version;
 public class TestConvert {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(new Server(Email.email("admin@example.com"), TestConvert.this::tick, new NoLimits(), OPEN));
+	private Tracker tracker = new Tracker(new Server().with(Email.email("admin@example.com")).with(TestConvert.this::tick).with(new NoLimits()).with(OPEN));
 
 	private long tick() {
 		now += 60000;
@@ -60,7 +60,7 @@ public class TestConvert {
 		User user1 = newTestUser();
 		assertConsistentConversion(bin2user, user2bin, user1);
 	}
-	
+
 	@Test
 	public void pageConversion() {
 		User user1 = newTestUser();
@@ -107,7 +107,7 @@ public class TestConvert {
 		Task task1 = tracker.reportDefect(prod1, gist("broken"), user1, prod1.somewhere, prod1.somewhen, true);
 		assertConsistentConversion(bin2task, task2bin, task1);
 	}
-	
+
 	@Test
 	public void logEntryConversion() {
 		long timestamp = System.currentTimeMillis();
@@ -116,7 +116,7 @@ public class TestConvert {
 		Transition[] entityChanges = new Transition[] { c1, c1 };
 		assertConsistentConversion(bin2event, event2bin, new Event(timestamp, ID.userId(user), entityChanges));
 	}
-	
+
 	private User newTestUser() {
 		User u1 = tracker.register(null, as("user1"), email("user1@example.com"));
 		u1 = tracker.authenticate(u1, u1.otp);
@@ -147,7 +147,7 @@ public class TestConvert {
 			res.alias = user;
 			return res;
 		}
-		
+
 		@Override
 		public Page page(Name output, Name user, Name page) {
 			return new Page(1, output, user, page, Template.BLANK_PAGE);
@@ -191,21 +191,21 @@ public class TestConvert {
 			res.area = area(output, area);
 			return res;
 		}
-		
+
 		@Override
 		public Event event(long timestamp) throws UnknownEntity {
 			throw new UnknownEntity(ID.eventId(timestamp));
 		}
-		
+
 		@Override
 		public History history(ID entity) throws UnknownEntity {
 			throw new UnknownEntity(ID.historyId(entity));
 		}
-		
+
 		@Override
 		public void tasks(Name output, Predicate<Task> consumer) {
 			// TODO Auto-generated method stub
-			
+
 		}
 
 		@Override
@@ -213,13 +213,13 @@ public class TestConvert {
 			// TODO Auto-generated method stub
 			return null;
 		}
-		
+
 		@Override
 		public Page[] pages(Name output, Name menu) {
 			// TODO Auto-generated method stub
 			return null;
 		}
-		
+
 		@Override
 		public Poll[] polls(Name output, Name area) {
 			// TODO Auto-generated method stub
@@ -230,6 +230,6 @@ public class TestConvert {
 		public void close() {
 			// nothing to do
 		}
-		
+
 	}
 }

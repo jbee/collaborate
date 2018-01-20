@@ -5,6 +5,8 @@ import static java.lang.Math.min;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.IdentityHashMap;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -22,11 +24,19 @@ import org.eclipse.jetty.server.session.HashSessionManager;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.lmdbjava.Env;
 
+import se.jbee.track.api.CachedViewService;
+import se.jbee.track.api.ListView;
 import se.jbee.track.api.Param;
 import se.jbee.track.api.Params;
+import se.jbee.track.api.SampleView;
+import se.jbee.track.cache.CacheCluster;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.LMDB;
+import se.jbee.track.html.HtmlRenderer;
+import se.jbee.track.html.ListViewHtmlRenderer;
+import se.jbee.track.html.SampleViewHtmlRenderer;
 import se.jbee.track.model.Date;
+import se.jbee.track.model.Email;
 
 public class TrackerServer extends AbstractHandler {
 
@@ -41,13 +51,14 @@ public class TrackerServer extends AbstractHandler {
 		resource_handler.setDirectoriesListed(true);
 		resource_handler.setResourceBase("web");
 		HandlerList handlers = new HandlerList();
-		
+
 		ContextHandler contextHandler = new ContextHandler("/static");
 		contextHandler.setHandler(resource_handler);
 		handlers.addHandler(contextHandler);
         server.setSessionIdManager(new HashSessionIdManager());
-		try (DB db = createDB(args)) {
-			TrackerServer app = new TrackerServer(new TrackerHttpUI(null, null));
+
+        try (DB db = createDB(args)) {
+			TrackerServer app = createServer(db);
 			HashSessionManager manager = new HashSessionManager();
 	        SessionHandler sessions = new SessionHandler(manager);
 	        sessions.setHandler(app);
@@ -55,7 +66,16 @@ public class TrackerServer extends AbstractHandler {
 			server.setHandler(handlers);
 			server.start();
 			server.join();
-		} 
+		}
+	}
+
+	private static TrackerServer createServer(DB db) {
+        Map<Class<?>, HtmlRenderer<?>> renderers = new IdentityHashMap<>();
+        renderers.put(ListView.class, new ListViewHtmlRenderer());
+        renderers.put(SampleView.class, new SampleViewHtmlRenderer());
+        Email admin = Email.email("peter@example.com");
+		se.jbee.track.engine.Server server = new se.jbee.track.engine.Server().with(admin);
+        return new TrackerServer(new TrackerHttpUI(new CachedViewService(server, db, new CacheCluster(db, server.clock)), renderers));
 	}
 
 	private static DB createDB(String[] args) throws IOException {
@@ -71,11 +91,11 @@ public class TrackerServer extends AbstractHandler {
 		if (!file.exists() && !file.mkdirs()) {
 			throw new IOException("Unable to create DB folder.");
 		}
-		return new LMDB(Env.create().setMapSize(1014 * 1024 * sizeMB), file);
+		return new LMDB(Env.create().setMapSize(1014 * 1024 * sizeMB).setMaxReaders(8), file);
 	}
-	
+
 	private final HttpUI ui;
-	
+
 	public TrackerServer(HttpUI ui) {
 		this.ui = ui;
 	}
@@ -108,5 +128,5 @@ public class TrackerServer extends AbstractHandler {
 		}
 		return null;
 	}
-	
+
 }

@@ -29,7 +29,6 @@ import se.jbee.track.db.DB;
 import se.jbee.track.db.DB.TxR;
 import se.jbee.track.db.DB.TxRW;
 import se.jbee.track.db.LMDB;
-import se.jbee.track.model.Email;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.ID.Type;
 import se.jbee.track.model.Name;
@@ -55,7 +54,7 @@ public class TestLMDB {
 			ByteBuffer val = ByteBuffer.allocateDirect(env.getMaxKeySize());
 			val.put("bar".getBytes()).flip();
 			db.put(key, val);
-			
+
 			try (Txn<ByteBuffer> tx = env.txnRead()) {
 				ByteBuffer v = db.get(tx, key);
 				Assert.assertNotNull(v);
@@ -65,10 +64,10 @@ public class TestLMDB {
 			}
 		}
 	}
-	
+
 	@Test
 	public void putGetAdapterAPI() throws IOException {
-		Tracker tracker = new Tracker(new Server(Email.email("admin@example.com"), () -> System.currentTimeMillis(), new NoLimits()));
+		Tracker tracker = new Tracker(new Server().with(new NoLimits()));
 		final File path = tmp.newFolder();
 		try (DB db = new LMDB(Env.create().setMapSize(1014*1024*10), path)) {
 			User u1 = tracker.register(null, as("user1"), email("pass1@ex.de"));
@@ -107,22 +106,20 @@ public class TestLMDB {
 			assertEquals(u1.alias, u1r.alias);
 		}
 	}
-	
+
 	@Test
 	public void putGetTranactionAPI() throws IOException {
 		final File path = tmp.newFolder();
 		try (DB db = new LMDB(Env.create().setMapSize(1014*1024*10), path)) {
 			Name user = as("abc");
 			Name page = as("def");
-			Clock realTime = () -> System.currentTimeMillis();
-			LinearLimits limits = new LinearLimits(5);
-			Server server = new Server(Email.email("admin@example.com"), realTime, limits);
+			Server server = new Server();
 
 			Change change = register(user, email("test@example.com"));
 			Changes changed = Transaction.run(change, db, server);
-			
+
 			assertEquals(1, changed.length());
-			
+
 			assertArrayEquals(new Change.Operation[]{Change.Operation.register}, changed.get(0).transitions);
 			assertNull(changed.get(0).before);
 			assertNotNull(changed.get(0).after);
@@ -130,15 +127,15 @@ public class TestLMDB {
 			User usr = (User)changed.get(0).after;
 			change = authenticate(user, usr.otp).and(compose(user, page, template("ghi")));
 			changed = Transaction.run(change, db, server);
-					
+
 			assertEquals(2, changed.length());
-			
+
 			assertArrayEquals(new Change.Operation[]{Change.Operation.compose}, changed.get(1).transitions);
 			assertNull(changed.get(1).before);
 			assertNotNull(changed.get(1).after);
 			assertSame(User.class, changed.get(0).after.getClass());
 			assertSame(Page.class, changed.get(1).after.getClass());
-			
+
 			Page s;
 			User u;
 			History sh;
@@ -164,6 +161,6 @@ public class TestLMDB {
 			assertEquals(2, e.cardinality());
 			assertEquals(Change.Operation.authenticate, e.transition(0).ops[0]);
 			assertEquals(Change.Operation.compose, e.transition(1).ops[0]);
-		}		
+		}
 	}
 }

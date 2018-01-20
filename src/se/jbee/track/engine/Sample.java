@@ -23,23 +23,23 @@ import se.jbee.track.model.Version;
 
 /**
  * A {@link Change} operation that creates a bunch of test data.
- * 
+ *
  * This is no primary operation of the system but shipped with any new system
  * for demonstrating purposes.
- * 
+ *
  * For this reasons it is not added to the {@link Tracker} but separated in this
  * file.
- * 
+ *
  * @author jan
  */
 public class Sample {
 
 	private static final Random RND = new Random();
-	
-	private static final EnumMap<Mail.Notification, Mail.Delivery> NO_MAILS = new EnumMap<>(Mail.Notification.class); 
-	
+
+	private static final EnumMap<Mail.Notification, Mail.Delivery> NO_MAILS = new EnumMap<>(Mail.Notification.class);
+
 	public static Change sample(Names users, Names outputs, Names versions, Names areas, Names categories, int tasks, Name actor) {
-		return (t, tx) -> { 
+		return (t, tx) -> {
 			User admin = user(t, tx, actor);
 			User[] ux = users(t, tx, users);
 			Output[] ox = outputs(t, tx, outputs, categories, admin);
@@ -75,7 +75,7 @@ public class Sample {
 
 	private static Version[] versions(Tracker t, Tx tx, Output[] outputs, Names versions, User[] users) {
 		Version[] vx = new Version[versions.count()];
-		int i = 0; 
+		int i = 0;
 		for (Name version : versions)
 			vx[i++] = version(t, tx, outputs, version, users);
 		return vx;
@@ -96,7 +96,7 @@ public class Sample {
 	}
 
 	private static Gist randomGist() {
-		return Gist.gist("");
+		return Gist.gist("Totally random!");
 	}
 
 	private static Area[] areas(Tracker t, Tx tx, Output[] outputs, Names areas, User[] users) {
@@ -118,7 +118,7 @@ public class Sample {
 		User actor = users[RND.nextInt(users.length)];
 		Output output = outputs[RND.nextInt(outputs.length)];
 		Area basis = basis(output, bases);
-		Area res = bases == null
+		Area res = basis == null
 			? t.compart(output, area, actor)
 			: t.compart(basis, area, actor, RND.nextBoolean());
 		if (!output.categories.isEmpty()) {
@@ -128,7 +128,7 @@ public class Sample {
 		tx.put(sample, res);
 		return res;
 	}
-	
+
 	private static Area basis(Output output, Area[] bases) {
 		if (RND.nextInt(100) < 15)
 			return null; // about 15% top level areas

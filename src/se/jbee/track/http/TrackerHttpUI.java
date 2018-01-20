@@ -5,9 +5,12 @@ import java.net.HttpURLConnection;
 import java.util.Map;
 
 import se.jbee.track.api.ListView;
+import se.jbee.track.api.Param;
+import se.jbee.track.api.Param.Command;
+import se.jbee.track.api.Params;
+import se.jbee.track.api.SampleView;
 import se.jbee.track.api.View;
 import se.jbee.track.api.ViewService;
-import se.jbee.track.api.Params;
 import se.jbee.track.html.HtmlRenderer;
 import se.jbee.track.html.HtmlWriter;
 
@@ -30,7 +33,11 @@ public class TrackerHttpUI implements HttpUI {
 
 	@Override
 	public int respond(Params params, PrintWriter out) {
-		runAndRender(ListView.class, params, out);
+		if (Command.sample.name().equals(params.get(Param.command))) {
+			runAndRender(SampleView.class, params, out);
+		} else {
+			runAndRender(ListView.class, params, out);
+		}
 		//TODO render page
 		if (true)
 			return HttpURLConnection.HTTP_OK;
@@ -43,5 +50,5 @@ public class TrackerHttpUI implements HttpUI {
 		HtmlRenderer<T> renderer = (HtmlRenderer<T>) renderers.get(pageType);
 		renderer.render(page, new HtmlWriter(out));
 	}
-	
+
 }

@@ -19,7 +19,7 @@ public final class LMDB implements DB {
 
 	private final Env<ByteBuffer> env;
 	@SuppressWarnings("unchecked")
-	private final Dbi<ByteBuffer>[] tables = new Dbi[ID.Type.values().length]; 
+	private final Dbi<ByteBuffer>[] tables = new Dbi[ID.Type.values().length];
 
 	public LMDB(Builder<ByteBuffer> envBuilder, File path) {
 		super();
@@ -28,17 +28,17 @@ public final class LMDB implements DB {
 			tables[t.ordinal()] = env.openDbi(t.name(), DbiFlags.MDB_CREATE);
 		}
 	}
-	
+
 	@Override
 	public void close() {
 		env.close();
 	}
-	
+
 	@Override
 	public TxR read() {
 		return new LMDB_TxR(env);
 	}
-	
+
 	@Override
 	public TxRW write() {
 		return new LMDB_TxRW(env);
@@ -47,16 +47,16 @@ public final class LMDB implements DB {
 	Dbi<ByteBuffer> table(ID.Type type) {
 		return tables[type.ordinal()];
 	}
-	
+
 	private class LMDB_TxR implements TxR {
 
 		final Txn<ByteBuffer> txn;
 		final ByteBuffer key;
-		
+
 		public LMDB_TxR(Env<ByteBuffer> env) {
 			this(env.txnRead());
 		}
-		
+
 		LMDB_TxR(Txn<ByteBuffer> txn) {
 			this.txn = txn;
 			this.key = ByteBuffer.allocateDirect(env.getMaxKeySize());
@@ -67,7 +67,7 @@ public final class LMDB implements DB {
 			setKey(id);
 			return table(id.type).get(txn, key);
 		}
-		
+
 		@Override
 		public void range(ID first, BiPredicate<ID, ByteBuffer> consumer) {
 			try (CursorIterator<ByteBuffer> it = iterator(first)) {
@@ -80,21 +80,21 @@ public final class LMDB implements DB {
 				}
 			}
 		}
-		
+
 		private CursorIterator<ByteBuffer> iterator(ID first) {
 			Dbi<ByteBuffer> table = table(first.type);
 			key.clear();
 			key.put(first.bytes());
 			key.position(key.position()-2);
 			key.flip();
-			return table.iterate(txn, key, IteratorType.FORWARD);			
+			return table.iterate(txn, key, IteratorType.FORWARD);
 		}
-		
+
 		@Override
 		public final void close() {
 			txn.close();
 		}
-		
+
 		final void setKey(ID id) {
 			key.clear();
 			key.put(id.bytes()).flip();
@@ -106,13 +106,13 @@ public final class LMDB implements DB {
 		public LMDB_TxRW(Env<ByteBuffer> env) {
 			super(env.txnWrite());
 		}
-		
+
 		@Override
 		public void put(ID id, ByteBuffer value) {
 			setKey(id);
 			table(id.type).put(txn, key, value);
 		}
-		
+
 		@Override
 		public void delete(ID id) {
 			setKey(id);
@@ -121,7 +121,7 @@ public final class LMDB implements DB {
 
 		@Override
 		public void commit() {
-			txn.commit();			
+			txn.commit();
 		}
 
 	}

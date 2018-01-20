@@ -516,22 +516,22 @@ public interface Bincoder<I,O> {
 	}
 
 	static byte[] getByteBytes(ByteBuffer from) {
-		return getBytes(from.get(), from);
+		return getNBytes(from.get(), from);
 	}
 
 	static byte[] getShortBytes(ByteBuffer from) {
-		return getBytes(from.getShort(), from);
+		return getNBytes(from.getShort(), from);
 	}
 
 	static byte[] getIntBytes(ByteBuffer from) {
-		return getBytes(from.getInt(), from);
+		return getNBytes(from.getInt(), from);
 	}
 
-	static byte[] getBytes(int len, ByteBuffer from) {
-		if (len < 0)
+	static byte[] getNBytes(int n, ByteBuffer from) {
+		if (n < 0)
 			return null;
-		byte[] bytes = new byte[len];
-		if (len > 0) {
+		byte[] bytes = new byte[n];
+		if (n > 0) {
 			from.get(bytes);
 		}
 		return bytes;
