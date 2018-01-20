@@ -1,5 +1,6 @@
 package se.jbee.track.engine;
 
+import static java.lang.Integer.parseInt;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static se.jbee.track.engine.Server.Switch.LOCKDOWN;
@@ -8,6 +9,7 @@ import static se.jbee.track.engine.Server.Switch.PRIVATE;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.EnumSet;
 
 import se.jbee.track.model.Date;
@@ -36,10 +38,10 @@ public final class Server {
 	 * -f FILE  database path
 	 * -s SIZE  database size in MB (10-100)
 	 * -a EMAIL the EMAIL address of the user that has admin rights
-	 * -l LIMIT activity limit base (default 5)
-	 * -O       open: allow users to create outputs
-	 * -L       lock-down: only the admin user may log in
-	 * -P       private: allow user to see admin's email
+	 * -b LIMIT activity limit base (default 5)
+	 * -o       open: allow users to create outputs
+	 * -l       lock-down: only the admin user may log in
+	 * -p       private: allow user to see admin's email
 	 * </pre>
 	 *
 	 * @param args
@@ -49,29 +51,23 @@ public final class Server {
 	 *             in case DB path is not accessible
 	 */
 	public static Server parse(String...args) throws IOException {
-		String path = System.getProperty("java.io.tmpdir") + "/collaborate-"+Date.today()+"/";
-		Email admin = Email.NO_ADMIN;
-		int sizeMB = 10;
-
-		if (args.length >= 1) {
-			path = args[0];
-		}
-		if (args.length >= 2) {
-			String a1 = args[1];
-			if (!a1.startsWith("-")) {
-				try {
-					sizeMB = min(100, max(10, Integer.parseInt(a1)));
-				} catch (NumberFormatException e) {
-				}
-			} else {
-
+		Server res = new Server();
+		int i = 0;
+		while (i  < args.length) {
+			String option = args[i++];
+			if (!option.startsWith("-") || option.length() <= 1)
+				throw new IllegalArgumentException("Expected option; Unknown option: "+args[i-1]); 
+			switch (option.charAt(1)) {
+			case 'f': res = res.with(new File(args[i++])); break;
+			case 's': res = res.with(parseInt(args[i++])); break;
+			case 'a': res = res.with(Email.email(args[i++])); break;
+			case 'b': res = res.with(new LinearLimits(parseInt(args[i++]))); break;
+			case 'o': res = res.with(Switch.OPEN); break;
+			case 'l': res = res.with(Switch.LOCKDOWN); break;
+			case 'p': res = res.with(Switch.PRIVATE); break;
 			}
 		}
-		File file = new File(path);
-		if (!file.exists() && !file.mkdirs()) {
-			throw new IOException("Unable to create DB folder.");
-		}
-		return new Server(admin, file, 1014L * 1024L * sizeMB, () -> System.currentTimeMillis(), new LinearLimits(5), EnumSet.noneOf(Switch.class));
+		return res;
 	}
 
 	public static enum Switch {
@@ -117,9 +113,13 @@ public final class Server {
 	public final Clock clock;
 	public final Limits limits;
 	private final EnumSet<Switch> switches;
+	
+	public final boolean isTemporary;
 
 	public Server() {
-		this(Email.NO_ADMIN, null, 0, () -> System.currentTimeMillis(), new LinearLimits(5), EnumSet.noneOf(Switch.class));
+		this(Email.NO_ADMIN, 
+				new File(System.getProperty("java.io.tmpdir") + "/collaborate-"+Date.today()+"/"), 1014L * 1024L * 10L, 
+				() -> System.currentTimeMillis(), new LinearLimits(5), EnumSet.noneOf(Switch.class));
 	}
 
 	private Server(Email admin, File pathDB, long sizeDB, Clock clock, Limits limits, EnumSet<Switch> switches) {
@@ -130,6 +130,7 @@ public final class Server {
 		this.clock = clock;
 		this.limits = limits;
 		this.switches = switches;
+		this.isTemporary = pathDB.getPath().startsWith(System.getProperty("java.io.tmpdir"));
 	}
 
 	public boolean isOpen() {
@@ -161,6 +162,20 @@ public final class Server {
 				switches.length == 0
 				? EnumSet.noneOf(Switch.class)
 				: EnumSet.of(switches[0], switches));
+	}
+	
+	public Server with(File pathDB) throws IOException {
+		if (!pathDB.exists() && !pathDB.mkdirs()) {
+			throw new IOException("Database folder does not exist and cannot be created: "+pathDB);
+		}
+		if (!pathDB.isDirectory()) {
+			throw new IllegalArgumentException("Please provide the folder the database is located, not a file like: "+pathDB);
+		}
+		return new Server(admin, pathDB, sizeDB, clock, limits, switches);
+	}
+	
+	public Server with(int sizeDB) {
+		return new Server(admin, pathDB, sizeDB, clock, limits, switches);
 	}
 
 	public Server with(Switch s) {

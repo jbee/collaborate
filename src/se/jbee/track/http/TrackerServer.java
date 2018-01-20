@@ -42,7 +42,9 @@ public class TrackerServer extends AbstractHandler {
 
 	public static void main( String[] args ) throws Exception
 	{
-		Server server = new Server(8080);
+		se.jbee.track.engine.Server config = se.jbee.track.engine.Server.parse(args);
+		
+		Server httpServer = new Server(8080);
 
 		ResourceHandler resource_handler = new ResourceHandler();
 		resource_handler.setCacheControl("no-store,no-cache,must-revalidate");
@@ -55,43 +57,30 @@ public class TrackerServer extends AbstractHandler {
 		ContextHandler contextHandler = new ContextHandler("/static");
 		contextHandler.setHandler(resource_handler);
 		handlers.addHandler(contextHandler);
-        server.setSessionIdManager(new HashSessionIdManager());
+        httpServer.setSessionIdManager(new HashSessionIdManager());
 
-        try (DB db = createDB(args)) {
-			TrackerServer app = createServer(db);
+        try (DB db = createDB(config)) {
+			TrackerServer app = createServer(config, db);
 			HashSessionManager manager = new HashSessionManager();
 	        SessionHandler sessions = new SessionHandler(manager);
 	        sessions.setHandler(app);
 			handlers.addHandler(sessions);
-			server.setHandler(handlers);
-			server.start();
-			server.join();
+			httpServer.setHandler(handlers);
+			httpServer.start();
+			httpServer.join();
 		}
 	}
 
-	private static TrackerServer createServer(DB db) {
+	private static TrackerServer createServer(se.jbee.track.engine.Server config, DB db) throws IOException {
         Map<Class<?>, HtmlRenderer<?>> renderers = new IdentityHashMap<>();
         renderers.put(ListView.class, new ListViewHtmlRenderer());
         renderers.put(SampleView.class, new SampleViewHtmlRenderer());
-        Email admin = Email.email("peter@example.com");
-		se.jbee.track.engine.Server server = new se.jbee.track.engine.Server().with(admin);
-        return new TrackerServer(new TrackerHttpUI(new CachedViewService(server, db, new CacheCluster(db, server.clock)), renderers));
+        config = config.with(Email.email("peter@example.com"));
+        return new TrackerServer(new TrackerHttpUI(new CachedViewService(config, db, new CacheCluster(db, config.clock)), renderers));
 	}
 
-	private static DB createDB(String[] args) throws IOException {
-		String path = System.getProperty("java.io.tmpdir") + "/collaborate-"+Date.today()+"/";
-		if (args.length >= 1) {
-			path = args[0];
-		}
-		int sizeMB = 10;
-		if (args.length >= 2) {
-			sizeMB = min(100, max(10, Integer.parseInt(args[1])));
-		}
-		File file = new File(path);
-		if (!file.exists() && !file.mkdirs()) {
-			throw new IOException("Unable to create DB folder.");
-		}
-		return new LMDB(Env.create().setMapSize(1014 * 1024 * sizeMB).setMaxReaders(8), file);
+	private static DB createDB(se.jbee.track.engine.Server config) throws IOException {
+		return new LMDB(Env.create().setMapSize(config.sizeDB).setMaxReaders(8), config.pathDB);
 	}
 
 	private final HttpUI ui;
