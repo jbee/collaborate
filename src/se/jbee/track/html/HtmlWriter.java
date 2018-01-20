@@ -15,16 +15,16 @@ import se.jbee.track.model.Task;
 
 /**
  * A wrapper around the {@link PrintWriter} that is the HTTP response stream.
- * 
+ *
  * Here is the place for utility methods, things that are done by multiple
  * pages, like likes and alike.
- * 
+ *
  * @author jan
  */
 public final class HtmlWriter {
 
 	private final PrintWriter out;
-	
+
 	public HtmlWriter(PrintWriter out) {
 		super();
 		this.out = out;
@@ -62,7 +62,7 @@ public final class HtmlWriter {
 	public void commandLink(Task task, String cssClasses, Command command, String label) {
 		out.append("<a class='").append(cssClasses).append("' href='/").append(command.name()).append("/").append(task.output.name).append("/").append(task.id.toString()).append("/'>").append(label).append("</a>");
 	}
-	
+
 	public void legend() {
 		out.append("<div class='footer'><div class='column'>");
 		renderTable(Coloration.status, Status.class);
@@ -82,11 +82,11 @@ public final class HtmlWriter {
 	}
 
 	public void footer() {
-		out.append("</body>");		
+		out.append("</body>");
 	}
 
 	public void header() {
 		out.append("<!DOCTYPE html><head><title>collaborate!</title>");
-		out.append("<link rel='stylesheet' href='/static/vizio.css'></head><body>");
+		out.append("<link rel='stylesheet' href='/static/collaborate.css'></head><body>");
 	}
 }
