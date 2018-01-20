@@ -9,25 +9,23 @@ import se.jbee.track.api.Param;
 import se.jbee.track.api.Param.Command;
 import se.jbee.track.api.Params;
 import se.jbee.track.api.SampleView;
+import se.jbee.track.api.UserInterface;
 import se.jbee.track.api.View;
 import se.jbee.track.api.ViewService;
 import se.jbee.track.html.HtmlRenderer;
 import se.jbee.track.html.HtmlWriter;
 
 /**
- * Connects the HTTP world with the general {@link Controller} abstraction. Its
- * task is also to make the implementation independent from a specific HTTP
- * server implementation and to allow for testing as if making HTTP request
- * without actually running a HTTP server.
+ * Connects the HTTP world with the general {@link UserInterface} abstraction.
  */
-public class TrackerHttpUI implements HttpUI {
+public class HttpUserInterface implements UserInterface {
 
-	private final ViewService ps;
+	private final ViewService views;
 	private final Map<Class<?>, HtmlRenderer<?>> renderers;
 
-	public TrackerHttpUI(ViewService ps, Map<Class<?>, HtmlRenderer<?>> renderers) {
+	public HttpUserInterface(ViewService views, Map<Class<?>, HtmlRenderer<?>> renderers) {
 		super();
-		this.ps = ps;
+		this.views = views;
 		this.renderers = renderers;
 	}
 
@@ -45,7 +43,7 @@ public class TrackerHttpUI implements HttpUI {
 	}
 
 	private <T extends View> void runAndRender(Class<T> pageType, Params params, PrintWriter out) {
-		T page = ps.run(params, pageType);
+		T page = views.run(params, pageType);
 		@SuppressWarnings("unchecked")
 		HtmlRenderer<T> renderer = (HtmlRenderer<T>) renderers.get(pageType);
 		renderer.render(page, new HtmlWriter(out));

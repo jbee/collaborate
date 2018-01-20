@@ -2,6 +2,7 @@ package se.jbee.track.db;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicReferenceArray;
 import java.util.function.BiPredicate;
 
 import org.lmdbjava.CursorIterator;
@@ -15,22 +16,32 @@ import org.lmdbjava.Txn;
 
 import se.jbee.track.model.ID;
 
+/**
+ * A wrapper around the java LMDB library to decouple all code from the library.
+ *
+ * A {@link LMDB} instance usually is constructed on application startup and
+ * used by multiple threads to create read {@link TxR} or write {@link TxRW}
+ * transactions.
+ *
+ * @author jan
+ */
 public final class LMDB implements DB {
 
-	private final Env<ByteBuffer> env;
-	@SuppressWarnings("unchecked")
-	private final Dbi<ByteBuffer>[] tables = new Dbi[ID.Type.values().length];
+	private volatile Env<ByteBuffer> env;
+	private final AtomicReferenceArray<Dbi<ByteBuffer>> collections = new AtomicReferenceArray<>(ID.Type.values().length);
 
 	public LMDB(Builder<ByteBuffer> envBuilder, File path) {
 		super();
 		this.env = envBuilder.setMaxDbs(10).open(path);
 		for (ID.Type t : ID.Type.values()) {
-			tables[t.ordinal()] = env.openDbi(t.name(), DbiFlags.MDB_CREATE);
+			collections.set(t.ordinal(), env.openDbi(t.name(), DbiFlags.MDB_CREATE));
 		}
 	}
 
 	@Override
 	public void close() {
+		for (int i = 0; i < collections.length(); i++)
+			collections.get(i).close();
 		env.close();
 	}
 
@@ -44,8 +55,8 @@ public final class LMDB implements DB {
 		return new LMDB_TxRW(env);
 	}
 
-	Dbi<ByteBuffer> table(ID.Type type) {
-		return tables[type.ordinal()];
+	Dbi<ByteBuffer> collection(ID.Type type) {
+		return collections.get(type.ordinal());
 	}
 
 	private class LMDB_TxR implements TxR {
@@ -65,7 +76,7 @@ public final class LMDB implements DB {
 		@Override
 		public final ByteBuffer get(ID id) {
 			setKey(id);
-			return table(id.type).get(txn, key);
+			return collection(id.type).get(txn, key);
 		}
 
 		@Override
@@ -82,12 +93,12 @@ public final class LMDB implements DB {
 		}
 
 		private CursorIterator<ByteBuffer> iterator(ID first) {
-			Dbi<ByteBuffer> table = table(first.type);
+			Dbi<ByteBuffer> collection = collection(first.type);
 			key.clear();
 			key.put(first.bytes());
 			key.position(key.position()-2);
 			key.flip();
-			return table.iterate(txn, key, IteratorType.FORWARD);
+			return collection.iterate(txn, key, IteratorType.FORWARD);
 		}
 
 		@Override
@@ -110,13 +121,13 @@ public final class LMDB implements DB {
 		@Override
 		public void put(ID id, ByteBuffer value) {
 			setKey(id);
-			table(id.type).put(txn, key, value);
+			collection(id.type).put(txn, key, value);
 		}
 
 		@Override
 		public void delete(ID id) {
 			setKey(id);
-			table(id.type).delete(txn, key);
+			collection(id.type).delete(txn, key);
 		}
 
 		@Override

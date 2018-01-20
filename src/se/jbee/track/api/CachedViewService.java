@@ -5,6 +5,7 @@ import static java.lang.Integer.parseInt;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import se.jbee.track.Server;
 import se.jbee.track.api.Param.Command;
 import se.jbee.track.cache.Cache;
 import se.jbee.track.cache.Matches;
@@ -12,10 +13,10 @@ import se.jbee.track.db.DB;
 import se.jbee.track.engine.Changes;
 import se.jbee.track.engine.NoLimits;
 import se.jbee.track.engine.Sample;
-import se.jbee.track.engine.Server;
 import se.jbee.track.engine.Transaction;
 import se.jbee.track.engine.TransitionDenied;
 import se.jbee.track.engine.TransitionDenied.Error;
+import se.jbee.track.model.Email;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
 import se.jbee.track.model.Page;
@@ -31,7 +32,7 @@ public class CachedViewService implements ViewService {
 	private final Map<String, User> sessions = new ConcurrentHashMap<>();
 
 	public CachedViewService(Server server, DB db, Cache cache) {
-		this.server = server;
+		this.server = server.with(Email.email("peter@example.com")); // for now
 		this.db = db;
 		this.cache = cache;
 	}
@@ -69,9 +70,9 @@ public class CachedViewService implements ViewService {
 		Names versions = request.names(Param.version);
 		Names categories = request.names(Param.category);
 		int tasks = parseInt(request.get(Param.task));
-		// this is run as if we are on lockdown so that limits won't apply - also this makes sure again one has to be admin
 		Changes changes = Transaction.run(Sample.sample(users, outputs, versions, areas, categories, tasks, actor.alias), db, server.with(new NoLimits()));
-		cache.invalidate(changes);
+		if (false)
+			cache.invalidate(changes);
 		return new SampleView(actor, changes);
 	}
 

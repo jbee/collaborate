@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
+import se.jbee.track.Server;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.DB.TxRW;
 import se.jbee.track.engine.Change.Operation;
@@ -125,6 +126,9 @@ public final class Transaction extends DAO implements Tx {
 				}
 			}
 		}
+		if (actor == null && e instanceof User) {
+			trackActor(e.uniqueID());
+		}
 	}
 
 	private void trackActor(final ID userID) {
@@ -143,7 +147,7 @@ public final class Transaction extends DAO implements Tx {
 			put(op, t.output);
 			put(op, t.area);
 			put(op, t.base);
-		} else if (e instanceof Output && e.version() == 1) {
+		} else if (e instanceof Output && e.initalVersion == 1) {
 			Output p = (Output)e;
 			put(op, p.origin);
 			put(op, p.somewhere);
@@ -160,11 +164,17 @@ public final class Transaction extends DAO implements Tx {
 
 	private Changes commit() {
 		super.close(); // no more reading
-		if (actor == null)
-			throw new IllegalStateException("Acting user has to be updated during a transaction!");
 		if (changed.isEmpty())
 			return Changes.EMPTY; // empty changesets have serial 0 and can be discarded/ignored
+		if (actor == null)
+			throw new IllegalStateException("Acting user has to be updated during a transaction!");
 		ByteBuffer buf = ByteBuffer.allocateDirect(4096);
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		try (TxRW tx = db.write()) {
 			Changes.Entry<?>[] log = writeEntities(tx, buf);
 			long timestamp = clock.time();
@@ -172,6 +182,7 @@ public final class Transaction extends DAO implements Tx {
 			tx.commit();
 			// serial is fetched within the TX write() but after commit() so we know this is successful
 			// also only one thread can enter the write block
+			tx.close();
 			return new Changes(timestamp, serial.incrementAndGet(), log);
 		}
 	}

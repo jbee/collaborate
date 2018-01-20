@@ -10,7 +10,7 @@ import se.jbee.track.util.Array;
 
 /**
  * A sorted set of {@link Name}s.
- * 
+ *
  * While it is sorted order must not have a particular meaning. It is the order
  * names were added.
  */
@@ -18,13 +18,25 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 
 	private static final Name[] EMPTY = new Name[0];
 
+	public static Names empty() {
+		return new Names(EMPTY);
+	}
+
+	public static Names names(String...names) {
+		Name[] res = new Name[names.length];
+		for (int i = 0; i < names.length; i++) {
+			res[i] = Name.as(names[i]);
+		}
+		return new Names(res);
+	}
+
 	private Name[] names;
 
 	public Names(Name... names) {
 		super();
 		this.names = names;
 	}
-	
+
 	public Name first() {
 		return names[0];
 	}
@@ -67,10 +79,6 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 
 	public boolean contains(Name user) {
 		return indexOf(user) >= 0;
-	}
-
-	public static Names empty() {
-		return new Names(EMPTY);
 	}
 
 	@Override

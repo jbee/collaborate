@@ -79,8 +79,8 @@ public final class Params extends EnumMap<Param, String> {
 				params.set(command, Command.sample)
 				.set(Param.actor, "peter")
 				.set(Param.role, "peter")
-				.set(Param.output, "c11, java")
-				.set(Param.area, "foo, bar")
+				.set(Param.output, "c11, java, python")
+				.set(Param.area, "foo, bar, baz")
 				.set(Param.version, "0.1, 0.2")
 				.set(Param.category, "example")
 				.set(Param.task, "10");

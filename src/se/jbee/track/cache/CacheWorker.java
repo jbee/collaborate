@@ -49,7 +49,7 @@ import se.jbee.track.model.Version;
 
 /**
  * Each worker is responsible for a single {@link Output}.
- * 
+ *
  * This way there is only 1 thread working with the data what makes it trivial
  * to not have inconsistent states leaving the cache while updating the cached
  * entities in place.
@@ -66,7 +66,7 @@ final class CacheWorker implements Cache {
 	 */
 	private Task[] byIDN; // fix (growing at the end)
 	private int usage; // last index in use
-	
+
 	// caches: best to worst filtering
 	private Map<Name, TaskSet> byUser = new HashMap<>(); // almost fix
 	private Map<Name, TaskSet> byMaintainer = new HashMap<>(); // almost fix
@@ -76,18 +76,18 @@ final class CacheWorker implements Cache {
 	private Map<Name, TaskSet> byArea = new HashMap<>(); // almost fix
 	private Map<Name, TaskSet> byVersion = new HashMap<>(); // almost fix
 	private Map<Name, TaskSet> byCategory = new HashMap<>(); // almost fix
-	
+
 	private Map<IDN, TaskSet> byBasis = new HashMap<>(); // fix
 	private Map<IDN, TaskSet> byOrigin = new HashMap<>(); // fix
 	private Map<IDN, TaskSet> bySerial = new HashMap<>(); // fix
-	
+
 	private EnumMap<Purpose, TaskSet> byPurpose = new EnumMap<>(Purpose.class); // fix
 	private EnumMap<Motive, TaskSet> byMotive = new EnumMap<>(Motive.class); // fix
 	private EnumMap<Status, TaskSet> byStatus = new EnumMap<>(Status.class); // almost fix
-	
+
 	// special caches:
 	private TaskSet[] byTemperature = new TaskSet[100]; // not fix, has to be recomputed every day
-	
+
 	public CacheWorker(Name output, DB db, Date today) {
 		super();
 		this.output = output;
@@ -96,7 +96,7 @@ final class CacheWorker implements Cache {
 		this.es = Executors.newSingleThreadExecutor(this::factory);
 		init(db);
 	}
-	
+
 	@Override
 	public void shutdown() {
 		es.shutdown();
@@ -108,20 +108,21 @@ final class CacheWorker implements Cache {
 		t.setName("cache-worker:"+output);
 		return t;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "cache:"+output.toString()+"["+usage+"]";
 	}
-	
+
 	private void init(DB db) {
+		if (true)return;
 		try (TxR tx = db.read()) {
 			try (Repository rep = new DAO(tx)) {
 				rep.tasks(output, (t) -> { index(t, TaskSet::init); return true; });
 			}
 		}
 	}
-	
+
 	private void index(Task t, BiConsumer<TaskSet, IDN> f) {
 		int idn = t.id.num;
 		if (idn >= byIDN.length) {
@@ -155,7 +156,7 @@ final class CacheWorker implements Cache {
 			getOrInit(t.origin, byOrigin).init(t.origin);
 		}
 	}
-	
+
 	private static <K> TaskSet getOrInit(K key, Map<K, TaskSet> map) {
 		TaskSet set = map.get(key);
 		if (set == null) {
@@ -164,7 +165,7 @@ final class CacheWorker implements Cache {
 		}
 		return set;
 	}
-	
+
 	private static TaskSet getOrInit(int idx, TaskSet[] map) {
 		if (map[idx] == null)
 			map[idx] = new TaskSet();
@@ -175,14 +176,14 @@ final class CacheWorker implements Cache {
 	public Future<Matches> matchesFor(User inquirer, Criteria criteria) {
 		return es.submit(() -> lookup(criteria));
 	}
-	
+
 	@Override
 	public Future<Void> invalidate(Changes changes) {
-		//TODO if there is a gap in serial put the ones coming late in a separate map. 
+		//TODO if there is a gap in serial put the ones coming late in a separate map.
 		// the later update will notice the gap again and pull all from the map that are inbetween
 		return es.submit(() -> { update(changes); return null; } );
 	}
-	
+
 	/**
 	 * As soon the set of potential hits has been narrowed down to less then
 	 * about 100 we use the remaining criteria to filter that list of potential
@@ -216,13 +217,13 @@ final class CacheWorker implements Cache {
 			return orderAndSlice(filter(candidates, criteria), criteria, today);
 		}
 		// 2. or (if no eq available) use the first "in" clause
-		
-		// 3. or use a range (serial, heat, temperature) 
-		
+
+		// 3. or use a range (serial, heat, temperature)
+
 		// 4. or just plain filter every known task ;(
 		return orderAndSlice(filter(byIDN, usage+1, criteria), criteria, today);
 	}
-	
+
 	static Matches orderAndSlice(Task[] matches, Criteria criteria, Date today) {
 		int len = 50;
 		int offset = 0;
@@ -240,12 +241,12 @@ final class CacheWorker implements Cache {
 				order(matches, criteria, today);
 			}
 			if (offset > 0 || offset+total > len) {
-				matches = copyOfRange(matches, offset, min(total, offset+len));  
+				matches = copyOfRange(matches, offset, min(total, offset+len));
 			}
 		}
 		return new Matches(matches, total);
 	}
-	
+
 
 	static void order(Task[] matches, Criteria criteria, Date today) {
 		int len = 0;
@@ -281,33 +282,33 @@ final class CacheWorker implements Cache {
 	static <T extends Comparable<T>> int cmp(Comparable<?> a, Comparable<?> b) {
 		return ((T)a).compareTo((T)b);
 	}
-	
+
 	private Task[] filter(TaskSet set, Criteria criteria) {
 		final int size = set.size();
 		return criteria.filter(new Iterator<Task>() {
-			
+
 			int i = 0;
 			@Override
 			public Task next() {
 				while (set.members[i] == 0) i++; // skip gaps
 				return byIDN[set.members[i++]];
 			}
-			
+
 			@Override
 			public boolean hasNext() {
 				return i < size-1;
 			}
 		}, today);
 	}
-	
+
 	private Task[] filter(Task[] set, int size, Criteria criteria) {
 		return criteria.filter(asList(set).subList(0, size).iterator(), today);
 	}
-	
+
 	private Map<?,TaskSet> select(Property prop) {
 		switch (prop) {
-		case aspirant: 
-		case participant: 
+		case aspirant:
+		case participant:
 		case user: return byUser;
 		case reporter: return byReporter;
 		case solver: return bySolver;
@@ -325,15 +326,15 @@ final class CacheWorker implements Cache {
 		default: return null;
 		}
 	}
-	
+
 	/**
 	 * Changes to take care of:
-	 * 
+	 *
 	 * - change to the{@link Output}, {@link Area}s and {@link Poll}s.
 	 * - {@link Task} changes (obviously)
-	 * 
+	 *
 	 * Changes to ignore:
-	 * 
+	 *
 	 * - change to {@link User}, {@link Page} and {@link Version}
 	 * - new {@link Event}s or {@link History}
 	 */
@@ -354,8 +355,8 @@ final class CacheWorker implements Cache {
 	 * the main idea behind this domains specific caching that takes advantage
 	 * of domain knowledge to minimize the work required to keep the cache up to
 	 * date even for a entity that is modified quite often.
-	 * 
-	 * A classic design of "throw out" and "reload" from DB would basically 
+	 *
+	 * A classic design of "throw out" and "reload" from DB would basically
 	 * constantly reload stuff and thereby not be that helpful.
 	 */
 	@SuppressWarnings("null")
@@ -370,7 +371,7 @@ final class CacheWorker implements Cache {
 		}
 		for (Change.Operation op : e.transitions) {
 			switch (op) {
-			case emphasise: // emphasis up/down 
+			case emphasise: // emphasis up/down
 				if (before.temperature(today) != after.temperature(today)) {
 					byTemperature[before.temperature(today)].remove(idn);
 					getOrInit(after.temperature(today), byTemperature).add(idn);
@@ -395,7 +396,7 @@ final class CacheWorker implements Cache {
 			case rebase: // change of version
 				getOrInit(before.base.name, byVersion).remove(idn);
 				getOrInit(after.base.name, byVersion).add(idn);
-				task.base = cacheInstanceOf(after.base); 
+				task.base = cacheInstanceOf(after.base);
 				break;
 			case attach: // attach/detach
 				task.attachments = after.attachments; break;
@@ -440,7 +441,7 @@ final class CacheWorker implements Cache {
 		}
 		// TODO maybe it is easier to just replace the full task in byID with after
 	}
-	
+
 	private Version cacheInstanceOf(Version v) {
 		TaskSet set = byVersion.get(v.name);
 		if (set == null)
@@ -448,7 +449,7 @@ final class CacheWorker implements Cache {
 		int idx = set.first();
 		return idx < 0 ? v : byIDN[idx].base;
 	}
-	
+
 	private Area cacheInstanceOf(Area a) {
 		TaskSet set = byArea.get(a.name);
 		if (set == null)
@@ -456,27 +457,27 @@ final class CacheWorker implements Cache {
 		int idx = set.first();
 		return idx < 0 ? a : byIDN[idx].area;
 	}
-	
+
 	private Output cacheInstanceOf(Output p) {
 		return byIDN[1].output;
 	}
-	
+
 	private static void removeMissing(Names a, Names b, Map<Name, TaskSet> map, IDN idn) {
 		for (Name n : a) {
 			if (!b.contains(n)) { getOrInit(n, map).remove(idn); }
 		}
 	}
-	
+
 	private static void addMissing(Names a, Names b, Map<Name, TaskSet> map, IDN idn) {
 		for (Name n : a) {
 			if (!b.contains(n)) { getOrInit(n, map).add(idn); }
 		}
 	}
-	
+
 	private void updateOutput(Entry<Output> e) {
 		Output after = e.after;
 		Output p = cacheInstanceOf(after);
-		if (after.isMoreRecent(p)) { 
+		if (after.isMoreRecent(p)) {
 			// just do that no matter what has changed as it is simpler
 			p.integrations = after.integrations;
 			p.tasks = after.tasks;
@@ -498,7 +499,7 @@ final class CacheWorker implements Cache {
 					a.abandoned = after.abandoned;
 					a.exclusive = after.exclusive;
 					a.maintainers = after.maintainers;
-				}				
+				}
 				break;
 			case categorise:
 				a.category = after.category; break;
@@ -509,17 +510,17 @@ final class CacheWorker implements Cache {
 		}
 		after.update(a);
 	}
-	
+
 	/**
 	 * A unsorted set of ids stored as shorts for compaction of data. Some cells
 	 * might be zero. These are blanked after {@link #remove(IDN)} for later
 	 * usage by {@link #init(IDN)}. When iterating the set one has to iterate
 	 * from 0 to usage (inclusive) and ignore all zeros.
-	 * 
+	 *
 	 * The set grows by power of 2 when set if full.
-	 * 
+	 *
 	 * The set is designed for high write thoughput and low memory footprint.
-	 * 
+	 *
 	 * It supports sets of up to 32,766 items.
 	 */
 	static class TaskSet {
@@ -529,7 +530,7 @@ final class CacheWorker implements Cache {
 		private int maxIDN = 0;
 		private int gaps = 0;
 		private int gap0 = -1; // last known gap index (if not reused already) this speeds up remove/add cycles
-		
+
 		/**
 		 * In contrast to {@link #add(IDN)} we are sure each task is just
 		 * initiated once so that we do not have to search for task already
@@ -546,21 +547,21 @@ final class CacheWorker implements Cache {
 			size++;
 			maxIDN = max(maxIDN, idn);
 		}
-		
+
 		int first() {
 			int i = 0;
 			while (i <= usage && members[i] == 0) i++;
 			return members[i] == 0 ? -1 : members[i];
 		}
-		
+
 		boolean contains(IDN task) {
 			return indexOf(task) >= 0;
 		}
-		
+
 		public int size() {
 			return size;
 		}
-		
+
 		int indexOf(IDN task) {
 			final int idn = task.num;
 			if (usage > 16) { // try binary search
@@ -574,7 +575,7 @@ final class CacheWorker implements Cache {
 			}
 			return -1;
 		}
-		
+
 		/**
 		 * This is a modified binary search that is being optimistic about the
 		 * items in the set being sorted in ascending order. Due to gap filling
@@ -592,7 +593,7 @@ final class CacheWorker implements Cache {
 			}
 			return m <= usage && m >= 0 ? m : -1;
 		}
-		
+
 		void add(IDN task) {
 			int idn = task.num;
 			if (idn > maxIDN) {
@@ -615,7 +616,7 @@ final class CacheWorker implements Cache {
 				}
 			}
 		}
-		
+
 		void remove(IDN task) {
 			int idx = indexOf(task);
 			if (idx >= 0) {
@@ -627,7 +628,7 @@ final class CacheWorker implements Cache {
 		}
 
 	}
-	
+
 	private static void sort(Task[] tasks, final Property[] orders, final Date today) {
 		Arrays.sort(tasks, new Comparator<Task>() {
 

@@ -8,8 +8,10 @@ import static org.junit.Assert.assertSame;
 import static se.jbee.track.engine.Change.authenticate;
 import static se.jbee.track.engine.Change.compose;
 import static se.jbee.track.engine.Change.register;
+import static se.jbee.track.engine.Sample.sample;
 import static se.jbee.track.model.Email.email;
 import static se.jbee.track.model.Name.as;
+import static se.jbee.track.model.Names.names;
 import static se.jbee.track.model.Template.template;
 
 import java.io.File;
@@ -17,6 +19,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -25,13 +28,16 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
+import se.jbee.track.Server;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.DB.TxR;
 import se.jbee.track.db.DB.TxRW;
 import se.jbee.track.db.LMDB;
+import se.jbee.track.model.Email;
 import se.jbee.track.model.ID;
 import se.jbee.track.model.ID.Type;
 import se.jbee.track.model.Name;
+import se.jbee.track.model.Names;
 import se.jbee.track.model.Page;
 import se.jbee.track.model.User;
 
@@ -161,6 +167,72 @@ public class TestLMDB {
 			assertEquals(2, e.cardinality());
 			assertEquals(Change.Operation.authenticate, e.transition(0).ops[0]);
 			assertEquals(Change.Operation.compose, e.transition(1).ops[0]);
+		}
+	}
+
+	@Test
+	@Ignore
+	public void runSampleTransaction() throws Exception {
+		final File path = tmp.newFolder();
+		Name peter = as("peter");
+		Email epeter = email("peter@example.com");
+		Server server = new Server().with(epeter).with(new NoLimits());
+		try (DB db = new LMDB(Env.create().setMapSize(1014*1024*10).setMaxReaders(8), path)) {
+			Changes changes = Transaction.run(Change.register(peter, epeter), db, server);
+			Transaction.run(Change.authenticate(peter, ((User)(changes.iterator().next().after)).otp), db, server);
+			for (int i = 0; i <  5; i++) {
+				Thread t = new Thread(() -> {
+					Transaction.run(sample(new Names(peter), names("c11", "java"), names("0.1","0.2"),
+							names("foo", "bar"), names("example"), 10, peter), db, server);
+				});
+				t.start();
+				t.join();
+			}
+		}
+	}
+
+	@Test
+	@Ignore
+	public void numReaders() throws Exception {
+		final File path = tmp.newFolder();
+		try (Env<ByteBuffer> env = Env.create()
+				.setMapSize(1014*1024*10)
+				.setMaxDbs(10)
+				.setMaxReaders(10)
+				.open(path)) {
+
+			Dbi<ByteBuffer> db = env.openDbi("x", DbiFlags.MDB_CREATE);
+			Dbi<ByteBuffer> db2 = env.openDbi("y", DbiFlags.MDB_CREATE);
+			Dbi<ByteBuffer> db3 = env.openDbi("y", DbiFlags.MDB_CREATE);
+			for (int i = 0; i < 10; i++) {
+				Thread t = new Thread(() -> {
+					ByteBuffer key = ByteBuffer.allocateDirect(env.getMaxKeySize());
+					key.put("foo".getBytes()).flip();
+					try (Txn<ByteBuffer> tx = env.txnRead()) {
+						db.get(tx, key);
+						db2.get(tx, key);
+						db3.get(tx, key);
+						tx.close();
+					}
+					ByteBuffer val = ByteBuffer.allocateDirect(env.getMaxKeySize());
+					val.put("bar".getBytes()).flip();
+					try (Txn<ByteBuffer> tx = env.txnWrite()) {
+						db.put(tx, key, val);
+						db2.put(tx, key, val);
+						db3.put(tx, key, val);
+						tx.close();
+					}
+
+					try (Txn<ByteBuffer> tx = env.txnRead()) {
+						db.get(tx, key);
+						db2.get(tx, key);
+						db3.get(tx, key);
+						tx.close();
+					}
+				});
+				t.start();
+				t.join();
+			}
 		}
 	}
 }

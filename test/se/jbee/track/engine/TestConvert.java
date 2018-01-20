@@ -2,6 +2,7 @@ package se.jbee.track.engine;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
+import static se.jbee.track.Server.Switch.OPEN;
 import static se.jbee.track.engine.Bincoder.area2bin;
 import static se.jbee.track.engine.Bincoder.bin2area;
 import static se.jbee.track.engine.Bincoder.bin2event;
@@ -18,7 +19,6 @@ import static se.jbee.track.engine.Bincoder.poll2bin;
 import static se.jbee.track.engine.Bincoder.task2bin;
 import static se.jbee.track.engine.Bincoder.user2bin;
 import static se.jbee.track.engine.Bincoder.version2bin;
-import static se.jbee.track.engine.Server.Switch.OPEN;
 import static se.jbee.track.model.Email.email;
 import static se.jbee.track.model.Gist.gist;
 import static se.jbee.track.model.Name.as;
@@ -29,6 +29,7 @@ import java.util.function.Predicate;
 
 import org.junit.Test;
 
+import se.jbee.track.Server;
 import se.jbee.track.engine.Event.Transition;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.Email;

@@ -37,14 +37,14 @@ import se.jbee.track.model.User;
 import se.jbee.track.model.Version;
 
 /**
- * Reading {@link Entity}s from a {@link DB} via a {@link Repository} abstraction.  
+ * Reading {@link Entity}s from a {@link DB} via a {@link Repository} abstraction.
  */
 public class DAO implements Repository {
 
 	protected final HashMap<ID, Entity<?>> loaded = new HashMap<>();
-	
+
 	private final DB.TxR txr;
-	
+
 	public DAO(TxR txr) {
 		super();
 		this.txr = txr;
@@ -54,12 +54,12 @@ public class DAO implements Repository {
 	public final void close() {
 		txr.close();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private final <T extends Entity<T>> T load(ID id, Bincoder<Repository, T> decoder) {
 		Object res = transactionObject(id);
 		if (res != null)
-			return (T) res;		
+			return (T) res;
 		T e = loadObject(id, decoder);
 		loaded.put(id, e);
 		return e;
@@ -68,18 +68,18 @@ public class DAO implements Repository {
 	private <T> T loadObject(ID id, Bincoder<Repository, T> decoder) {
 		return decoder.convert(this, read(id));
 	}
-	
+
 	/**
 	 * Override this to return an object already changed in the running
 	 * transaction.
-	 * 
+	 *
 	 * @return returns the object as it is already present in the running
 	 *         transaction. Returns null if the object has not been loaded yet.
 	 */
 	protected Object transactionObject(ID id) {
 		return loaded.get(id);
 	}
-	
+
 	@Override
 	public Page page(Name output, Name user, Name page) {
 		return load(pageId(output, user, page), bin2page);
@@ -109,17 +109,17 @@ public class DAO implements Repository {
 	public Task task(Name output, IDN id) {
 		return load(ID.taskId(output, id), bin2task);
 	}
-	
+
 	@Override
 	public User user(Name user) {
 		return load(userId(user), bin2user);
 	}
-	
+
 	@Override
 	public Event event(long timestamp) throws UnknownEntity {
 		return loadObject(ID.eventId(timestamp), bin2event);
 	}
-	
+
 	@Override
 	public History history(ID entity) throws UnknownEntity {
 		ID id = ID.historyId(entity);
@@ -132,35 +132,35 @@ public class DAO implements Repository {
 			throw new Repository.UnknownEntity(id);
 		return buf;
 	}
-	
+
 	@Override
 	public void tasks(Name output, Predicate<Task> consumer) {
-		range(bin2task, ID.taskId(output, IDN.ZERO), 
+		range(bin2task, ID.taskId(output, IDN.ZERO),
 				(t) -> t.output.name.equalTo(output) && consumer.test(t));
 	}
-	
+
 	@Override
 	public Output[] outputs() {
-		return range(bin2output, new Output[0], ID.outputId(as("0")), 
+		return range(bin2output, new Output[0], ID.outputId(as("0")),
 				(p) -> true);
 	}
-	
+
 	@Override
 	public Page[] pages(Name output, Name menu) {
 		return range(bin2page, new Page[0], ID.pageId(output, menu, as("0")),
 				(s) -> s.menu.equalTo(menu));
 	}
-	
+
 	@Override
 	public Poll[] polls(Name output, Name area) {
-		return range(bin2poll, new Poll[0], ID.pollId(output, area, IDN.ZERO), 
+		return range(bin2poll, new Poll[0], ID.pollId(output, area, IDN.ZERO),
 				(p) -> p.area.name.equalTo(area));
 	}
-	
+
 	private <T> void range(Bincoder<Repository, T> decoder, ID start, Predicate<T> filter) {
 		txr.range(start, (k,v) -> filter.test(transactionObjectOrDecode(decoder, k, v)));
 	}
-	
+
 	private <T> T[] range(Bincoder<Repository, T> decoder, T[] empty, ID start, Predicate<T> filter) {
 		List<T> res = new ArrayList<>();
 		txr.range(start, (k,v) -> {
@@ -169,7 +169,7 @@ public class DAO implements Repository {
 		});
 		return res.toArray(empty);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private <T> T transactionObjectOrDecode(Bincoder<Repository, T> decoder, ID k, ByteBuffer v) {
 		Object et = transactionObject(k);
