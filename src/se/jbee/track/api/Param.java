@@ -33,5 +33,5 @@ public enum Param {
 
 		// generates testdata
 		sample
-	};
+	}
 }

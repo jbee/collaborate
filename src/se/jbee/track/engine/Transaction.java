@@ -169,12 +169,6 @@ public final class Transaction extends DAO implements Tx {
 		if (actor == null)
 			throw new IllegalStateException("Acting user has to be updated during a transaction!");
 		ByteBuffer buf = ByteBuffer.allocateDirect(4096);
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		try (TxRW tx = db.write()) {
 			Changes.Entry<?>[] log = writeEntities(tx, buf);
 			long timestamp = clock.time();
@@ -182,7 +176,6 @@ public final class Transaction extends DAO implements Tx {
 			tx.commit();
 			// serial is fetched within the TX write() but after commit() so we know this is successful
 			// also only one thread can enter the write block
-			tx.close();
 			return new Changes(timestamp, serial.incrementAndGet(), log);
 		}
 	}
@@ -195,6 +188,8 @@ public final class Transaction extends DAO implements Tx {
 	 */
 	private static final AtomicLong serial = new AtomicLong();
 
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private Changes.Entry<?>[] writeEntities(TxRW tx, ByteBuffer buf) {
 		Changes.Entry<?>[] res = new Changes.Entry[changed.size()];
 		int i = 0;

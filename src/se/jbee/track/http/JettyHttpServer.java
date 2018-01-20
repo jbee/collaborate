@@ -74,7 +74,7 @@ public class JettyHttpServer extends AbstractHandler {
 			}
 			long nsStart = System.nanoTime();
 			response.setStatus(ui.respond(params, response.getWriter()));
-			System.out.println((System.nanoTime() - nsStart)/1000L+" us");
+			System.out.println((System.nanoTime() - nsStart)/1000000L+" ms");
 		}
 		baseRequest.setHandled(true);
 	}

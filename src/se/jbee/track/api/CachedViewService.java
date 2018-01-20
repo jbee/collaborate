@@ -71,8 +71,7 @@ public class CachedViewService implements ViewService {
 		Names categories = request.names(Param.category);
 		int tasks = parseInt(request.get(Param.task));
 		Changes changes = Transaction.run(Sample.sample(users, outputs, versions, areas, categories, tasks, actor.alias), db, server.with(new NoLimits()));
-		if (false)
-			cache.invalidate(changes);
+		cache.invalidate(changes);
 		return new SampleView(actor, changes);
 	}
 

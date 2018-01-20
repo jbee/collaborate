@@ -115,7 +115,6 @@ final class CacheWorker implements Cache {
 	}
 
 	private void init(DB db) {
-		if (true)return;
 		try (TxR tx = db.read()) {
 			try (Repository rep = new DAO(tx)) {
 				rep.tasks(output, (t) -> { index(t, TaskSet::init); return true; });
