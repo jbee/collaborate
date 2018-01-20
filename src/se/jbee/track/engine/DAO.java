@@ -2,9 +2,9 @@ package se.jbee.track.engine;
 
 import static se.jbee.track.engine.Bincoder.bin2area;
 import static se.jbee.track.engine.Bincoder.bin2event;
+import static se.jbee.track.engine.Bincoder.bin2output;
 import static se.jbee.track.engine.Bincoder.bin2page;
 import static se.jbee.track.engine.Bincoder.bin2poll;
-import static se.jbee.track.engine.Bincoder.bin2output;
 import static se.jbee.track.engine.Bincoder.bin2task;
 import static se.jbee.track.engine.Bincoder.bin2user;
 import static se.jbee.track.engine.Bincoder.bin2version;

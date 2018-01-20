@@ -1,9 +1,10 @@
 package se.jbee.track.html;
 
 import static se.jbee.track.model.Date.date;
+
 import se.jbee.track.api.ListView;
-import se.jbee.track.api.View;
 import se.jbee.track.api.Param.Command;
+import se.jbee.track.api.View;
 import se.jbee.track.cache.Matches;
 import se.jbee.track.model.Criteria;
 import se.jbee.track.model.Criteria.Coloration;

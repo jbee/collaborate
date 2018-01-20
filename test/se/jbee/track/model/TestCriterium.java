@@ -15,9 +15,6 @@ import static se.jbee.track.model.Name.as;
 import org.junit.Before;
 import org.junit.Test;
 
-import se.jbee.track.model.Date;
-import se.jbee.track.model.Output;
-import se.jbee.track.model.Task;
 import se.jbee.track.model.Criteria.Criterium;
 import se.jbee.track.model.Criteria.Property;
 

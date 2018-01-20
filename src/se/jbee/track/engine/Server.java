@@ -1,15 +1,12 @@
 package se.jbee.track.engine;
 
 import static java.lang.Integer.parseInt;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 import static se.jbee.track.engine.Server.Switch.LOCKDOWN;
 import static se.jbee.track.engine.Server.Switch.OPEN;
 import static se.jbee.track.engine.Server.Switch.PRIVATE;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.EnumSet;
 
 import se.jbee.track.model.Date;

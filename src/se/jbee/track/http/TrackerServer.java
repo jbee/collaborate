@@ -1,9 +1,5 @@
 package se.jbee.track.http;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-
-import java.io.File;
 import java.io.IOException;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -35,7 +31,6 @@ import se.jbee.track.db.LMDB;
 import se.jbee.track.html.HtmlRenderer;
 import se.jbee.track.html.ListViewHtmlRenderer;
 import se.jbee.track.html.SampleViewHtmlRenderer;
-import se.jbee.track.model.Date;
 import se.jbee.track.model.Email;
 
 public class TrackerServer extends AbstractHandler {
@@ -43,7 +38,7 @@ public class TrackerServer extends AbstractHandler {
 	public static void main( String[] args ) throws Exception
 	{
 		se.jbee.track.engine.Server config = se.jbee.track.engine.Server.parse(args);
-		
+
 		Server httpServer = new Server(8080);
 
 		ResourceHandler resource_handler = new ResourceHandler();
