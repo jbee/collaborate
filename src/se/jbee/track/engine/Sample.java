@@ -102,7 +102,7 @@ public class Sample {
 	private static final String[] DEFECT = {" is not responding.", " throws ", " causes ", " fails because of a "};
 	private static final String[] ERROR = {"Error", "Exception"};
 	private static final String[] VERB = {" should be ", " should not be ", " could be "};
-	private static final String[] ENDING = {" available.", " moved.", "moved back."};
+	private static final String[] ENDING = {" available.", " moved.", "moved back.", "green.", "red."};
 
 	private static Gist randomGist(Motive motive) {
 		String gist = pick1From(SUBJECT);

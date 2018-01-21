@@ -114,7 +114,7 @@ public interface Change {
 		envision,
 		connect,
 		disconnect,
-		suggest,
+		suggest(true),
 
 		// areas
 		open,
@@ -161,8 +161,22 @@ public interface Change {
 		unwatch,
 
 		// misc
-		sample
+		sample(true)
 		;
+
+		/**
+		 * Should multiple subsequent operation of same type be folded into one in the
+		 * change-log?
+		 */
+		public final boolean fold;
+
+		private Operation() {
+			this(false);
+		}
+		private Operation(boolean fold) {
+			this.fold = fold;
+		}
+
 	}
 
 	/**
