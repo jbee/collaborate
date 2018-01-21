@@ -6,6 +6,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
@@ -22,32 +23,34 @@ import se.jbee.track.api.UserInterface;
 
 public class JettyHttpServer extends AbstractHandler {
 
-	public static void start(se.jbee.track.engine.Server config, UserInterface ui) throws Exception {
+	public static Server create(se.jbee.track.engine.Server config, UserInterface ui) {
 		Server httpServer = new Server(config.port);
-		ResourceHandler resource_handler = new ResourceHandler();
-		if (config.isTemporary) {
-			resource_handler.setCacheControl("no-store,no-cache,must-revalidate");
-		}
-		// Configure the ResourceHandler. Setting the resource base indicates where the
-		// files should be served out of.
-		// In this example it is the current directory but it can be configured to
-		// anything that the jvm has access to.
-		resource_handler.setDirectoriesListed(true);
-		resource_handler.setResourceBase("web");
 		HandlerList handlers = new HandlerList();
-
-		ContextHandler contextHandler = new ContextHandler("/static");
-		contextHandler.setHandler(resource_handler);
-		handlers.addHandler(contextHandler);
+		handlers.addHandler(staticContentHandler(config));
+		handlers.addHandler(dynamicContentHandler(ui));
+		httpServer.setHandler(handlers);
 		httpServer.setSessionIdManager(new HashSessionIdManager());
+		return httpServer;
+	}
+
+	private static Handler dynamicContentHandler(UserInterface ui) {
 		JettyHttpServer app = new JettyHttpServer(ui);
 		HashSessionManager manager = new HashSessionManager();
 		SessionHandler sessions = new SessionHandler(manager);
 		sessions.setHandler(app);
-		handlers.addHandler(sessions);
-		httpServer.setHandler(handlers);
-		httpServer.start();
-		httpServer.join();
+		return sessions;
+	}
+
+	private static Handler staticContentHandler(se.jbee.track.engine.Server config) {
+		ResourceHandler statics = new ResourceHandler();
+		if (config.isTemporary) {
+			statics.setCacheControl("no-store,no-cache,must-revalidate");
+		}
+		statics.setDirectoriesListed(true);
+		statics.setResourceBase("web");
+		ContextHandler staticsContext = new ContextHandler("/static");
+		staticsContext.setHandler(statics);
+		return staticsContext;
 	}
 
 	private final UserInterface ui;

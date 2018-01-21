@@ -1,6 +1,7 @@
 package se.jbee.track.engine;
 
 import static java.lang.Integer.parseInt;
+import static java.lang.Short.parseShort;
 import static se.jbee.track.engine.Server.Switch.DEDICATED;
 import static se.jbee.track.engine.Server.Switch.LOCKDOWN;
 import static se.jbee.track.engine.Server.Switch.OPEN;
@@ -56,10 +57,10 @@ public final class Server {
 				throw new IllegalArgumentException("Expected option; Unknown option: "+args[i-1]);
 			switch (option.charAt(1)) {
 			case 'f': res = res.with(new File(args[i++])); break;
-			case 's': res = res.with(Short.parseShort(args[i++])); break;
+			case 's': res = res.with(parseShort(args[i++])); break;
 			case 'a': res = res.with(Email.email(args[i++])); break;
 			case 'b': res = res.with(new LinearLimits(parseInt(args[i++]))); break;
-			case 'p': res = res.with(Integer.parseInt(args[i++])); break;
+			case 'p': res = res.with(parseInt(args[i++])); break;
 			case 'o': res = res.with(Switch.OPEN); break;
 			case 'l': res = res.with(Switch.LOCKDOWN); break;
 			case 'd': res = res.with(Switch.DEDICATED); break;
@@ -176,7 +177,7 @@ public final class Server {
 	}
 
 	public Server with(short sizeDB) {
-		return new Server(admin, pathDB, sizeDB, port, clock, limits, switches);
+		return new Server(admin, pathDB, 1014L * 1024L * sizeDB, port, clock, limits, switches);
 	}
 
 	public Server with(int port) {

@@ -31,8 +31,11 @@ public final class Application {
 
 	public static void main(String[] args) throws Exception {
 		Server config = Server.parse(args);
+		config = config.with(config.pathDB); // force check and creation of dir
 		UserInterface ui = createHttpUserInterface(config);
-		JettyHttpServer.start(config, ui);
+		org.eclipse.jetty.server.Server server = JettyHttpServer.create(config, ui);
+		server.start();
+		server.join();
 	}
 
 	public static UserInterface createHttpUserInterface(Server config) {
