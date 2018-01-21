@@ -4,7 +4,7 @@ import static java.lang.System.currentTimeMillis;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static se.jbee.track.Server.Switch.OPEN;
+import static se.jbee.track.engine.Server.Switch.OPEN;
 import static se.jbee.track.model.Date.date;
 import static se.jbee.track.model.Email.email;
 import static se.jbee.track.model.Gist.gist;
@@ -13,6 +13,7 @@ import static se.jbee.track.model.Name.as;
 import org.junit.Test;
 
 import se.jbee.track.engine.NoLimits;
+import se.jbee.track.engine.Server;
 import se.jbee.track.engine.Tracker;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Email;

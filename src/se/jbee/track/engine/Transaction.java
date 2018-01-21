@@ -16,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
-import se.jbee.track.Server;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.DB.TxRW;
 import se.jbee.track.engine.Change.Operation;

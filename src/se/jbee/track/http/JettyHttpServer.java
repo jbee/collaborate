@@ -16,18 +16,14 @@ import org.eclipse.jetty.server.session.HashSessionIdManager;
 import org.eclipse.jetty.server.session.HashSessionManager;
 import org.eclipse.jetty.server.session.SessionHandler;
 
-import se.jbee.track.Application;
 import se.jbee.track.api.Param;
 import se.jbee.track.api.Params;
 import se.jbee.track.api.UserInterface;
 
 public class JettyHttpServer extends AbstractHandler {
 
-	public static void main(String[] args) throws Exception {
-		se.jbee.track.Server config = se.jbee.track.Server.parse(args);
-		UserInterface ui = Application.createHttpUserInterface(config);
-
-		Server httpServer = new Server(8080);
+	public static void start(se.jbee.track.engine.Server config, UserInterface ui) throws Exception {
+		Server httpServer = new Server(config.port);
 		ResourceHandler resource_handler = new ResourceHandler();
 		if (config.isTemporary) {
 			resource_handler.setCacheControl("no-store,no-cache,must-revalidate");

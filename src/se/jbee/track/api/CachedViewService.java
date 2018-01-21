@@ -5,7 +5,6 @@ import static java.lang.Integer.parseInt;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import se.jbee.track.Server;
 import se.jbee.track.api.Param.Command;
 import se.jbee.track.cache.Cache;
 import se.jbee.track.cache.Matches;
@@ -13,6 +12,7 @@ import se.jbee.track.db.DB;
 import se.jbee.track.engine.Changes;
 import se.jbee.track.engine.NoLimits;
 import se.jbee.track.engine.Sample;
+import se.jbee.track.engine.Server;
 import se.jbee.track.engine.Transaction;
 import se.jbee.track.engine.TransitionDenied;
 import se.jbee.track.engine.TransitionDenied.Error;

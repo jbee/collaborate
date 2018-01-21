@@ -21,7 +21,6 @@ import static se.jbee.track.model.Status.unsolved;
 
 import java.util.EnumMap;
 
-import se.jbee.track.Server;
 import se.jbee.track.engine.Limits.ConcurrentUsage;
 import se.jbee.track.engine.TransitionDenied.Error;
 import se.jbee.track.model.Area;

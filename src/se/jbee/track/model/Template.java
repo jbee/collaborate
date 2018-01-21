@@ -8,29 +8,31 @@ import java.util.List;
 public final class Template extends Bytes implements Comparable<Template> {
 
 	public static final Template BLANK_PAGE = new Template(new byte[0]);
-	
+
 	public static Template template(String template) {
 		if (template.isEmpty())
 			return BLANK_PAGE;
-		if (!isText(template)) {
+		if (!isText(template))
 			throw new IllegalArgumentException("Template contains illegal characters.");
-		}
-		return new Template(template.getBytes(UTF_16BE));
+		byte[] bytes = template.getBytes(UTF_16BE);
+		if (bytes.length > 4000)
+			throw new IllegalArgumentException("Text is too long.");
+		return new Template(bytes);
 	}
-	
+
 	public static Template fromBytes(byte[] template) {
 		return new Template(template);
 	}
-	
+
 	private final byte[] template;
-	
+
 	private transient volatile Object[] parsed;
-	
+
 	private Template(byte[] template) {
 		super();
 		this.template = template;
 	}
-	
+
 	public boolean isEmpty() {
 		return template.length == 0;
 	}
@@ -44,7 +46,7 @@ public final class Template extends Bytes implements Comparable<Template> {
 	public int compareTo(Template other) {
 		return this == other ? 0 : compare(template, other.template);
 	}
-	
+
 	@Override
 	public String toString() {
 		return new String(template, UTF_16BE);
@@ -96,29 +98,29 @@ public final class Template extends Bytes implements Comparable<Template> {
 		}
 		return parts.toArray();
 	}
-	
+
 	//TODO less formal. A template can contain any text. We do a simple markup there. If a line starts with [ it is considered part of a query
-	
+
 	/* so one can write
-	 * 
+	 *
 	 * *** My Title ***
-	 * 
+	 *
 	 * Some text here.
 	 * In multiple lines.
-	 * 
+	 *
 	 * My oldies
 	 * [user=@]
 	 * [age>20]
-	 * 
+	 *
 	 * Hot just now
 	 * [output=@][temperature > 90]
-	 * 
+	 *
 	 * *** Next Silo ***
 	 * ...
 	 */
-	
-	// also there could be simple markups for a 
+
+	// also there could be simple markups for a
 	// * search form => ???
 	// * current users polls => !!!
-	// * 
+	// *
 }

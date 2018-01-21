@@ -28,7 +28,6 @@ import org.lmdbjava.DbiFlags;
 import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
-import se.jbee.track.Server;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.DB.TxR;
 import se.jbee.track.db.DB.TxRW;

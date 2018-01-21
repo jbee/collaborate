@@ -1,17 +1,14 @@
-package se.jbee.track;
+package se.jbee.track.engine;
 
 import static java.lang.Integer.parseInt;
-import static se.jbee.track.Server.Switch.LOCKDOWN;
-import static se.jbee.track.Server.Switch.OPEN;
-import static se.jbee.track.Server.Switch.PRIVATE;
+import static se.jbee.track.engine.Server.Switch.DEDICATED;
+import static se.jbee.track.engine.Server.Switch.LOCKDOWN;
+import static se.jbee.track.engine.Server.Switch.OPEN;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.EnumSet;
 
-import se.jbee.track.engine.Clock;
-import se.jbee.track.engine.Limits;
-import se.jbee.track.engine.LinearLimits;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Email;
 import se.jbee.track.model.Output;
@@ -41,7 +38,7 @@ public final class Server {
 	 * -b LIMIT activity limit base (default 5)
 	 * -o       open: allow users to create outputs
 	 * -l       lock-down: only the admin user may log in
-	 * -p       private: allow user to see admin's email
+	 * -d       dedicated: allow user to see admin's email
 	 * </pre>
 	 *
 	 * @param args
@@ -56,15 +53,18 @@ public final class Server {
 		while (i  < args.length) {
 			String option = args[i++];
 			if (!option.startsWith("-") || option.length() <= 1)
-				throw new IllegalArgumentException("Expected option; Unknown option: "+args[i-1]); 
+				throw new IllegalArgumentException("Expected option; Unknown option: "+args[i-1]);
 			switch (option.charAt(1)) {
 			case 'f': res = res.with(new File(args[i++])); break;
-			case 's': res = res.with(parseInt(args[i++])); break;
+			case 's': res = res.with(Short.parseShort(args[i++])); break;
 			case 'a': res = res.with(Email.email(args[i++])); break;
 			case 'b': res = res.with(new LinearLimits(parseInt(args[i++]))); break;
+			case 'p': res = res.with(Integer.parseInt(args[i++])); break;
 			case 'o': res = res.with(Switch.OPEN); break;
 			case 'l': res = res.with(Switch.LOCKDOWN); break;
-			case 'p': res = res.with(Switch.PRIVATE); break;
+			case 'd': res = res.with(Switch.DEDICATED); break;
+			default:
+				throw new IllegalArgumentException("Unknown option: "+args[i-1]);
 			}
 		}
 		return res;
@@ -90,7 +90,7 @@ public final class Server {
 		 * If set user may see/get the admins email so that they can contact the
 		 * admin in case it is needed.
 		 */
-		PRIVATE,
+		DEDICATED,
 
 	}
 
@@ -109,24 +109,25 @@ public final class Server {
 	 * Maximum size of DB in bytes.
 	 */
 	public final long sizeDB;
+	public final boolean isTemporary;
 
 	public final Clock clock;
 	public final Limits limits;
 	private final EnumSet<Switch> switches;
-	
-	public final boolean isTemporary;
+	public final int port;
 
 	public Server() {
-		this(Email.NO_ADMIN, 
-				new File(System.getProperty("java.io.tmpdir") + "/collaborate-"+Date.today()+"/"), 1014L * 1024L * 10L, 
+		this(Email.NO_ADMIN,
+				new File(System.getProperty("java.io.tmpdir") + "/collaborate-"+Date.today()+"/"), 1014L * 1024L * 10L, 8080,
 				() -> System.currentTimeMillis(), new LinearLimits(5), EnumSet.noneOf(Switch.class));
 	}
 
-	private Server(Email admin, File pathDB, long sizeDB, Clock clock, Limits limits, EnumSet<Switch> switches) {
+	private Server(Email admin, File pathDB, long sizeDB, int port, Clock clock, Limits limits, EnumSet<Switch> switches) {
 		super();
 		this.admin = admin;
 		this.pathDB = pathDB;
 		this.sizeDB = sizeDB;
+		this.port = port;
 		this.clock = clock;
 		this.limits = limits;
 		this.switches = switches;
@@ -146,24 +147,24 @@ public final class Server {
 	}
 
 	public Server with(Clock clock) {
-		return new Server(admin, pathDB, sizeDB, clock, limits, switches);
+		return new Server(admin, pathDB, sizeDB, port, clock, limits, switches);
 	}
 
 	public Server with(Limits limits) {
-		return new Server(admin, pathDB, sizeDB, clock, limits, switches);
+		return new Server(admin, pathDB, sizeDB, port, clock, limits, switches);
 	}
 
 	public Server with(Email admin) {
-		return new Server(admin, pathDB, sizeDB, clock, limits, switches);
+		return new Server(admin, pathDB, sizeDB, port, clock, limits, switches);
 	}
 
 	public Server with(Switch...switches) {
-		return new Server(admin, pathDB, sizeDB, clock, limits,
+		return new Server(admin, pathDB, sizeDB, port, clock, limits,
 				switches.length == 0
 				? EnumSet.noneOf(Switch.class)
 				: EnumSet.of(switches[0], switches));
 	}
-	
+
 	public Server with(File pathDB) throws IOException {
 		if (!pathDB.exists() && !pathDB.mkdirs()) {
 			throw new IOException("Database folder does not exist and cannot be created: "+pathDB);
@@ -171,11 +172,15 @@ public final class Server {
 		if (!pathDB.isDirectory()) {
 			throw new IllegalArgumentException("Please provide the folder the database is located, not a file like: "+pathDB);
 		}
-		return new Server(admin, pathDB, sizeDB, clock, limits, switches);
+		return new Server(admin, pathDB, sizeDB, port, clock, limits, switches);
 	}
-	
-	public Server with(int sizeDB) {
-		return new Server(admin, pathDB, sizeDB, clock, limits, switches);
+
+	public Server with(short sizeDB) {
+		return new Server(admin, pathDB, sizeDB, port, clock, limits, switches);
+	}
+
+	public Server with(int port) {
+		return new Server(admin, pathDB, sizeDB, port, clock, limits, switches);
 	}
 
 	public Server with(Switch s) {
@@ -183,11 +188,11 @@ public final class Server {
 			return this;
 		EnumSet<Switch> switches = this.switches.clone();
 		switches.add(s);
-		return new Server(admin, pathDB, sizeDB, clock, limits, switches);
+		return new Server(admin, pathDB, sizeDB, port, clock, limits, switches);
 	}
 
 	public Email admin() {
-		return switches.contains(PRIVATE) ? admin : null;
+		return switches.contains(DEDICATED) ? admin : null;
 	}
 
 }
