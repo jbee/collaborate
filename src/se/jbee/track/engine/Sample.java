@@ -15,6 +15,7 @@ import se.jbee.track.engine.Change.Tx;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.Gist;
 import se.jbee.track.model.Mail;
+import se.jbee.track.model.Motive;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
 import se.jbee.track.model.Output;
@@ -52,21 +53,22 @@ public class Sample {
 			for (Version v : vx)
 				versionByOutput.computeIfAbsent(v.output, (name) -> new ArrayList<>()).add(v);
 			for (int i = 0; i < tasks; i++) {
-				Area a = ax[RND.nextInt(ax.length)];
-				User reporter = ux[RND.nextInt(ux.length)];
+				Area a = pick1From(ax);
+				User reporter = pick1From(ux);
 				Output o = omap.get(a.output);
 				List<Version> candidates = versionByOutput.get(a.output);
 				if (candidates == null) { // we just register a new version for that product as well
-					candidates = Collections.singletonList(version(t, tx, new Output[] {o}, versions.at(RND.nextInt(versions.count())), ux));
+					candidates = Collections.singletonList(version(t, tx, new Output[] {o}, pick1From(versions), ux));
 					versionByOutput.put(a.output, candidates);
 				}
-				Version version = candidates.get(RND.nextInt(candidates.size()));
+				Version version = pick1From(candidates);
 				if (a.board) {
-					t.reportRequest(o, randomGist(), reporter, a);
+					tx.put(sample, t.reportRequest(o, randomGist(a.motive), reporter, a));
 				} else {
 					if (RND.nextInt(100) < 40) {
-						t.reportDefect(o, randomGist(), reporter, a, version, RND.nextBoolean());
+						tx.put(sample, t.reportDefect(o, randomGist(Motive.defect), reporter, a, version, RND.nextBoolean()));
 					} else {
+						tx.put(sample, t.reportProposal(o, randomGist(Motive.proposal), reporter, a));
 					}
 				}
 			}
@@ -88,15 +90,48 @@ public class Sample {
 				return res;
 		}
 		// does not exist
-		User actor = users[RND.nextInt(users.length)];
-		Output output = outputs[RND.nextInt(outputs.length)];
+		User actor = pick1From(users);
+		Output output = pick1From(outputs);
 		Version res = t.tag(output, version, actor);
 		tx.put(sample, res);
 		return res;
 	}
 
-	private static Gist randomGist() {
-		return Gist.gist("Totally random!");
+	private static final String[] SUBJECT = {"Mail", "User", "Product", "Article", "Account"};
+	private static final String[] SUBJECT_TECH = {"Factory", "Manager", "Proxy", "Impl"};
+	private static final String[] DEFECT = {" is not responding.", " throws ", " causes ", " fails because of a "};
+	private static final String[] ERROR = {"Error", "Exception"};
+	private static final String[] VERB = {" should be ", " should not be ", " could be "};
+	private static final String[] ENDING = {" available.", " moved.", "moved back."};
+
+	private static Gist randomGist(Motive motive) {
+		String gist = pick1From(SUBJECT);
+		int suf = RND.nextInt(100);
+		while (suf < 30 && suf > 0) {
+			gist += pick1From(SUBJECT_TECH);
+			suf = RND.nextInt(suf);
+		}
+		if (motive == Motive.defect) {
+			gist += pick1From(DEFECT);
+			if (!gist.endsWith(".")) {
+				gist += pick1From(SUBJECT)+pick1From(ERROR);
+			}
+		} else {
+			gist += pick1From(VERB)+pick1From(ENDING);
+		}
+		return Gist.gist(gist);
+	}
+
+	private static <T> T pick1From(T[] options) {
+		return options[RND.nextInt(options.length)];
+	}
+
+	private static Name pick1From(Names options) {
+		return options.at(RND.nextInt(options.count()));
+	}
+
+	private static <T> T pick1From(List<T> options) {
+		return options.isEmpty() ? null : options.get(RND.nextInt(options.size()));
 	}
 
 	private static Area[] areas(Tracker t, Tx tx, Output[] outputs, Names areas, User[] users) {
@@ -115,14 +150,14 @@ public class Sample {
 				return res;
 		}
 		// does not exist yet...
-		User actor = users[RND.nextInt(users.length)];
-		Output output = outputs[RND.nextInt(outputs.length)];
+		User actor = pick1From(users);
+		Output output = pick1From(outputs);
 		Area basis = basis(output, bases);
 		Area res = basis == null
 			? t.compart(output, area, actor)
 			: t.compart(basis, area, actor, RND.nextBoolean());
 		if (!output.categories.isEmpty()) {
-			res = t.categorise(res, output.categories.at(RND.nextInt(output.categories.count())), actor);
+			res = t.categorise(res, pick1From(output.categories), actor);
 		}
 		//TODO to have a difference on sub-area maintainers need to join before all areas are done...
 		tx.put(sample, res);
@@ -136,7 +171,7 @@ public class Sample {
 		for (Area a : bases)
 			if (a != null && a.output.equalTo(output.name) && !a.board)
 				candidates.add(a);
-		return candidates.isEmpty() ? null : candidates.get(RND.nextInt(candidates.size()));
+		return pick1From(candidates);
 	}
 
 	private static User[] users(Tracker t, Tx tx, Names users) {

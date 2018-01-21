@@ -64,6 +64,7 @@ public final class Server {
 			case 'o': res = res.with(Switch.OPEN); break;
 			case 'l': res = res.with(Switch.LOCKDOWN); break;
 			case 'd': res = res.with(Switch.DEDICATED); break;
+			case 'h': System.out.println("Usage: java -jar collaborate.jar [OPTION...]"); System.exit(0); break;
 			default:
 				throw new IllegalArgumentException("Unknown option: "+args[i-1]);
 			}
