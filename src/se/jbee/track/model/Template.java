@@ -15,7 +15,7 @@ public final class Template extends Bytes implements Comparable<Template> {
 		if (!isText(template))
 			throw new IllegalArgumentException("Template contains illegal characters.");
 		byte[] bytes = template.getBytes(UTF_16BE);
-		if (bytes.length > 4000)
+		if (bytes.length > 8000)
 			throw new IllegalArgumentException("Text is too long.");
 		return new Template(bytes);
 	}

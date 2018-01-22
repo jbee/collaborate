@@ -46,6 +46,11 @@ import se.jbee.track.model.Version;
 public final class Transaction extends DAO implements Tx {
 
 	/**
+	 * We really just need a single buffer for writing as only one TX can write at a time.
+	 */
+	private static final ByteBuffer WRITE_BUF = ByteBuffer.allocateDirect(8192);
+
+	/**
 	 * Applies the changes to the DB.
 	 *
 	 * @return a list of changed entities each given as a pair: before and after the change
@@ -169,11 +174,11 @@ public final class Transaction extends DAO implements Tx {
 			return Changes.EMPTY; // empty changesets have serial 0 and can be discarded/ignored
 		if (actor == null)
 			throw new IllegalStateException("Acting user has to be updated during a transaction!");
-		ByteBuffer buf = ByteBuffer.allocateDirect(4096);
 		try (TxRW tx = db.write()) {
-			Changes.Entry<?>[] log = writeEntities(tx, buf);
+			WRITE_BUF.clear();
+			Changes.Entry<?>[] log = writeEntities(tx, WRITE_BUF);
 			long timestamp = clock.time();
-			writeHistoryAndEvent(tx, log, timestamp, buf);
+			writeHistoryAndEvent(tx, log, timestamp, WRITE_BUF);
 			tx.commit();
 			// serial is fetched within the TX write() but after commit() so we know this is successful
 			// also only one thread can enter the write block
