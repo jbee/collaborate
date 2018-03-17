@@ -4,12 +4,15 @@ import static java.nio.charset.StandardCharsets.UTF_16BE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class Template implements ByteSequence<Template> {
+public final class Template extends Text<Template> {
 
-	private static final String TEMPLATE_TEXT_REGEX = "(?:[-+*a-zA-Z0-9@_\\s\\\\\\$\\^:,;.?!#>=%&`\"'~\\pL\\pN\\(\\)\\[\\]\\{\\}]+|<[^a-zA-Z/]|/[^>])+[</]?";
+	private static final String TEMPLATE_CHAR_GROUP = "-+*a-zA-Z0-9@_\\s\\\\\\$\\^:,;.?!#>=%&`\\\"'~\\pL\\pN\\p{Sc}\\(\\)\\[\\]\\{\\}";
+	private static final String TEMPLATE_TEXT_REGEX = "(?:["+TEMPLATE_CHAR_GROUP+"]+|<[^a-zA-Z/]|/[^>])+[</]?";
 	private static final Pattern TEMPLATE_TEXT = Pattern.compile("^"+TEMPLATE_TEXT_REGEX+"$");
+	private static final Pattern TEMPLATE_ILLEGAL = Pattern.compile("[^"+TEMPLATE_CHAR_GROUP+"]");
 
 	public static boolean isTemplateText(String s) {
 		return TEMPLATE_TEXT.matcher(s).matches();
@@ -20,8 +23,11 @@ public final class Template implements ByteSequence<Template> {
 	public static Template template(String template) {
 		if (template.isEmpty())
 			return BLANK_PAGE;
-		if (!isTemplateText(template))
-			throw new IllegalArgumentException("Template contains illegal characters.");
+		if (!isTemplateText(template)) {
+			Matcher m = TEMPLATE_ILLEGAL.matcher(template);
+			m.find();
+			throw new IllegalArgumentException("Template contains illegal characters: "+m.group());
+		}
 		byte[] bytes = template.getBytes(UTF_16BE);
 		if (bytes.length > 8000)
 			throw new IllegalArgumentException("Text is too long.");
@@ -32,23 +38,10 @@ public final class Template implements ByteSequence<Template> {
 		return new Template(template);
 	}
 
-	private final byte[] template;
-
 	private transient volatile Object[] parsed;
 
 	private Template(byte[] template) {
-		super();
-		this.template = template;
-	}
-
-	@Override
-	public byte[] readonlyBytes() {
-		return template;
-	}
-
-	@Override
-	public String toString() {
-		return new String(template, UTF_16BE);
+		super(template);
 	}
 
 	public Object[] elements() {

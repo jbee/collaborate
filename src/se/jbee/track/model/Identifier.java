@@ -1,6 +1,5 @@
 package se.jbee.track.model;
 
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -34,7 +33,7 @@ public abstract class Identifier<T extends Identifier<T>> implements ByteSequenc
 
 	@Override
 	public String toString() {
-		return new String(symbols, StandardCharsets.US_ASCII);
+		return new String(symbols, charset());
 	}
 
 	@Override

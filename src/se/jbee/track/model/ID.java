@@ -11,7 +11,7 @@ public final class ID extends Identifier<ID> {
 
 	private static final byte[] DIVIDER = {':'};
 
-	@UseCode
+	@UseCode("UPOAVTpeh")
 	public enum Type {
 		// core domain (uses upper case symbols)
 		User, Page, Output, Area, Version, Task,

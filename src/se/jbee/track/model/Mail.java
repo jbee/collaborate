@@ -4,22 +4,22 @@ package se.jbee.track.model;
 
 public final class Mail {
 
-	@UseCode
+	@UseCode("ci")
 	public static enum Objective { confirmation, information }
-	
-	@UseCode
+
+	@UseCode("pshdwn")
 	public static enum Delivery { promptly, shortly, hourly, daily, weekly, never }
-	
+
 	/**
 	 * The idea of a fine grained setting is to reduce mails or mail handling by
 	 * allowing users to configure away messages by using
 	 * {@link Delivery#never} and at the same time give the user a way to
 	 * adopt mails to their usage pattern.
-	 * 
+	 *
 	 * In general one get mails for all tasks involved or watched. So watching
 	 * is mostly a way to trigger notifications for task one isn't involved in.
 	 */
-	@UseCode
+	@UseCode("acoltpvrdmse")
 	public static enum Notification {
 		// user
 		authenticated(Delivery.never), // a login occurred
@@ -40,9 +40,9 @@ public final class Mail {
 		solved(Delivery.hourly),   // where user is involved
 		extended(Delivery.hourly)  // where user is involved
 		;
-		
+
 		public final Delivery preset;
-		
+
 		Notification(Delivery preset) {
 			this.preset = preset;
 		}
@@ -53,7 +53,7 @@ public final class Mail {
 	public final Objective objective;
 	public final Notification subject;
 	public final String text;
-	
+
 	public Mail(Delivery method, Email to, Objective objective, Notification subject, String text) {
 		super();
 		this.method = method;
@@ -62,5 +62,5 @@ public final class Mail {
 		this.subject = subject;
 		this.text = text;
 	}
-	
+
 }

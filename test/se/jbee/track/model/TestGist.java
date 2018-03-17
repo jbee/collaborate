@@ -33,4 +33,20 @@ public class TestGist {
 		assertEquals(-1, find(a, gist("foob")));
 		assertEquals(-1, find(a, gist("bazi")));
 	}
+
+	@Test
+	public void gistLengthIsInCharacters() {
+		assertEquals(0, gist("").length());
+		assertEquals(1, gist("x").length());
+		assertEquals(2, gist("xy").length());
+		assertEquals(3, gist("xyz").length());
+	}
+
+	@Test
+	public void gistCharAtReturnsCharacters() {
+		assertEquals('a', gist("a").charAt(0));
+		assertEquals('ä', gist("ä").charAt(0));
+		assertEquals('€', gist("ä€").charAt(1));
+		assertEquals('X', gist("ä€X").charAt(2));
+	}
 }

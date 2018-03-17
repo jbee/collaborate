@@ -1,6 +1,6 @@
 package se.jbee.track.model;
 
-@UseCode
+@UseCode("nrpd")
 public enum Motive {
 
 	/**
@@ -9,17 +9,17 @@ public enum Motive {
 	 * predict the moment or plan the way.
 	 */
 	necessity,
-	
+
 	/**
 	 * To a thought that might be something to do.
 	 */
 	reminder,
-	
+
 	/**
 	 * A specific change of how things should be is proposed.
 	 */
 	proposal,
-	
+
 	/**
 	 * Something is broken, wrong. Change is required to make something work as
 	 * described.

@@ -1,6 +1,6 @@
 package se.jbee.track.model;
 
-@UseCode
+@UseCode("cmvp")
 public enum Purpose {
 
 	clarification, // confirming defects, localizing area, exploring ideas

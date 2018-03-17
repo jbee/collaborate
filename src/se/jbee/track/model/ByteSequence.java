@@ -1,5 +1,7 @@
 package se.jbee.track.model;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 public interface ByteSequence<T extends ByteSequence<T>> extends CharSequence, Comparable<T> {
@@ -9,6 +11,10 @@ public interface ByteSequence<T extends ByteSequence<T>> extends CharSequence, C
 	 *         reasons this is not necessarily a copy or otherwise computed array.
 	 */
 	byte[] readonlyBytes();
+
+	default Charset charset() {
+		return StandardCharsets.US_ASCII;
+	}
 
 	default boolean isEmpty() {
 		return readonlyBytes().length == 0;
@@ -40,7 +46,7 @@ public interface ByteSequence<T extends ByteSequence<T>> extends CharSequence, C
 
 	@Override
 	default int compareTo(T other) {
-		return this == other ? 0 : ByteSequence.compare(this, other);
+		return this == other ? 0 : compare(this, other);
 	}
 
 	default boolean equalTo(T other) {

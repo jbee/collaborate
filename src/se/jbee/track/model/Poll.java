@@ -2,7 +2,7 @@ package se.jbee.track.model;
 
 public final class Poll extends Entity<Poll> {
 
-	@UseCode
+	@UseCode("prieasu")
 	public static enum Matter {
 		// on maintainers
 		participation, resignation,
@@ -12,7 +12,7 @@ public final class Poll extends Entity<Poll> {
 		abandonment,
 		// non integration URLs or not?
 		safeguarding, unblocking;
-		
+
 		public boolean isUserRelated() {
 			return ordinal() < abandonment.ordinal();
 		}
@@ -34,17 +34,17 @@ public final class Poll extends Entity<Poll> {
 	public Poll(int version) {
 		super(version);
 	}
-	
+
 	@Override
 	public ID computeID() {
 		return ID.pollId(area.output, area.name, serial);
 	}
-	
+
 	@Override
 	public Name output() {
 		return area.output;
 	}
-	
+
 	public boolean canVote(Name voter) {
 		return !isConcluded() && area.maintainers.contains(voter) && !affected.equalTo(voter) && !isEffectivelySettled();
 	}
@@ -60,7 +60,7 @@ public final class Poll extends Entity<Poll> {
 	public boolean isAccepted() {
 		return outcome == Outcome.consent || (consenting.count() > dissenting.count() && isEffectivelySettled());
 	}
-	
+
 	public boolean isConcluded() {
 		return outcome != Outcome.inconclusive;
 	}
@@ -68,5 +68,5 @@ public final class Poll extends Entity<Poll> {
 	public boolean hasVoted(Name user) {
 		return consenting.contains(user) || dissenting.contains(user);
 	}
-	
+
 }

@@ -52,7 +52,17 @@ public class TestByteSequenceSecurity {
 	}
 
 	@Test
+	public void currencySymbolsAreGistText() {
+		assertTrue(isGistText("€$£¥"));
+	}
+
+	@Test
 	public void nonLettersOrDigitsUnicodeSymbolsAreNotTemplateText() {
 		assertFalse(isTemplateText("💩"));
+	}
+
+	@Test
+	public void currencySymbolsAreTemplateText() {
+		assertTrue(isTemplateText("€$£¥"));
 	}
 }

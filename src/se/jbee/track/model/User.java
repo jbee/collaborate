@@ -7,7 +7,7 @@ import java.util.EnumMap;
 
 public final class User extends Entity<User> {
 
-	@UseCode
+	@UseCode("urca")
 	public static enum AuthState { unregistered, registered, confirming, authenticated }
 
 	private static final int INITIAL_WATCH_LIMIT = 20;

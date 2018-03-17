@@ -1,6 +1,6 @@
 package se.jbee.track.model;
 
-@UseCode
+@UseCode("ctwhb")
 public enum Heat {
 
 	cold, tepid, warm, hot, burning;

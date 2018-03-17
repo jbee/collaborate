@@ -1,25 +1,25 @@
 package se.jbee.track.model;
 
-@UseCode
+@UseCode("uard")
 public enum Status {
 
 	/**
 	 * The problem is not concluded yet.
 	 */
-	unsolved, 
-	
+	unsolved,
+
 	/*
 	 * concluded
 	 */
-	
+
 	/**
 	 * Problem isn't worth looking into (ignored).
 	 */
-	absolved, 
+	absolved,
 	/**
 	 * Problem tracked down and "fixed".
 	 */
-	resolved, 
+	resolved,
 	/**
 	 * System redesigned to not have the (kind of) problem any more.
 	 */
