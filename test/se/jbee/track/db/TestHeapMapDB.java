@@ -36,7 +36,7 @@ public class TestHeapMapDB {
 	@Test
 	public void putValuesAreAvailableAfterCommittedTransaction() {
 		ID key = userId(as("xy"));
-		ByteBuffer value = ByteBuffer.wrap("foo".getBytes());
+		ByteBuffer value = value("foo");
 		try (TxRW tx = db.write()) {
 			tx.put(key, value);
 			tx.commit();
@@ -47,7 +47,7 @@ public class TestHeapMapDB {
 	@Test
 	public void putValuesAreNotAvailableAfterUncommittedTransaction() {
 		ID key = userId(as("xy"));
-		ByteBuffer value = ByteBuffer.wrap("foo".getBytes());
+		ByteBuffer value = value("foo");
 		try (TxRW tx = db.write()) {
 			tx.put(key, value);
 		}
@@ -57,14 +57,14 @@ public class TestHeapMapDB {
 	@Test
 	public void putValuesCanBeReplacedByACommittedTransaction() {
 		ID key = userId(as("xy"));
-		ByteBuffer value = ByteBuffer.wrap("foo".getBytes());
+		ByteBuffer value = value("foo");
 		try (TxRW tx = db.write()) {
 			tx.put(key, value);
 			tx.commit();
 		}
 		assertEquals(value, db.read().get(key));
 
-		ByteBuffer newValue = ByteBuffer.wrap("bar".getBytes());
+		ByteBuffer newValue = value("bar");
 		try (TxRW tx = db.write()) {
 			tx.put(key, newValue);
 			tx.commit();
@@ -75,17 +75,21 @@ public class TestHeapMapDB {
 	@Test
 	public void putValuesAreNotReplacedByAnUncommittedTransaction() {
 		ID key = userId(as("xy"));
-		ByteBuffer value = ByteBuffer.wrap("foo".getBytes());
+		ByteBuffer value = value("foo");
 		try (TxRW tx = db.write()) {
 			tx.put(key, value);
 			tx.commit();
 		}
 		assertEquals(value, db.read().get(key));
 
-		ByteBuffer newValue = ByteBuffer.wrap("bar".getBytes());
+		ByteBuffer newValue = value("bar");
 		try (TxRW tx = db.write()) {
 			tx.put(key, newValue);
 		}
 		assertEquals(value, db.read().get(key));
+	}
+
+	private static ByteBuffer value(String val) {
+		return ByteBuffer.wrap("bar".getBytes());
 	}
 }

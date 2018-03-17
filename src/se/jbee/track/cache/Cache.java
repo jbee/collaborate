@@ -25,7 +25,7 @@ public interface Cache {
 	 * Note: To cause indexing of a specific {@link Output} use
 	 * {@link Criteria#index(se.jbee.track.model.Name)}.
 	 */
-	Future<Matches> matchesFor(User inquirer, Criteria criteria);
+	Future<Matches> matchesFor(User actor, Criteria criteria);
 	
 	Future<Void> invalidate(Changes changes);
 

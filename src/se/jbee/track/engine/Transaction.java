@@ -107,8 +107,7 @@ public final class Transaction extends DAO implements Tx {
 			putFields(op, e); // "auto"-update fields with updates
 			changed.put(id, e);
 			ArrayList<Operation> ops = changeTypes.computeIfAbsent(id, (id_) -> new ArrayList<>());
-			if (ops.isEmpty() || !op.fold || ops.get(ops.size()-1) != op)
-				ops.add(op);
+			ops.add(op);
 			putUser(e, id);
 		}
 	}

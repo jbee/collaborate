@@ -1,6 +1,5 @@
 package se.jbee.track.engine;
 
-import static se.jbee.track.engine.Change.Operation.sample;
 import static se.jbee.track.model.Email.email;
 
 import java.util.ArrayList;
@@ -63,12 +62,12 @@ public class Sample {
 				}
 				Version version = pick1From(candidates);
 				if (a.board) {
-					tx.put(sample, t.reportRequest(o, randomGist(a.motive), reporter, a));
+					Change.request(o.name, randomGist(a.motive), reporter.alias, a.name).apply(t, tx);
 				} else {
 					if (RND.nextInt(100) < 40) {
-						tx.put(sample, t.reportDefect(o, randomGist(Motive.defect), reporter, a, version, RND.nextBoolean()));
+						Change.warn(o.name, randomGist(Motive.defect), reporter.alias, a.name, version.name, RND.nextBoolean()).apply(t, tx);
 					} else {
-						tx.put(sample, t.reportProposal(o, randomGist(Motive.proposal), reporter, a));
+						Change.propose(o.name, randomGist(Motive.proposal), reporter.alias, a.name).apply(t, tx);
 					}
 				}
 			}
@@ -92,9 +91,8 @@ public class Sample {
 		// does not exist
 		User actor = pick1From(users);
 		Output output = pick1From(outputs);
-		Version res = t.tag(output, version, actor);
-		tx.put(sample, res);
-		return res;
+		Change.tag(output.name, version, actor.alias).apply(t, tx);
+		return tx.version(output.name, version);
 	}
 
 	private static final String[] SUBJECT = {"Mail", "User", "Product", "Article", "Account"};
@@ -153,15 +151,16 @@ public class Sample {
 		User actor = pick1From(users);
 		Output output = pick1From(outputs);
 		Area basis = basis(output, bases);
-		Area res = basis == null
-			? t.compart(output, area, actor)
-			: t.compart(basis, area, actor, RND.nextBoolean());
+		if (basis == null) {
+			Change.compart(output.name, area, actor.alias).apply(t, tx);
+		} else {
+			Change.compart(output.name, basis.name, area, actor.alias, RND.nextBoolean()).apply(t, tx);
+		}
 		if (!output.categories.isEmpty()) {
-			res = t.categorise(res, pick1From(output.categories), actor);
+			Change.categorise(output.name, area, pick1From(output.categories), actor.alias).apply(t, tx);
 		}
 		//TODO to have a difference on sub-area maintainers need to join before all areas are done...
-		tx.put(sample, res);
-		return res;
+		return tx.area(output.name, area);
 	}
 
 	private static Area basis(Output output, Area[] bases) {
@@ -185,12 +184,11 @@ public class Sample {
 	private static User user(Tracker t, Tx tx, Name alias) {
 		User res = tx.userOrNull(alias);
 		if (res == null) {
-			res = t.register(res, alias, email(alias.toString()+"@example.com"));
-			res = t.authenticate(res, res.otp);
-			res = t.configure(res, NO_MAILS);
-			tx.put(sample, res);
+			Change.register(alias, email(alias.toString()+"@example.com")).apply(t, tx);
+			Change.authenticate(alias, tx.user(alias).otp).apply(t, tx);
+			Change.configure(alias, NO_MAILS).apply(t, tx);
 		}
-		return res;
+		return tx.user(alias);
 	}
 
 	private static Output[] outputs(Tracker t, Tx tx, Names outputs, Names categories, User actor) {
@@ -204,12 +202,11 @@ public class Sample {
 	private static Output output(Tracker t, Tx tx, Name output, Names categories, User actor) {
 		Output res = tx.outputOrNull(output);
 		if (res == null) {
-			res = t.envision(output, actor);
+			Change.envision(output, actor.alias).apply(t, tx);
 			for (Name c : categories)
-				res = t.suggest(res, c, actor);
-			tx.put(sample, res);
+				Change.suggest(output, c, actor.alias).apply(t, tx);
 		}
-		return res;
+		return tx.output(output);
 	}
 
 }

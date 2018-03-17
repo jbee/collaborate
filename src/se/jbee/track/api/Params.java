@@ -42,6 +42,11 @@ public final class Params extends EnumMap<Param, String> {
 		return res;
 	}
 
+	public Name name(Param p) {
+		String val = get(p);
+		return val == null ? Name.UNKNOWN : Name.as(val);
+	}
+
 	// URLs
 
 	/**
@@ -127,5 +132,6 @@ public final class Params extends EnumMap<Param, String> {
 		}
 		return params;
 	}
+
 
 }

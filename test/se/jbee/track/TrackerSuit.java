@@ -6,6 +6,7 @@ import org.junit.runners.Suite.SuiteClasses;
 
 import se.jbee.track.api.TestURLToParams;
 import se.jbee.track.cache.TestTaskSet;
+import se.jbee.track.db.TestHeapMapDB;
 import se.jbee.track.engine.TestConvert;
 import se.jbee.track.engine.TestLMDB;
 import se.jbee.track.engine.TestOTP;
@@ -22,7 +23,7 @@ import se.jbee.track.model.TestURL;
 		TestCriteria.class, TestOTP.class, TestUseCode.class,
 		TestCriterium.class, TestGist.class, TestTaskSet.class,
 		TestByteSequenceSecurity.class, TestURL.class, TestName.class, TestURLToParams.class,
-		TestTemplate.class })
+		TestTemplate.class, TestHeapMapDB.class })
 public class TrackerSuit {
 	// run all tests...
 }

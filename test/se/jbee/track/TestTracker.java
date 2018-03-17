@@ -12,7 +12,7 @@ import static se.jbee.track.model.Name.as;
 
 import org.junit.Test;
 
-import se.jbee.track.engine.NoLimits;
+import se.jbee.track.engine.Limits;
 import se.jbee.track.engine.Server;
 import se.jbee.track.engine.Tracker;
 import se.jbee.track.model.Date;
@@ -24,7 +24,7 @@ import se.jbee.track.model.User;
 public class TestTracker {
 
 	private long now = System.currentTimeMillis();
-	private Tracker tracker = new Tracker(new Server().with(Email.email("admin@example.com")).with(TestTracker.this::tick).with(new NoLimits()).with(OPEN));
+	private Tracker tracker = new Tracker(new Server().with(Email.email("admin@example.com")).with(TestTracker.this::tick).with(Limits.NONE).with(OPEN));
 
 	private long tick() {
 		now += 60000;

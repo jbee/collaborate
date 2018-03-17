@@ -89,7 +89,6 @@ final class CacheWorker implements Cache {
 	private TaskSet[] byTemperature = new TaskSet[100]; // not fix, has to be recomputed every day
 
 	public CacheWorker(Name output, DB db, Date today) {
-		super();
 		this.output = output;
 		this.today = today;
 		this.byIDN = new Task[128]; // initial capacity
@@ -128,8 +127,8 @@ final class CacheWorker implements Cache {
 			Task[] tmp = new Task[nextPowerOf2(idn)];
 			System.arraycopy(tmp, 0, tmp, 0, usage+1);
 			byIDN = tmp;
-			usage = idn;
 		}
+		usage = Math.max(idn, usage);
 		byIDN[idn] = t;
 		if (!t.archived) {
 			for (Name n : t.participants)
@@ -172,7 +171,7 @@ final class CacheWorker implements Cache {
 	}
 
 	@Override
-	public Future<Matches> matchesFor(User inquirer, Criteria criteria) {
+	public Future<Matches> matchesFor(User actor, Criteria criteria) {
 		return es.submit(() -> lookup(criteria));
 	}
 
@@ -195,11 +194,11 @@ final class CacheWorker implements Cache {
 			return new Matches(copyOfRange(byIDN, 1, usage+1), usage+1);
 		}
 		// 1. find the "eq" selector that yields the smallest set
-		Criterium c = criteria.get(0);
 		TaskSet candidates = null;
 		Criterium selector = null;
 		int i = 1;
-		while (c.op == eq) {
+		while (i < criteria.count() && criteria.get(i).op == eq) {
+			Criterium c = criteria.get(i);
 			Map<?,TaskSet> table = select(c.left);
 			if (table != null) {
 				TaskSet index = table.get(c.rvalues[0]);
@@ -210,7 +209,7 @@ final class CacheWorker implements Cache {
 					candidates = index;
 				}
 			}
-			c = criteria.get(i++);
+			i++;
 		}
 		if (selector != null) {
 			return orderAndSlice(filter(candidates, criteria), criteria, today);
@@ -301,7 +300,7 @@ final class CacheWorker implements Cache {
 	}
 
 	private Task[] filter(Task[] set, int size, Criteria criteria) {
-		return criteria.filter(asList(set).subList(0, size).iterator(), today);
+		return criteria.filter(asList(set).subList(1, size).iterator(), today);
 	}
 
 	private Map<?,TaskSet> select(Property prop) {

@@ -1,6 +1,7 @@
 package se.jbee.track.api;
 
 import static java.lang.Integer.parseInt;
+import static se.jbee.track.cache.Matches.matches;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,12 +11,13 @@ import se.jbee.track.cache.Cache;
 import se.jbee.track.cache.Matches;
 import se.jbee.track.db.DB;
 import se.jbee.track.engine.Changes;
-import se.jbee.track.engine.NoLimits;
+import se.jbee.track.engine.Limits;
 import se.jbee.track.engine.Sample;
 import se.jbee.track.engine.Server;
 import se.jbee.track.engine.Transaction;
 import se.jbee.track.engine.TransitionDenied;
 import se.jbee.track.engine.TransitionDenied.Error;
+import se.jbee.track.model.Criteria;
 import se.jbee.track.model.Email;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
@@ -70,7 +72,7 @@ public class CachedViewService implements ViewService {
 		Names versions = request.names(Param.version);
 		Names categories = request.names(Param.category);
 		int tasks = parseInt(request.get(Param.task));
-		Changes changes = Transaction.run(Sample.sample(users, outputs, versions, areas, categories, tasks, actor.alias), db, server.with(new NoLimits()));
+		Changes changes = Transaction.run(Sample.sample(users, outputs, versions, areas, categories, tasks, actor.alias), db, server.with(Limits.NONE));
 		cache.invalidate(changes);
 		return new SampleView(actor, changes);
 	}
@@ -81,8 +83,15 @@ public class CachedViewService implements ViewService {
 	}
 
 	private ListView list(Params request) {
-
-		return new ListView(new User(1), System.currentTimeMillis(), new Page[0], new Page(1, Name.as("prod"), Name.as("area"), Name.as("xyz"), Template.template("Hello")), new Matches[0]);
+		User actor = user(request.get(Param.actor));
+		Name output = request.name(Param.output);
+		Matches indexing = matches(cache.matchesFor(actor, Criteria.index(output)));
+		System.out.println(indexing);
+		Matches matches = matches(cache.matchesFor(actor, Criteria.parse("[output="+output+"][length=5][offset=10]")));
+		System.out.println(matches);
+		return new ListView(new User(1), System.currentTimeMillis(), new Page[0], new Page(1, Name.as("prod"), Name.as("area"), Name.as("xyz"), Template.template("Hello\n[output="+output+"]\n")), matches);
 	}
+
+
 
 }

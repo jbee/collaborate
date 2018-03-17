@@ -50,7 +50,7 @@ public interface ByteSequence<T extends ByteSequence<T>> extends CharSequence, C
 	}
 
 	default boolean equalTo(T other) {
-		return this == other || Arrays.equals(readonlyBytes(), other.readonlyBytes());
+		return this == other || other != null && Arrays.equals(readonlyBytes(), other.readonlyBytes());
 	}
 
 	default boolean startsWith(ByteSequence<?> prefix) {

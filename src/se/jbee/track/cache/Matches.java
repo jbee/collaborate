@@ -1,15 +1,26 @@
 package se.jbee.track.cache;
 
+import java.util.concurrent.Future;
+
 import se.jbee.track.model.Names;
 import se.jbee.track.model.Output;
 import se.jbee.track.model.Task;
 
 public final class Matches {
-	
+
+	public static Matches matches(Future<Matches> matches) {
+		try {
+			return matches.get();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return Matches.none();
+		}
+	}
+
 	public static Matches none() {
 		return new Matches(new Task[0], 0);
 	}
-	
+
 	public final Task[] tasks;
 	public final int total;
 	/**
@@ -19,7 +30,7 @@ public final class Matches {
 	 * explicitly.
 	 */
 	public final Names excludedOutputs;
-	
+
 	public Matches(Task[] matches, int totalMatches) {
 		this(matches, totalMatches, Names.empty());
 	}
@@ -29,8 +40,13 @@ public final class Matches {
 		this.total = totalMatches;
 		this.excludedOutputs = excludedOutputs;
 	}
-	
+
 	public Matches exlcuded(Names outputs) {
 		return new Matches(tasks, total, outputs);
+	}
+
+	@Override
+	public String toString() {
+		return tasks.length+"/"+total+" not including "+excludedOutputs+"";
 	}
 }

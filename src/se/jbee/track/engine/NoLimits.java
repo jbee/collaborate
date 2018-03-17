@@ -1,7 +1,7 @@
 package se.jbee.track.engine;
 
 
-public class NoLimits implements Limits {
+final class NoLimits implements Limits {
 
 
 	@Override

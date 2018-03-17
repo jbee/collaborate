@@ -33,16 +33,16 @@ import se.jbee.track.model.User;
 /**
  * A {@link CacheCluster} is a fully functional multi-{@link Output}
  * {@link Cache}.
- * 
+ *
  * It has an {@link ExecutorService} to run and merge cross-output queries.
  * {@link Output}-specific queries are delegated to a {@link CacheWorker}. Each
  * {@link CacheWorker} caches a specific {@link Output}.
- * 
+ *
  * The content of a {@link CacheWorker} is valid one day. On a new day now
  * outdated caches are {@link #shutdown()} and a fresh {@link CacheWorker}
  * instance is created for the new day. This way the cache updates itself when
  * needed.
- * 
+ *
  * @author jan
  */
 public class CacheCluster implements Cache {
@@ -56,30 +56,30 @@ public class CacheCluster implements Cache {
 	 * The date the existing caches have been build for.
 	 */
 	private AtomicReference<Date> cacheValidity;
-	
+
 	public CacheCluster(DB db, Clock clock) {
 		this.es = Executors.newSingleThreadExecutor(this::factory);
 		this.db = db;
 		this.clock = clock;
 		this.cacheValidity = new AtomicReference<>(Date.date(clock.time()));
 	}
-	
+
 	@Override
 	public void shutdown() {
 		es.shutdown();
 		for (Cache c : outputCaches.values()) c.shutdown();
 		outputCaches.clear();
 	}
-	
+
 	private Thread factory(Runnable target) {
 		Thread t = new Thread(target);
 		t.setDaemon(true);
 		t.setName("cache-cluster");
 		return t;
 	}
-	
+
 	@Override
-	public Future<Matches> matchesFor(User inquirer, Criteria criteria) {
+	public Future<Matches> matchesFor(User actor, Criteria criteria) {
 		// throw away old caches
 		Date before = cacheValidity.get();
 		Date today = Date.date(clock.time());
@@ -94,19 +94,16 @@ public class CacheCluster implements Cache {
 		// might be a indexing request
 		if (criteria.isIndexRequest()) {
 			Name output = (Name) criteria.get(0).rvalues[0];
-			if (outputCaches.containsKey(output)) {
-				return readyFuture(Matches.none());
-			}
 			Cache cache = outputCaches.computeIfAbsent(output, (k) -> {
 				return new CacheWorker(k, db, before);
 			});
-			return cache.matchesFor(inquirer, criteria.without(Property.output));
+			return cache.matchesFor(actor, criteria.without(Property.output));
 		}
 		// lookup request
 		Names outputs = criteria.collect(Names.empty(), Name.class, Names::add, output, eq, in);
 		if (outputs.isEmpty()) {
 			//TODO what about user bound queries that do not refer to actual user?
-			outputs = inquirer.contributesToOutputs;
+			outputs = actor.contributesToOutputs;
 			Names ignore = criteria.collect(Names.empty(), Name.class, Names::add, output, neq, nin);
 			if (!ignore.isEmpty()) {
 				for (Name n : ignore) { outputs = outputs.remove(n);	}
@@ -119,23 +116,23 @@ public class CacheCluster implements Cache {
 			Cache cache = outputCaches.get(outputs.first());
 			if (cache == null)
 				return readyFuture(Matches.none().exlcuded(outputs)); // there was just 1 output but it was not cached yet
-			return cache.matchesFor(inquirer, criteria);
+			return cache.matchesFor(actor, criteria);
 		}
 		final Criteria lookupCriteria = criteria;
 		final Names lookupOutputs = outputs;
-		return es.submit(() -> lookup(inquirer, lookupOutputs, lookupCriteria));
+		return es.submit(() -> lookup(actor, lookupOutputs, lookupCriteria));
 	}
-	
+
 	/**
 	 * This is a multi-output lookup that fetches results from the individual
 	 * output caches and then joins them to a single result.
-	 * 
+	 *
 	 * Like the lookup within a output this is ran by an
 	 * {@link ExecutorService} so that {@link #matchesFor(User, Criteria)}
 	 * returns without doing the actual work or waiting for other {@link Future}
 	 * s.
 	 */
-	private Matches lookup(User inquirer, Names outputs, Criteria criteria) {
+	private Matches lookup(User actor, Names outputs, Criteria criteria) {
 		Criteria filterCriteria = criteria.without(Property.order, Property.length, Property.offset);
 		Names uncached = Names.empty();
 		List<Future<Matches>> futures = new ArrayList<>();
@@ -144,7 +141,7 @@ public class CacheCluster implements Cache {
 			if (cache == null) {
 				uncached = uncached.add(p);
 			} else {
-				futures.add(cache.matchesFor(inquirer, filterCriteria));
+				futures.add(cache.matchesFor(actor, filterCriteria));
 			}
 		}
 		List<Matches> outputMatches = new ArrayList<>();
@@ -156,7 +153,7 @@ public class CacheCluster implements Cache {
 			}
 		}
 		int len = 0;
-		for (Matches m : outputMatches) 
+		for (Matches m : outputMatches)
 			len += m.tasks.length;
 		Task[] tmp = new Task[len];
 		int s = 0;

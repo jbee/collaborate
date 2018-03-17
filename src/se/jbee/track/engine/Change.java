@@ -37,6 +37,7 @@ import static se.jbee.track.engine.Change.Operation.remind;
 import static se.jbee.track.engine.Change.Operation.rephrase;
 import static se.jbee.track.engine.Change.Operation.request;
 import static se.jbee.track.engine.Change.Operation.resolve;
+import static se.jbee.track.engine.Change.Operation.suggest;
 import static se.jbee.track.engine.Change.Operation.tag;
 import static se.jbee.track.engine.Change.Operation.unwatch;
 import static se.jbee.track.engine.Change.Operation.warn;
@@ -115,7 +116,7 @@ public interface Change {
 		envision,
 		connect,
 		disconnect,
-		suggest(true),
+		suggest,
 
 		// areas
 		open,
@@ -162,23 +163,7 @@ public interface Change {
 		watch,
 		unwatch,
 
-		// misc
-		sample(true)
 		;
-
-		/**
-		 * Should multiple subsequent operation of same type be folded into one in the
-		 * change-log?
-		 */
-		public final boolean fold;
-
-		private Operation() {
-			this(false);
-		}
-		private Operation(boolean fold) {
-			this.fold = fold;
-		}
-
 	}
 
 	/**
@@ -207,6 +192,10 @@ public interface Change {
 
 	public static Change envision(Name output, Name actor) {
 		return (t, tx) -> { tx.put(envision, t.envision(output, tx.user(actor))); };
+	}
+
+	public static Change suggest(Name output, Name category, Name actor) {
+		return (t, tx) -> { tx.put(suggest, t.suggest(tx.output(output), category, tx.user(actor))); };
 	}
 
 	public static Change connect(Name output, Integration endpoint, Name actor) {
