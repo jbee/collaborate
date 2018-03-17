@@ -34,25 +34,25 @@ import java.util.regex.Pattern;
 /**
  * A data structure to describe what {@link Task}s to select and how to present
  * them by a list of {@link Criterium}s.
- * 
+ *
  * A {@link Criterium} is given in a human/machine friendly syntax:
- * 
+ *
  * <pre>
  * [property operator value]
  * </pre>
- * 
+ *
  * There is a fix set of {@link Property}s and {@link Operator}s. Also the
  * possible combinations are constraint statically.
- * 
+ *
  * As the combination of {@link Property} and {@link Operator} determines the
  * kind of semantic of a value there does not need to be a syntax to distinguish
  * between numbers, property names or texts.
- * 
+ *
  * Some combinations require or allow value sets. A set is specified using curly
  * brackets and commas to separate elements.
- * 
+ *
  * Some examples for valid constraints:
- * 
+ *
  * <pre>
  * [reporter = Frank]
  * [age > 20]
@@ -61,22 +61,22 @@ import java.util.regex.Pattern;
  * [first = 15]
  * [color = heat]
  * </pre>
- * 
+ *
  * This would list all task reported by Frank older than 20 days in an area
  * where Frank or Peter are maintainer. The result would be ordered by name
  * first, age second and start with the 15 match and would be colored using the
  * heat of the tasks.
- * 
+ *
  * The example for <code>order</code> shows, that the set is sometimes used as a
  * list too, that is to say order of elements matters.
- * 
+ *
  * If in/nin are used the values are alternatives (OR).
  * To test for AND use multiple {@link Criterium}s.
  * <pre>
  * [user ~ Frank]
  * [user ~ Paul]
  * </pre>
- * 
+ *
  * While the uniform way of describing constraints can be a bit lengthy it
  * allows for simple parsing and remembering.
  */
@@ -89,14 +89,14 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	public static Criteria index(Name output) {
 		return new Criteria(new Criterium(Property.output, eq, output));
 	}
-	
+
 	private final Criterium[] criteria;
-	
+
 	public Criteria(Criterium... criteria) {
 		super();
 		this.criteria = criteria;
 	}
-	
+
 	public boolean isIndexRequest() {
 		return criteria.length == 1 && criteria[0].left == Property.output && criteria[0].op == eq;
 	}
@@ -104,36 +104,36 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	public int count() {
 		return criteria.length;
 	}
-	
+
 	public Criterium get(int index) {
 		return criteria[index];
 	}
-	
+
 	@Override
 	public Iterator<Criterium> iterator() {
 		return asList(criteria).iterator();
 	}
-	
+
 	@Override
 	public String toString() {
 		return join(criteria, "");
 	}
-	
+
 	public boolean contains(Property p) {
 		return indexOf(p) >= 0;
 	}
-	
+
 	public int indexOf(Property p) {
 		return indexOf(p, 0);
 	}
-	
+
 	public int indexOf(Property p, int start) {
 		for (int i = start; i < criteria.length; i++)
 			if (criteria[i].left == p)
 				return i;
 		return -1;
 	}
-	
+
 	public Task[] filter(Iterator<Task> tasks, Date today) {
 		List<Task> res = new ArrayList<>();
 		while (tasks.hasNext()) {
@@ -143,14 +143,14 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		}
 		return res.toArray(new Task[0]);
 	}
-	
+
 	public boolean matches(Task t, Date today) {
 		for (Criterium c : criteria)
 			if (!c.matches(t, today))
 				return false;
 		return true;
 	}
-	
+
 	public Criteria without(Property p, Property...more) {
 		EnumSet<Property> excluded = EnumSet.of(p, more);
 		Criterium[] res = new Criterium[criteria.length];
@@ -161,7 +161,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		}
 		return new Criteria(Arrays.copyOf(res, i));
 	}
-	
+
 	public <T,V> T collect(T v0, Class<V> elemType, BiFunction<T, V, T> merge, Property p, Operator...ops) {
 		EnumSet<Operator> included = EnumSet.of(ops[0], ops);
 		T res = v0;
@@ -172,13 +172,13 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		}
 		return res;
 	}
-	
+
 	private static final Pattern CRITERIUM = Pattern.compile("\\s*\\[([a-z]+)\\s*([=<>?!~]{1,2})\\s*([^\\]]+)\\]");
-	
+
 	public static Criteria parse(String s) throws CriteriumMalformed {
 		return parse(s, new HashMap<Criteria.Property, Name>());
 	}
-	
+
 	public static Criteria parse(String s, Map<Property, Name> context) throws CriteriumMalformed {
 		Matcher m = CRITERIUM.matcher(s);
 		List<Criterium> res = new ArrayList<>();
@@ -196,7 +196,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 				// just to get rid of those special cases right away
 				if (!prop.isSetValue()) {
 					if (op == in)
-						op = eq; 
+						op = eq;
 					if (op == nin)
 						op = neq;
 				}
@@ -241,7 +241,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		}
 		throw new CriteriumMalformed("Date property "+prop+" does not support value: "+Arrays.toString(val));
 	}
-	
+
 	private static boolean sequentialYearsOrMonths(String[] val) {
 		int len = val[0].length();
 		for (int i = 1; i < val.length; i++) {
@@ -259,11 +259,11 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	private static String endOf(String date) {
 		return extend(date, "-12", "-31");
 	}
-	
+
 	private static String startOf(String date) {
 		return extend(date, "-01", "-01");
 	}
-	
+
 	private static String extend(String val, String on4, String on7) {
 		if (val.length() == 4)
 			val+=on4;
@@ -271,11 +271,11 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			val+=on7;
 		return val;
 	}
-	
+
 	private static Criterium criterium(Property p, Operator op, String... val) {
 		return new Criterium(p, op, typed(p, val));
 	}
-	
+
 	private static Object[] typed(Property p, String[] val) {
 		Object[] res = new Object[val.length];
 		for (int i = 0; i < val.length; i++) {
@@ -287,7 +287,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		}
 		return res;
 	}
-	
+
 	private static Object typed(Property p, String val) {
 		if (val.startsWith("@")) {
 			return Property.valueOf(val.toLowerCase().substring(1));
@@ -312,7 +312,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		}
 		return new String[] { value };
 	}
-	
+
 	public static final class Criterium implements Comparable<Criterium> {
 
 		public final Property left;
@@ -327,11 +327,11 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			this.rvalues = values;
 			this.right = prop != Property.order && values.length > 0 && values[0] instanceof Property ? (Property)values[0] : null;
 		}
-		
+
 		public int intValue(int def) {
 			return left.type != number ? def : ((Number)rvalues[0]).intValue();
 		}
-		
+
 		public boolean isPropertyComparison() {
 			return right != null;
 		}
@@ -368,20 +368,20 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			default:  return false;
 			}
 		}
-		
+
 		private boolean equals(Comparable<?> lv, Comparable<?> rv) {
 			if (left.type == name) {
 				boolean leftIsSet = left.isSetValue();
 				boolean rightIsSet = right.isSetValue();
 				if (leftIsSet != rightIsSet) {
-					return leftIsSet 
+					return leftIsSet
 							? ((Names) lv).contains((Name)rv)
 							: ((Names) rv).contains((Name)lv);
 				}
 			}
 			return lv.equals(rv);
 		}
-		
+
 		private boolean contains(Comparable<?> lv, Comparable<?> rv) {
 			if (left.type == name) {
 				if (right.type == text) {
@@ -391,7 +391,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 				boolean leftIsSet = left.isSetValue();
 				boolean rightIsSet = right.isSetValue();
 				if (leftIsSet != rightIsSet) {
-					return leftIsSet 
+					return leftIsSet
 							? ((Names) lv).contains((Name)rv)
 							: ((Names) rv).contains((Name)lv);
 				}
@@ -404,7 +404,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			}
 			return lv.equals(rv);
 		}
-		
+
 		private boolean equals(Comparable<?> lv, Object[] rvs) {
 			if (left.type == name && left.isSetValue()) {
 				Names set = (Names) lv;
@@ -418,7 +418,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			}
 			return rvs.length == 1 && rvs[0].equals(lv);
 		}
-		
+
 		private boolean contains1(Comparable<?> val, Object[] anyOf) {
 			if (left.type == name && left.isSetValue()) {
 				Names set = (Names) val;
@@ -442,7 +442,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 					return true;
 			return false;
 		}
-		
+
 		@SuppressWarnings("unchecked")
 		private static <T> int cmp(Comparable<T> a, Object b) {
 			if (a.getClass() != b.getClass())
@@ -455,7 +455,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			String val = rvalues.length == 1 ? rvalues[0].toString() : "{"+join(rvalues, ", ")+"}";
 			return "["+left.name()+" "+op+" "+(isPropertyComparison()? "@": "")+val+"]";
 		}
-		
+
 		@Override
 		public int compareTo(Criterium other) {
 			if (left.isResultProperty() != other.left.isResultProperty())
@@ -465,19 +465,19 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 				return res;
 			return signum(other.left.selectivity - left.selectivity);
 		}
-		
+
 	}
-	
+
 	public static enum Coloration {
 
-		heat, status, goal, motive, 
+		heat, status, goal, motive,
 	}
-	
+
 	/**
 	 * Pages not using a {@link #list} {@link Layout} usually only use a single
 	 * query in the {@link Page} {@link Template} as these layouts require
 	 * horizontal space.
-	 * 
+	 *
 	 * @author jan
 	 */
 	public static enum Layout {
@@ -495,11 +495,11 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		/**
 		 * Is a overview table only showing a specific property of the matching
 		 * task to give a overall impression or indication about an aspect.
-		 * 
+		 *
 		 * Tasks are the rows. Columns could be users (this makes very much
 		 * sense as multiple users can work on a task). It helps to understand
 		 * how well task are covered.
-		 * 
+		 *
 		 * Another tableau could be using areas as rows and showing
 		 * accumulations in the columns. Like using Status as columns would show
 		 * how many tasks of a type in each state exist. Or maybe even links to
@@ -511,9 +511,9 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		 * The tasks are shown as a tree with the origin being the root.
 		 */
 		tree
-		
+
 	}
-	
+
 	/**
 	 * Properties a task can be filtered by.
 	 */
@@ -525,7 +525,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		group(property, 0, Property.class, eq),
 		coloration(property, 0, Coloration.class, eq),
 		layout(property, 0, Layout.class, eq),
-		
+
 		// task properties
 		emphasis(number, 10, eq, ge, le, gt, lt),
 		temperature(number, 10, eq, ge, le, gt, lt),
@@ -556,47 +556,47 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		url(text, 70, eq, gt, lt, in, nin), //TODO when eq, gt or lt is used and the value is not an URL (starts with http) then we somehow have to know what kind of integration URL is meant and look for that
 		gist(text, 70, eq, gt, lt, in, nin),
 		conclusion(text, 70, eq, gt, lt, in, nin);
-		
+
 		/**
 		 * The operations supported by the property
 		 */
 		public final EnumSet<Operator> ops;
-		
+
 		/**
-		 * The type usually used with the property. 
+		 * The type usually used with the property.
 		 * When an {@link Operator} is used that just is just with other types those are also accepted.
 		 * If an {@link Operator} is used with the {@link #type} this has to be used.
 		 */
 		public final ValueType type;
 		/**
 		 * A range from 0 (no selecting at all) to 100 (unique selection).
-		 * 
+		 *
 		 * A measure of how good the property is suited to reduce possible
 		 * matching tasks to a small set of tasks.
 		 */
 		public final int selectivity;
-		
+
 		private final Class<? extends Enum<?>> propertyType;
 		private Enum<?>[] values;
 
 		private Property(ValueType type, int selectivity, Operator... ops) {
 			this(type, selectivity, null, ops);
-		}	
+		}
 		private Property(ValueType type, int selectivity, Class<? extends Enum<?>> propertyType, Operator... ops) {
 			this.propertyType = propertyType;
 			this.selectivity = selectivity;
 			this.ops = EnumSet.of(ops[0], ops);
 			this.type = type;
 		}
-		
+
 		public boolean isResultProperty() {
 			return ordinal() <= coloration.ordinal();
 		}
-		
+
 		public boolean isSetValue() {
 			return ordinal() >= user.ordinal() && ordinal() <= participant.ordinal();
 		}
-		
+
 		public Enum<?> value(String name) {
 			if (values == null) {
 				values = propertyType.getEnumConstants(); // need to do this outside of constructor as Property itself can be the enum
@@ -643,67 +643,67 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			case watcher: return t.watchers;
 			case area: return t.area.name;
 			case output: return t.output.name;
-			case gist: return t.gist; 
+			case gist: return t.gist;
 			case conclusion: return t.conclusion;
 			}
 		}
 	}
-	
-	public static enum ValueType { 
+
+	public static enum ValueType {
 		/**
 		 * essentially an <code>int<code>
 		 */
-		number("\\d+"), 
+		number("\\d+"),
 		/**
 		 * essentially a enumeration name or constant name like "asc"
 		 */
-		property("[a-z]+"), 
+		property("[a-z]+"),
 		/**
 		 * A {@link Name}
 		 */
-		name("[-a-zA-Z0-9_@.]+[*~]?"), 
+		name("[-a-zA-Z0-9_@.]+[*~]?"),
 		/**
 		 * A {@link Date}
 		 */
 		date("\\d\\d\\d\\d(?:-\\d\\d(?:-\\d\\d))"),
 		/**
-		 * essentially true or false but names like "yes"/"no" or such are also acceptable 
+		 * essentially true or false but names like "yes"/"no" or such are also acceptable
 		 */
 		flag("true|false|yes|no|1|0|on|off"),
 		/**
-		 * A {@link Gist} of letters, digits, space and punctuation characters are allowed, 
+		 * A {@link Gist} of letters, digits, space and punctuation characters are allowed,
 		 * typical URLs should be accepted.
 		 * {@link Operator#gt} is used as "starts with" and {@link Operator#lt} as "ends with".
 		 */
-		text(Bytes.BASIC_TEXT_REGEX);
-		
+		text(Gist.GIST_TEXT_REGEX);
+
 		public final Pattern value;
 
 		private ValueType(String value) {
 			this.value = Pattern.compile("^"+value+"$");
 		}
-		
+
 		public boolean isValid(String val) {
 			return value.matcher(val).matches();
 		}
 	}
 
 	public static enum Operator {
-		eq("=", true), 
+		eq("=", true),
 		/**
 		 * Is the value one of a set of alternatives?
 		 */
-		in("~", true), 
-		gt(">", false), 
-		lt("<", false), 
-		ge(">=", false), 
-		le("<=", false), 
-		neq("!=", true), 
+		in("~", true),
+		gt(">", false),
+		lt("<", false),
+		ge(">=", false),
+		le("<=", false),
+		neq("!=", true),
 		/**
 		 * Is the value not one of a set of alternatives?
 		 */
 		nin("!~", true),
-		
+
 		asc(">>", true),
 		desc("<<", true)
 		;
@@ -724,11 +724,11 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			}
 			throw new CriteriumMalformed("No such operator `"+symbol+"`, valid operators are "+Arrays.toString(Operator.values()));
 		}
-		
+
 		public boolean isFilter() {
 			return !isSelector() && ordinal() <= nin.ordinal();
 		}
-		
+
 		public boolean isSelector() {
 			return ordinal() <= in.ordinal() ;
 		}
@@ -757,7 +757,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		public CriteriumMalformed(String message, Throwable cause) {
 			super(message, cause);
 		}
-		
+
 	}
 
 }

@@ -11,12 +11,12 @@ import java.util.regex.Pattern;
  * three-part-word
  * me42
  * </pre>
- * 
+ *
  * Illegal editable names:
  * <pre>
  * x
  * </pre>
- * 
+ *
  * Valid non editable names:
  * <pre>
  * *
@@ -25,7 +25,7 @@ import java.util.regex.Pattern;
  * @foo.*
  * @foo.~
  * </pre>
- * 
+ *
  */
 public final class Name extends Identifier<Name> {
 
@@ -59,7 +59,7 @@ public final class Name extends Identifier<Name> {
 		}
 		throw new IllegalArgumentException("Not a valid name: "+name);
 	}
-	
+
 	/**
 	 * @return not editable names cannot be created by user but they might exist,
 	 *         e.g. <code>@my</code> to manage common pages.
@@ -67,7 +67,7 @@ public final class Name extends Identifier<Name> {
 	public boolean isNonEditable() {
 		return indexOf('@') == 0 || length() == 1;
 	}
-	
+
 	public boolean isEmail() {
 		return indexOf('@') > 0;
 	}
@@ -90,9 +90,9 @@ public final class Name extends Identifier<Name> {
 	public boolean isOrigin() {
 		return charAt(0) == '*';
 	}
-	
+
 	public boolean isVersion() {
-		return charAt(0) >= '0' && charAt(0) <= '9'; 
+		return charAt(0) >= '0' && charAt(0) <= '9';
 	}
 
 	/**

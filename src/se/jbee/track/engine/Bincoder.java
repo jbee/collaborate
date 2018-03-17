@@ -10,7 +10,7 @@ import java.util.Map.Entry;
 import se.jbee.track.engine.Change.Tx;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.Attachments;
-import se.jbee.track.model.Bytes;
+import se.jbee.track.model.ByteSequence;
 import se.jbee.track.model.Date;
 import se.jbee.track.model.Email;
 import se.jbee.track.model.Gist;
@@ -537,18 +537,18 @@ public interface Bincoder<I,O> {
 		return bytes;
 	}
 
-	static void putIntBytes(Bytes seq, ByteBuffer to) {
+	static void putIntBytes(ByteSequence seq, ByteBuffer to) {
 		if (seq == null) {
 			to.putInt(-1);
 		} else {
-			byte[] bytes = seq.bytes();
+			byte[] bytes = seq.readonlyBytes();
 			to.putInt(bytes.length);
 			to.put(bytes);
 		}
 	}
 
-	static void putShortBytes(Bytes seq, ByteBuffer to) {
-		putShortBytes(seq == null ? null : seq.bytes(), to);
+	static void putShortBytes(ByteSequence seq, ByteBuffer to) {
+		putShortBytes(seq == null ? null : seq.readonlyBytes(), to);
 	}
 
 	static void putShortBytes(byte[] bytes, ByteBuffer to) {
@@ -562,11 +562,11 @@ public interface Bincoder<I,O> {
 		}
 	}
 
-	static void putByteBytes(Bytes seq, ByteBuffer to) {
+	static void putByteBytes(ByteSequence seq, ByteBuffer to) {
 		if (seq == null) {
 			to.put((byte) -1);
 		} else {
-			byte[] bytes = seq.bytes();
+			byte[] bytes = seq.readonlyBytes();
 			to.put((byte) bytes.length);
 			to.put(bytes);
 		}

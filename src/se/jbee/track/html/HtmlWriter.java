@@ -23,6 +23,8 @@ import se.jbee.track.model.Task;
  */
 public final class HtmlWriter {
 
+	//TODO have a look at https://www.owasp.org/index.php/XSS_(Cross_Site_Scripting)_Prevention_Cheat_Sheet
+
 	private final PrintWriter out;
 
 	public HtmlWriter(PrintWriter out) {

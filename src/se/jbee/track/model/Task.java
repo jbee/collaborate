@@ -13,6 +13,7 @@ public class Task extends Entity<Task> {
 	public Name reporter;
 	public Date reported;
 	public Gist gist;
+	public Gist originalGist; //TODO actually use this - also add op for changing gist that keeps original in this field
 
 	public Motive motive;
 	public Purpose purpose;
@@ -20,7 +21,7 @@ public class Task extends Entity<Task> {
 	public Names baseVersions;
 	public boolean exploitable;
 	public boolean disclosed;
-	
+
 	// working with a task (data that might change)
 	public IDN basis = IDN.ZERO; // direct predecessor
 	public IDN origin = IDN.ZERO; // initial "impulse" that lead to this task
@@ -41,7 +42,7 @@ public class Task extends Entity<Task> {
 	 */
 	public Names aspirants;
 	/**
-	 * Users actively working with this task. 
+	 * Users actively working with this task.
 	 */
 	public Names participants;
 	/**
@@ -53,29 +54,29 @@ public class Task extends Entity<Task> {
 	 * Users that want to follow progress of this task.
 	 */
 	public Names watchers; // OBS! this is the only real dynamic length field...
-	
+
 	// resolving a task (closing record)
 	public Name solver;
 	public Date resolved;
 	public Gist conclusion;
-	
-	// archiving 
+
+	// archiving
 	public boolean archived;
 
 	public Task(int version) {
 		super(version);
 	}
-	
+
 	@Override
 	public ID computeID() {
 		return ID.taskId(output.name, id);
 	}
-	
+
 	@Override
 	public Name output() {
 		return output.name;
 	}
-	
+
 	/**
 	 * {@link Heat} is aggregated temperature. When {@link User} vote on
 	 * {@link Task}s the task receives some heat. The actual amount depends on
@@ -110,7 +111,7 @@ public class Task extends Entity<Task> {
 	public boolean canBeEmphasisedBy(Name user) {
 		return (!area.exclusive || area.maintainers.contains(user));
 	}
-	
+
 	public boolean isSolved() {
 		return status != Status.unsolved;
 	}
@@ -120,7 +121,7 @@ public class Task extends Entity<Task> {
 			users = participants.union(aspirants);
 		return users;
 	}
-	
+
 	public void changed() {
 		users = null;
 	}

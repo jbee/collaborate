@@ -9,7 +9,7 @@ import se.jbee.track.cache.TestTaskSet;
 import se.jbee.track.engine.TestConvert;
 import se.jbee.track.engine.TestLMDB;
 import se.jbee.track.engine.TestOTP;
-import se.jbee.track.model.TestBytes;
+import se.jbee.track.model.TestByteSequenceSecurity;
 import se.jbee.track.model.TestCriteria;
 import se.jbee.track.model.TestCriterium;
 import se.jbee.track.model.TestGist;
@@ -21,7 +21,7 @@ import se.jbee.track.model.TestURL;
 @SuiteClasses({ TestTracker.class, TestConvert.class, TestLMDB.class,
 		TestCriteria.class, TestOTP.class, TestUseCode.class,
 		TestCriterium.class, TestGist.class, TestTaskSet.class,
-		TestBytes.class, TestURL.class, TestName.class, TestURLToParams.class,
+		TestByteSequenceSecurity.class, TestURL.class, TestName.class, TestURLToParams.class,
 		TestTemplate.class })
 public class TrackerSuit {
 	// run all tests...

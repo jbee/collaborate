@@ -1,7 +1,15 @@
 package se.jbee.track.model;
 
+import java.util.regex.Pattern;
 
 public final class Email extends Identifier<Email>  {
+
+	private static final String EMAIL_REGEX = "[0-9a-zA-Z$-_.+!*'(),;/?:=&#%]+";
+	private static final Pattern EMAIL = Pattern.compile("^"+EMAIL_REGEX+"@"+EMAIL_REGEX+"$");
+
+	public static boolean isEmail(String s) {
+		return EMAIL.matcher(s).matches();
+	}
 
 	/**
 	 * A constant used as the administrators email in case no one should be the

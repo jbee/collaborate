@@ -34,6 +34,7 @@ import static se.jbee.track.engine.Change.Operation.register;
 import static se.jbee.track.engine.Change.Operation.release;
 import static se.jbee.track.engine.Change.Operation.relocate;
 import static se.jbee.track.engine.Change.Operation.remind;
+import static se.jbee.track.engine.Change.Operation.rephrase;
 import static se.jbee.track.engine.Change.Operation.request;
 import static se.jbee.track.engine.Change.Operation.resolve;
 import static se.jbee.track.engine.Change.Operation.tag;
@@ -131,6 +132,7 @@ public interface Change {
 		dissent,
 
 		// tasks
+		rephrase,
 		relocate,
 		rebase,
 		attach,
@@ -236,6 +238,10 @@ public interface Change {
 
 	public static Change categorise(Name output, Name area, Name category, Name actor) {
 		return (t, tx) -> {	tx.put(categorise, t.categorise(tx.area(output, area), category, tx.user(actor))); };
+	}
+
+	public static Change rephrase(Name output, IDN task, Gist toGist, Name actor) {
+		return (t, tx) -> { tx.put(rephrase, t.rephrase(tx.task(output, task), toGist, tx.user(actor))); };
 	}
 
 	public static Change relocate(Name output, IDN task, Name toArea, Name actor) {

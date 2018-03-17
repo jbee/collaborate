@@ -339,6 +339,23 @@ public final class Tracker {
 		return area;
 	}
 
+	public Task rephrase(Task task, Gist toGist, User actor) {
+		expectUnsolved(task);
+		expectAuthenticated(actor);
+		expectMaintainer(task.area, actor);
+		if (!task.gist.equalTo(toGist)) {
+			stressUser(actor);
+			stressDoUpdateText(task, actor);
+			task = task.clone();
+			if (task.originalGist.isEmpty()) {
+				task.originalGist = task.gist;
+			}
+			task.gist = toGist;
+			touch(actor);
+		}
+		return task;
+	}
+
 	public Task relocate(Task task, Area to, User actor) {
 		if (task.area.name.equalTo(to.name))
 			return task; //NOOP
@@ -463,6 +480,8 @@ public final class Tracker {
 		task.reporter = reporter.alias;
 		task.reported = date(now());
 		task.gist = gist;
+		task.originalGist = Gist.EMPTY;
+		task.conclusion = Gist.EMPTY;
 		task.motive = motive;
 		task.purpose = purpose;
 		task.status = Status.unsolved;
@@ -918,6 +937,14 @@ public final class Tracker {
 		stressUser(owner);
 		stressLimit(limit("update", page.name), "Too many page updates for page: "+page.name);
 		stressLimit(limit("update", ORIGIN), "Too many page updates recently.");
+		stressAction();
+	}
+
+	private void stressDoUpdateText(Task task, User actor) {
+		stressLimit(limit("text@user", actor.alias), "Too many recent text changes by user: "+actor.alias);
+		stressUser(actor);
+		stressLimit(limit("text@task", task.id.asName()), "Too many text changes for task: "+task.id);
+		stressLimit(limit("text", ORIGIN), "Too many text changes recently.");
 		stressAction();
 	}
 

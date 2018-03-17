@@ -4,15 +4,23 @@ import static java.nio.charset.StandardCharsets.UTF_16BE;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
-public final class Template extends Bytes implements Comparable<Template> {
+public final class Template implements ByteSequence<Template> {
+
+	private static final String TEMPLATE_TEXT_REGEX = "(?:[-+*a-zA-Z0-9@_\\s\\\\\\$\\^:,;.?!#>=%&`\"'~\\pL\\pN\\(\\)\\[\\]\\{\\}]+|<[^a-zA-Z/]|/[^>])+[</]?";
+	private static final Pattern TEMPLATE_TEXT = Pattern.compile("^"+TEMPLATE_TEXT_REGEX+"$");
+
+	public static boolean isTemplateText(String s) {
+		return TEMPLATE_TEXT.matcher(s).matches();
+	}
 
 	public static final Template BLANK_PAGE = new Template(new byte[0]);
 
 	public static Template template(String template) {
 		if (template.isEmpty())
 			return BLANK_PAGE;
-		if (!isText(template))
+		if (!isTemplateText(template))
 			throw new IllegalArgumentException("Template contains illegal characters.");
 		byte[] bytes = template.getBytes(UTF_16BE);
 		if (bytes.length > 8000)
@@ -33,18 +41,9 @@ public final class Template extends Bytes implements Comparable<Template> {
 		this.template = template;
 	}
 
-	public boolean isEmpty() {
-		return template.length == 0;
-	}
-
 	@Override
-	public byte[] bytes() {
+	public byte[] readonlyBytes() {
 		return template;
-	}
-
-	@Override
-	public int compareTo(Template other) {
-		return this == other ? 0 : compare(template, other.template);
 	}
 
 	@Override

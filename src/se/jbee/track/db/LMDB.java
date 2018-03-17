@@ -95,7 +95,7 @@ public final class LMDB implements DB {
 		private CursorIterator<ByteBuffer> iterator(ID first) {
 			Dbi<ByteBuffer> collection = collection(first.type);
 			key.clear();
-			key.put(first.bytes());
+			key.put(first.readonlyBytes());
 			key.position(key.position()-2);
 			key.flip();
 			return collection.iterate(txn, key, IteratorType.FORWARD);
@@ -108,7 +108,7 @@ public final class LMDB implements DB {
 
 		final void setKey(ID id) {
 			key.clear();
-			key.put(id.bytes()).flip();
+			key.put(id.readonlyBytes()).flip();
 		}
 	}
 
