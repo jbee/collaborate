@@ -1064,7 +1064,7 @@ public final class Tracker {
 	}
 
 	private static void expectCanBeInvolved(User user, Task task) {
-		if (task.participants() >= 5
+		if (task.involvedUsers() >= 5
 				&& !task.aspirants.contains(user)
 				&& !task.participants.contains(user))
 			denyTransition(Error.E11_TASK_USER_LIMIT_REACHED, task.id);

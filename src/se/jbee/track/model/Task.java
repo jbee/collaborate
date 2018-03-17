@@ -13,7 +13,7 @@ public class Task extends Entity<Task> {
 	public Name reporter;
 	public Date reported;
 	public Gist gist;
-	public Gist originalGist; //TODO actually use this - also add op for changing gist that keeps original in this field
+	public Gist originalGist;
 
 	public Motive motive;
 	public Purpose purpose;
@@ -46,7 +46,7 @@ public class Task extends Entity<Task> {
 	 */
 	public Names participants;
 	/**
-	 * Both {@link #aspirants} and {@link #participants()} are users of this task.
+	 * Both {@link #aspirants} and {@link #involvedUsers()} are users of this task.
 	 * This field is used to avoid recomputing the union again and again.
 	 */
 	private transient Names users;
@@ -100,7 +100,7 @@ public class Task extends Entity<Task> {
 		return today.daysSince(reported) + 1;
 	}
 
-	public int participants() {
+	public int involvedUsers() {
 		return aspirants.count() + participants.count();
 	}
 

@@ -117,7 +117,7 @@ public class ListViewHtmlRenderer implements HtmlRenderer<ListView> {
 	}
 
 	private void renderUsersList(Task task, HtmlWriter out) {
-		if (task.participants() > 0) {
+		if (task.involvedUsers() > 0) {
 			if (task.aspirants.count() > 0) {
 				out.append("<b>[...</b>");
 				renderUsersLinks(task.aspirants, out);

@@ -21,15 +21,13 @@ import se.jbee.track.http.HttpUserInterface;
 import se.jbee.track.http.JettyHttpServer;
 
 /**
- * A place for assembling the logical tracker application.
+ * A place for assembling the tracker domain application.
  *
  * Different front-ends might be added to it like a HTTP web server for a HTML
  * based user interface. Another could be a command line user interface.
  *
  * This class directly or indirectly depends on all sub-packages but nothing
  * depends on it.
- *
- * @author jan
  */
 public final class Application {
 
