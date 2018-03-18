@@ -18,12 +18,13 @@ import static se.jbee.track.model.Criteria.ValueType.name;
 import static se.jbee.track.model.Criteria.ValueType.number;
 import static se.jbee.track.model.Criteria.ValueType.property;
 import static se.jbee.track.model.Criteria.ValueType.text;
+import static se.jbee.track.util.Array.any;
+import static se.jbee.track.util.Array.refine;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -91,10 +92,16 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	}
 
 	private final Criterium[] criteria;
+	public final boolean unbound;
 
 	public Criteria(Criterium... criteria) {
 		super();
 		this.criteria = criteria;
+		this.unbound = any(criteria, c -> c.unbound);
+	}
+
+	public Criteria bindTo(Map<Property, Name> context) {
+		return unbound ? new Criteria(refine(criteria, c -> c.bindTo(context))) : this;
 	}
 
 	public boolean isIndexRequest() {
@@ -176,10 +183,6 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	private static final Pattern CRITERIUM = Pattern.compile("\\s*\\[([a-z]+)\\s*([=<>?!~]{1,2})\\s*([^\\]]+)\\]");
 
 	public static Criteria parse(String s) throws CriteriumMalformed {
-		return parse(s, new HashMap<Criteria.Property, Name>());
-	}
-
-	public static Criteria parse(String s, Map<Property, Name> context) throws CriteriumMalformed {
 		Matcher m = CRITERIUM.matcher(s);
 		List<Criterium> res = new ArrayList<>();
 		while (m.find()) {
@@ -199,12 +202,6 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 						op = eq;
 					if (op == nin)
 						op = neq;
-				}
-				// @ can be used to refer the name for that property given by the context (useful for all properties of type name)
-				if (prop.type == name && "@".equals(val[0])) {
-					if (!context.containsKey(prop))
-						throw new CriteriumMalformed("No context substitution known for property: "+prop);
-					val[0] = context.get(prop).toString();
 				}
 			}
 			if (val.length > 1 && !op.allowsMultipleArguments) {
@@ -288,7 +285,11 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		return res;
 	}
 
+	private static final Object UNBOUND = "@";
+
 	private static Object typed(Property p, String val) {
+		if ("@".equals(val))
+			return UNBOUND;
 		if (val.startsWith("@")) {
 			return Property.valueOf(val.toLowerCase().substring(1));
 		}
@@ -319,6 +320,7 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		public final Operator op;
 		public final Object[] rvalues;
 		public final Property right;
+		public final boolean unbound;
 
 		public Criterium(Property prop, Operator op, Object... values) {
 			super();
@@ -326,6 +328,17 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 			this.op = op;
 			this.rvalues = values;
 			this.right = prop != Property.order && values.length > 0 && values[0] instanceof Property ? (Property)values[0] : null;
+			this.unbound = any(rvalues, v -> v == UNBOUND);
+		}
+
+		public Criterium bindTo(Map<Property, Name> context) {
+			if (!unbound)
+				return this;
+			Object[] values = rvalues.clone();
+			for (int i = 0; i < values.length; i++)
+				if (values[i] == UNBOUND)
+					values[i] = context.get(left);
+			return new Criterium(left, op, values);
 		}
 
 		public int intValue(int def) {

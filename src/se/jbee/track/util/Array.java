@@ -5,6 +5,8 @@ import static java.util.Arrays.copyOf;
 import static java.util.Arrays.copyOfRange;
 
 import java.util.function.BiPredicate;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 
 public final class Array {
@@ -18,6 +20,21 @@ public final class Array {
 			if (eq.test(arr[i], e))
 				return i;
 		return -1;
+	}
+
+	public static <T> int indexOf(T[] arr, Predicate<T> eq) {
+		for (int i = 0; i < arr.length; i++)
+			if (eq.test(arr[i]))
+				return i;
+		return -1;
+	}
+
+	public static <T> boolean any(T[] arr, Predicate<T> eq) {
+		return indexOf(arr, eq) >= 0;
+	}
+
+	public static <T> boolean contains(T[] arr, T e, BiPredicate<T, T> eq) {
+		return indexOf(arr, e, eq) >= 0;
 	}
 
 	public static <T> T[] add(T[] set, T e, BiPredicate<T, T> eq) {
@@ -64,6 +81,20 @@ public final class Array {
 			return 0;
 		}
 		return res;
+	}
+
+	public static <A> A[] refine(A[] a, Function<A, A> f) {
+		return a.length == 0 ? a : map(a, f);
+	}
+
+	public static <A, B> B[] map(A[] a, Function<A, B> f) {
+		B b0 = f.apply(a[0]);
+		@SuppressWarnings("unchecked")
+		B[] b = (B[]) java.lang.reflect.Array.newInstance(b0.getClass(), a.length);
+		b[0] = b0;
+		for (int i = 1; i < a.length; i++)
+			b[i] = f.apply(a[i]);
+		return b;
 	}
 
 }

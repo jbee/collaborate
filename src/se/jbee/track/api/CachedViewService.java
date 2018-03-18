@@ -1,6 +1,7 @@
 package se.jbee.track.api;
 
 import static java.lang.Integer.parseInt;
+import static java.util.Collections.singletonMap;
 import static se.jbee.track.cache.Matches.matches;
 
 import java.util.Map;
@@ -18,6 +19,7 @@ import se.jbee.track.engine.Transaction;
 import se.jbee.track.engine.TransitionDenied;
 import se.jbee.track.engine.TransitionDenied.Error;
 import se.jbee.track.model.Criteria;
+import se.jbee.track.model.Criteria.Property;
 import se.jbee.track.model.Email;
 import se.jbee.track.model.Name;
 import se.jbee.track.model.Names;
@@ -87,9 +89,9 @@ public class CachedViewService implements ViewService {
 		Name output = request.name(Param.output);
 		Matches indexing = matches(cache.matchesFor(actor, Criteria.index(output)));
 		System.out.println(indexing);
-		Matches matches = matches(cache.matchesFor(actor, Criteria.parse("[output="+output+"][length=5][offset=10]")));
+		Matches matches = matches(cache.matchesFor(actor, Criteria.parse("[output=@][length=5][offset=0]").bindTo(singletonMap(Property.output, output))));
 		System.out.println(matches);
-		return new ListView(new User(1), System.currentTimeMillis(), new Page[0], new Page(1, Name.as("prod"), Name.as("area"), Name.as("xyz"), Template.template("Hello\n[output="+output+"]\n")), matches);
+		return new ListView(new User(1), System.currentTimeMillis(), new Page[0], new Page(1, Name.as("prod"), Name.as("area"), Name.as("xyz"), Template.template("Hello\n[output=@]\n")), matches);
 	}
 
 

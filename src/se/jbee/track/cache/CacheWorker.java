@@ -191,7 +191,7 @@ final class CacheWorker implements Cache {
 	private Matches lookup(Criteria criteria) {
 		// 0. if there is not a single criteria return all
 		if (criteria.count() == 0) {
-			return new Matches(copyOfRange(byIDN, 1, usage+1), usage+1);
+			return new Matches(copyOfRange(byIDN, 1, usage+1), usage);
 		}
 		// 1. find the "eq" selector that yields the smallest set
 		TaskSet candidates = null;

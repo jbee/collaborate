@@ -94,9 +94,7 @@ public class CacheCluster implements Cache {
 		// might be a indexing request
 		if (criteria.isIndexRequest()) {
 			Name output = (Name) criteria.get(0).rvalues[0];
-			Cache cache = outputCaches.computeIfAbsent(output, (k) -> {
-				return new CacheWorker(k, db, before);
-			});
+			Cache cache = outputCaches.computeIfAbsent(output, (k) -> new CacheWorker(k, db, before));
 			return cache.matchesFor(actor, criteria.without(Property.output));
 		}
 		// lookup request

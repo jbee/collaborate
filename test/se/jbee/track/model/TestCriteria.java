@@ -24,7 +24,7 @@ public class TestCriteria {
 		assertTrue(text.isValid("https://mail.google.com/mail/u/0/#inbox"));
 		assertTrue(text.isValid("http://asserttrue.blogspot.se/2010/01/how-to-iimplement-custom-paint-in-50.html#"));
 	}
-	
+
 	@Test
 	public void valuesAreTyped() {
 		Criteria criteria = Criteria.parse("[coloration=heat][length=20][user~{foo,bar}]");
@@ -34,20 +34,20 @@ public class TestCriteria {
 		assertSame(Coloration.class, criteria.get(1).rvalues[0].getClass());
 		assertSame(Integer.class, criteria.get(2).rvalues[0].getClass());
 	}
-	
+
 	@Test
 	public void count() {
 		Criteria criteria = Criteria.parse("[url={jira:GRP-001}][url=https://mail.google.com/mail/u/0/#inbox]");
 		assertEquals(2, criteria.count());
 	}
-	
+
 	@Test
 	public void valuesCanBeEnumConstants() {
 		Criteria criteria = Criteria.parse("[order>>heat]");
 		assertEquals(1, criteria.count());
 		assertSame(Property.heat, criteria.get(0).rvalues[0]);
 	}
-	
+
 	@Test
 	public void dateYYYYexpandsToRange() {
 		Criteria criteria = Criteria.parse("[reported=2016]");
@@ -57,7 +57,7 @@ public class TestCriteria {
 		assertEquals(Operator.le, criteria.get(1).op);
 		assertEquals(Date.parse("2016-12-31"), criteria.get(1).rvalues[0]);
 	}
-	
+
 	@Test
 	public void parsingOrdersListOfCriteriumByItsImportanceForLookup() {
 		Criteria criteria = Criteria.parse("[length=5][user~{Tom,Frank}][reporter=Tom][age<10][solver=Max]");
@@ -68,16 +68,16 @@ public class TestCriteria {
 		assertEquals(Property.age, criteria.get(3).left);
 		assertEquals(Property.length, criteria.get(4).left);
 	}
-	
+
 	@Test
 	public void parsingReplacesActualOutput() {
-		Criteria criteria = Criteria.parse("[output=@]", singletonMap(Property.output, as("foo")));
+		Criteria criteria = Criteria.parse("[output=@]").bindTo(singletonMap(Property.output, as("foo")));
 		assertEquals("[output = foo]", criteria.toString());
 	}
 
 	@Test
 	public void parsingReplacesActualArea() {
-		Criteria criteria = Criteria.parse("[area=@]", singletonMap(Property.area, as("foo")));
+		Criteria criteria = Criteria.parse("[area=@]").bindTo(singletonMap(Property.area, as("foo")));
 		assertEquals("[area = foo]", criteria.toString());
 	}
 
@@ -86,10 +86,10 @@ public class TestCriteria {
 		EnumMap<Property, Name> context = new EnumMap<>(Property.class);
 		context.put(Property.user, as("foo"));
 		context.put(Property.reporter, as("bar"));
-		Criteria criteria = Criteria.parse("[user=@][reporter=@]", context);
+		Criteria criteria = Criteria.parse("[user=@][reporter=@]").bindTo(context);
 		assertEquals("[reporter = bar][user = foo]", criteria.toString());
 	}
-	
+
 	@Test
 	public void propertyCanBeUsedAsRightOperand() {
 		Criteria criteria = Criteria.parse("[reporter~@user][user~@reporter]");
