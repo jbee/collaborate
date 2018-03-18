@@ -457,7 +457,7 @@ final class CacheWorker implements Cache {
 	}
 
 	private Output cacheInstanceOf(Output p) {
-		return byIDN[1].output;
+		return usage >= 1 ? byIDN[1].output : p;
 	}
 
 	private static void removeMissing(Names a, Names b, Map<Name, TaskSet> map, IDN idn) {
