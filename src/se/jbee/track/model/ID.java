@@ -1,8 +1,7 @@
 package se.jbee.track.model;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.util.Arrays.copyOfRange;
-
-import java.nio.charset.StandardCharsets;
 
 /**
  * A (database wide) unique identifier.
@@ -85,12 +84,12 @@ public final class ID extends Identifier<ID> {
 	}
 
 	public static ID taskId(Name output, IDN id) {
-		return ID.id(ID.Type.Task, output, id.asName());
+		return new ID(Type.Task, join(output.readonlyBytes(), DIVIDER, toBase32(id.num)));
 	}
 
 	public static ID eventId(long timestamp) {
 		// we just use the hex string of the long number - a key without a : is an event
-		return new ID(Type.event, Long.toHexString(timestamp).getBytes(StandardCharsets.US_ASCII));
+		return new ID(Type.event, Long.toHexString(timestamp).getBytes(US_ASCII));
 	}
 
 	public static ID historyId(ID entity) {
@@ -132,5 +131,23 @@ public final class ID extends Identifier<ID> {
 	        result |= (bytes8[i] & 0xFF);
 	    }
 	    return result;
+	}
+
+	private static final byte[] base32digits = "0123456789ABCDEFGHIJKLMNOPQRSTUV".getBytes(US_ASCII);
+	/**
+	 * Converts a positive integer number to a 4 digit base 32 number with leading zeros.
+	 */
+	static byte[] toBase32(int num) {
+		if (num < 0 || num > 1048575)
+			throw new NumberFormatException("Only integers in range 0 to 1048575 can be converted to 4 digit base 32.");
+		final int mask = (1 << 5) - 1;
+		byte[] res = new byte[4];
+		int pos = res.length-1;
+		do {
+			res[pos--] = base32digits[num & mask];
+			num >>>= 5;
+		} while (num > 0 && pos >= 0);
+		while (pos >= 0) res[pos--] = '0';
+		return res;
 	}
 }

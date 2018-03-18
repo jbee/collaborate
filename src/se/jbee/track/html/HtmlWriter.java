@@ -38,7 +38,7 @@ public final class HtmlWriter {
 	}
 
 	public void versionLink(Task task) {
-		out.append("<a class='vn' href='/view/").append(task.output.name).append("/v/").append(task.base.name).append("/'>").append(task.base.name).append("</a>");
+		out.append("<a class='vn' href='").append(task.output.name).append("/v/").append(task.base.name).append("/'>").append(task.base.name).append("</a>");
 	}
 
 	public void userLink(Name user) {
@@ -50,7 +50,7 @@ public final class HtmlWriter {
 	}
 
 	public void areaLink(Area area) {
-		out.append("<a href='/view/").append(area.output).append("/").append(area.name).append("/'>").append(area.name).append("</a>");
+		out.append("<a href='").append(area.output).append("/").append(area.name).append("/'>").append(area.name).append("</a>");
 	}
 
 	public void taskLink(Task task) {

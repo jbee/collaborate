@@ -232,7 +232,7 @@ final class CacheWorker implements Cache {
 			offset = criteria.get(criteria.indexOf(Property.offset)).intValue(offset);
 		}
 		int total = matches.length;
-		if (offset + len > total) {
+		if (offset > total) {
 			matches = new Task[0];
 		} else {
 			if (criteria.contains(Property.order)) {
