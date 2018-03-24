@@ -125,7 +125,6 @@ public final class Server {
 	}
 
 	private Server(Email admin, File pathDB, long sizeDB, int port, Clock clock, Limits limits, EnumSet<Switch> switches) {
-		super();
 		this.admin = admin;
 		this.pathDB = pathDB;
 		this.sizeDB = sizeDB;

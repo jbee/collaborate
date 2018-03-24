@@ -66,7 +66,6 @@ public final class Output extends Entity<Output> {
 		public final URL base;
 
 		public Integration(Name name, URL base) {
-			super();
 			this.name = name;
 			this.base = base;
 		}

@@ -28,7 +28,6 @@ public final class LinearLimits implements Limits {
 	private long nextCleanup;
 
 	public LinearLimits(int base) {
-		super();
 		this.base = base;
 		this.nextCleanup = Long.MIN_VALUE;
 	}
@@ -123,7 +122,6 @@ public final class LinearLimits implements Limits {
 		AtomicInteger count = new AtomicInteger();
 
 		LimitPerPeriod(int limit, int periodDivisor) {
-			super();
 			this.limit = limit;
 			this.periodDivisor = periodDivisor;
 		}

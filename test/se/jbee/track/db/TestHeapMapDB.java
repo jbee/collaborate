@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Test;
 
-import se.jbee.track.db.DB.TxRW;
+import se.jbee.track.db.DB.Write;
 import se.jbee.track.model.ID;
 
 /**
@@ -22,8 +22,8 @@ public class TestHeapMapDB {
 
 	@Test
 	public void onlyOneWriteTransationAtATimeIsPossible() throws InterruptedException {
-		try (TxRW tx = db.write()) {
-			AtomicReference<TxRW> tx2 = new AtomicReference<>();
+		try (Write tx = db.write()) {
+			AtomicReference<Write> tx2 = new AtomicReference<>();
 			Thread w2 = new Thread(() -> {
 				tx2.set(db.write());
 			});
@@ -37,7 +37,7 @@ public class TestHeapMapDB {
 	public void putValuesAreAvailableAfterCommittedTransaction() {
 		ID key = userId(as("xy"));
 		ByteBuffer value = value("foo");
-		try (TxRW tx = db.write()) {
+		try (Write tx = db.write()) {
 			tx.put(key, value);
 			tx.commit();
 		}
@@ -48,7 +48,7 @@ public class TestHeapMapDB {
 	public void putValuesAreNotAvailableAfterUncommittedTransaction() {
 		ID key = userId(as("xy"));
 		ByteBuffer value = value("foo");
-		try (TxRW tx = db.write()) {
+		try (Write tx = db.write()) {
 			tx.put(key, value);
 		}
 		assertNull(db.read().get(key));
@@ -58,14 +58,14 @@ public class TestHeapMapDB {
 	public void putValuesCanBeReplacedByACommittedTransaction() {
 		ID key = userId(as("xy"));
 		ByteBuffer value = value("foo");
-		try (TxRW tx = db.write()) {
+		try (Write tx = db.write()) {
 			tx.put(key, value);
 			tx.commit();
 		}
 		assertEquals(value, db.read().get(key));
 
 		ByteBuffer newValue = value("bar");
-		try (TxRW tx = db.write()) {
+		try (Write tx = db.write()) {
 			tx.put(key, newValue);
 			tx.commit();
 		}
@@ -76,14 +76,14 @@ public class TestHeapMapDB {
 	public void putValuesAreNotReplacedByAnUncommittedTransaction() {
 		ID key = userId(as("xy"));
 		ByteBuffer value = value("foo");
-		try (TxRW tx = db.write()) {
+		try (Write tx = db.write()) {
 			tx.put(key, value);
 			tx.commit();
 		}
 		assertEquals(value, db.read().get(key));
 
 		ByteBuffer newValue = value("bar");
-		try (TxRW tx = db.write()) {
+		try (Write tx = db.write()) {
 			tx.put(key, newValue);
 		}
 		assertEquals(value, db.read().get(key));

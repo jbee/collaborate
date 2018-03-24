@@ -55,7 +55,6 @@ public final class Mail {
 	public final String text;
 
 	public Mail(Delivery method, Email to, Objective objective, Notification subject, String text) {
-		super();
 		this.method = method;
 		this.to = to;
 		this.objective = objective;

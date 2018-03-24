@@ -8,7 +8,7 @@ package se.jbee.track.model;
 public final class IDN implements Comparable<IDN> {
 
 	public static final IDN ZERO = new IDN(0);
-	
+
 	public final int num;
 
 
@@ -17,9 +17,8 @@ public final class IDN implements Comparable<IDN> {
 			throw new IllegalArgumentException("A IDN must be a positive number!");
 		return num == 0 ? ZERO : new IDN(num);
 	}
-	
+
 	private IDN(int num) {
-		super();
 		this.num = num;
 	}
 
@@ -32,11 +31,11 @@ public final class IDN implements Comparable<IDN> {
 	public int compareTo(IDN other) {
 		return Integer.compare(num, other.num);
 	}
-	
+
 	public Name asName() {
 		return Name.as(String.valueOf(num));
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof IDN && equalTo((IDN) obj);
@@ -45,7 +44,7 @@ public final class IDN implements Comparable<IDN> {
 	public boolean equalTo(IDN other) {
 		return num == other.num;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return num;

@@ -14,14 +14,14 @@ import se.jbee.track.model.User;
  * {@link Event}s directly. This is done to keep a low memory profile while
  * providing the most useful data right away without needing to search through
  * all events.
- * 
+ *
  * If the entity is a {@link User} the events are not the transformations done
  * one the user but by the user.
  */
 public final class History implements Iterable<ID> {
 
 	/**
-	 * The effected entity. 
+	 * The effected entity.
 	 */
 	public final ID entity;
 	/**
@@ -33,9 +33,8 @@ public final class History implements Iterable<ID> {
 	 * Order is always maintained from oldest to newest (most recent) event.
 	 */
 	public final long[] events;
-	
+
 	public History(ID entity, long[] events) {
-		super();
 		this.entity = entity;
 		this.events = events;
 	}
@@ -44,11 +43,11 @@ public final class History implements Iterable<ID> {
 	public String toString() {
 		return entity.toString();
 	}
-	
+
 	public int length() {
 		return events.length-1;
 	}
-	
+
 	/**
 	 * Compaction means that at least one event has been dropped to not have the history grow limit-less.
 	 */
@@ -59,7 +58,7 @@ public final class History implements Iterable<ID> {
 	@Override
 	public Iterator<ID> iterator() {
 		return new Iterator<ID>() {
-			
+
 			int i = 1;
 			@Override
 			public boolean hasNext() {

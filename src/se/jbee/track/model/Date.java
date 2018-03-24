@@ -11,10 +11,9 @@ public final class Date implements Comparable<Date> {
 	public final int epochDay;
 
 	public Date(int epochDay) {
-		super();
 		this.epochDay = epochDay;
 	}
-	
+
 	public static Date parse(String yyyymmdd) {
 		return new Date((int) LocalDate.parse(yyyymmdd).toEpochDay());
 	}
@@ -39,7 +38,7 @@ public final class Date implements Comparable<Date> {
 	public Date plusDays(int days) {
 		return new Date(epochDay+days);
 	}
-	
+
 	public Date minusDays(int days) {
 		return new Date(epochDay-days);
 	}
@@ -47,12 +46,12 @@ public final class Date implements Comparable<Date> {
 	public static Date today() {
 		return date(System.currentTimeMillis());
 	}
-	
+
 	@Override
 	public String toString() {
 		return LocalDate.ofEpochDay(epochDay).toString();
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		return obj instanceof Date && equalTo((Date) obj);
@@ -61,7 +60,7 @@ public final class Date implements Comparable<Date> {
 	public boolean equalTo(Date other) {
 		return epochDay == other.epochDay;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return epochDay;

@@ -21,9 +21,9 @@ import se.jbee.track.model.ID;
  * transactions to one at a time.
  *
  * Read transaction operate on the state of the map at the beginning of the
- * {@link DB.TxR}. When a {@link DB.TxRW} is created the {@link SortedMap} is
+ * {@link DB.Read}. When a {@link DB.Write} is created the {@link SortedMap} is
  * copied and any modifications are only transfered back in case of a
- * {@link TxRW#commit()}.
+ * {@link Write#commit()}.
  *
  * Consequently write performance is pretty terrible for a larger database as it
  * copies on change.
@@ -43,15 +43,15 @@ public final class HeapMapDB implements DB {
 	}
 
 	@Override
-	public TxR read() {
-		return new HeapMapTxR(entities.get());
+	public Read read() {
+		return new HeapMapRead(entities.get());
 	}
 
 	@Override
-	public TxRW write() {
+	public Write write() {
 		try {
 			writeLock.acquire();
-			return new HeapMapTxW(entities.get(), this);
+			return new HeapMapWrite(entities.get(), this);
 		} catch (InterruptedException e) {
 			throw new RuntimeException(e);
 		}
@@ -65,11 +65,11 @@ public final class HeapMapDB implements DB {
 		}
 	}
 
-	private static class HeapMapTxR implements TxR {
+	private static class HeapMapRead implements Read {
 
 		final SortedMap<ID, ByteBuffer> entities;
 
-		HeapMapTxR(SortedMap<ID, ByteBuffer> entities) {
+		HeapMapRead(SortedMap<ID, ByteBuffer> entities) {
 			this.entities = entities;
 		}
 
@@ -98,12 +98,12 @@ public final class HeapMapDB implements DB {
 
 	}
 
-	private static class HeapMapTxW extends HeapMapTxR implements TxRW {
+	private static class HeapMapWrite extends HeapMapRead implements Write {
 
 		private final HeapMapDB db;
 		private boolean committed = false;
 
-		HeapMapTxW(SortedMap<ID, ByteBuffer> entities, HeapMapDB db) {
+		HeapMapWrite(SortedMap<ID, ByteBuffer> entities, HeapMapDB db) {
 			super(new TreeMap<>(entities));
 			this.db = db;
 		}

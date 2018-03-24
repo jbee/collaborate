@@ -66,7 +66,7 @@ public final class Params extends EnumMap<Param, String> {
 	 *  /{output}/{idn}
 	 *  /{output}/{area}/{serial}
 	 * </pre>
-	 * All POST/PUT URLs use <code>/do/</code> as first segement.
+	 * All POST/PUT URLs use <code>/do/</code> as first segment.
 	 */
 	public static Params fromPath(String path) {
 		if (path.startsWith("/"))

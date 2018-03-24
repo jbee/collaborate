@@ -28,7 +28,6 @@ public final class HtmlWriter {
 	private final PrintWriter out;
 
 	public HtmlWriter(PrintWriter out) {
-		super();
 		this.out = out;
 	}
 

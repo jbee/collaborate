@@ -10,6 +10,7 @@ import se.jbee.track.api.ListView;
 import se.jbee.track.api.SampleView;
 import se.jbee.track.api.UserInterface;
 import se.jbee.track.api.ViewService;
+import se.jbee.track.cache.Cache;
 import se.jbee.track.cache.CacheCluster;
 import se.jbee.track.db.DB;
 import se.jbee.track.db.LMDB;
@@ -45,11 +46,13 @@ public final class Application {
 		Server config = Server.parse(args);
 		config = config.with(config.pathDB); // force check and creation of dir
 		try (DB db = createDB(config)) {
-			ViewService views = new CachedViewService(config, db, new CacheCluster(db, config.clock));
-			UserInterface ui = createHttpUserInterface(views);
-			org.eclipse.jetty.server.Server server = JettyHttpServer.create(config, ui);
-			server.start();
-			server.join();
+			try (Cache cache = new CacheCluster(db, config.clock)) {
+				ViewService views = new CachedViewService(config, db, cache);
+				UserInterface ui = createHttpUserInterface(views);
+				org.eclipse.jetty.server.Server server = JettyHttpServer.create(config, ui);
+				server.start();
+				server.join();
+			}
 		}
 	}
 

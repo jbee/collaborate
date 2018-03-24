@@ -33,7 +33,6 @@ public class Names implements Iterable<Name>, Comparable<Names> {
 	private Name[] names;
 
 	public Names(Name... names) {
-		super();
 		this.names = names;
 	}
 

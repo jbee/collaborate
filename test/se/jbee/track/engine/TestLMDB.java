@@ -29,8 +29,8 @@ import org.lmdbjava.Env;
 import org.lmdbjava.Txn;
 
 import se.jbee.track.db.DB;
-import se.jbee.track.db.DB.TxR;
-import se.jbee.track.db.DB.TxRW;
+import se.jbee.track.db.DB.Read;
+import se.jbee.track.db.DB.Write;
 import se.jbee.track.db.LMDB;
 import se.jbee.track.model.Email;
 import se.jbee.track.model.ID;
@@ -79,7 +79,7 @@ public class TestLMDB {
 			u1 = tracker.authenticate(u1, u1.otp);
 			Page s1 = tracker.compose(u1, as("def"), template("ghi"));
 			Page s2 = tracker.compose(u1, as("mno"), template("pqr"));
-			try (TxRW tx = db.write()) {
+			try (Write tx = db.write()) {
 				ByteBuffer buf = ByteBuffer.allocateDirect(1024);
 				Bincoder.page2bin.convert(s1, buf);
 				buf.flip();
@@ -98,7 +98,7 @@ public class TestLMDB {
 			Page s1r;
 			Page s2r;
 			User u1r;
-			try (TxR tx = db.read()) {
+			try (Read tx = db.read()) {
 				ByteBuffer buf = tx.get(s1.uniqueID());
 				s1r = Bincoder.bin2page.convert(null, buf);
 				buf = tx.get(s2.uniqueID());
@@ -145,7 +145,7 @@ public class TestLMDB {
 			User u;
 			History sh;
 			Event e;
-			try (TxR tx = db.read()) {
+			try (Read tx = db.read()) {
 				ByteBuffer buf = tx.get(ID.pageId(user, page));
 				s = Bincoder.bin2page.convert(null, buf);
 				buf = tx.get(ID.userId(user));

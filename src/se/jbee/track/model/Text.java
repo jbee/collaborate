@@ -11,7 +11,6 @@ public abstract class Text<T extends Text<T>> implements ByteSequence<T> {
 	private final byte[] text;
 
 	protected Text(byte[] utf16Symbols) {
-		super();
 		this.text = utf16Symbols;
 	}
 

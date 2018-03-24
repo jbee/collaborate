@@ -3,7 +3,7 @@ package se.jbee.track.model;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 
-public class Task extends Entity<Task> {
+public final class Task extends Entity<Task> {
 
 	// creating a task
 	public Output output; // needs to be a object since it changes when new task is created
@@ -120,9 +120,5 @@ public class Task extends Entity<Task> {
 		if (users == null)
 			users = participants.union(aspirants);
 		return users;
-	}
-
-	public void changed() {
-		users = null;
 	}
 }

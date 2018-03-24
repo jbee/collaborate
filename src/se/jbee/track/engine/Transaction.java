@@ -8,6 +8,7 @@ import static se.jbee.track.engine.Bincoder.poll2bin;
 import static se.jbee.track.engine.Bincoder.task2bin;
 import static se.jbee.track.engine.Bincoder.user2bin;
 import static se.jbee.track.engine.Bincoder.version2bin;
+import static se.jbee.track.engine.Changes.changes;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -15,9 +16,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import se.jbee.track.db.DB;
-import se.jbee.track.db.DB.TxRW;
+import se.jbee.track.db.DB.Write;
 import se.jbee.track.engine.Change.Operation;
 import se.jbee.track.engine.Change.Tx;
 import se.jbee.track.engine.Event.Transition;
@@ -50,17 +52,21 @@ public final class Transaction extends DAO implements Tx {
 	 */
 	private static final ByteBuffer WRITE_BUF = ByteBuffer.allocateDirect(8192);
 
+	public static Changes run(Change set, DB db, Server server) throws ConcurrentUsage {
+		return run(set, db, server, null);
+	}
+
 	/**
 	 * Applies the changes to the DB.
 	 *
 	 * @return a list of changed entities each given as a pair: before and after the change
 	 * @throws ConcurrentUsage when trying to change an entity already changed by an ongoing transaction (in another thread)
 	 */
-	public static Changes run(Change set, DB db, Server server) throws ConcurrentUsage {
+	public static Changes run(Change set, DB db, Server server, Consumer<Changes> listener) throws ConcurrentUsage {
 		final long now = max(lastTick.incrementAndGet(), server.clock.time());
 		final Clock fixedNow = () -> now;
 		Limits limits = new OccupySpecificLimits(server.limits);
-		try (Transaction tx = new Transaction(fixedNow, db)) {
+		try (Transaction tx = new Transaction(fixedNow, db, listener)) {
 			try {
 				set.apply(new Tracker(server.with(fixedNow).with(limits)), tx);
 				return tx.commit();
@@ -83,13 +89,15 @@ public final class Transaction extends DAO implements Tx {
 
 	private final Clock clock;
 	private final DB db;
+	private final Consumer<Changes> listener;
 
 	private ID actor;
 
-	private Transaction(Clock clock, DB db) {
+	private Transaction(Clock clock, DB db, Consumer<Changes> listener) {
 		super(db.read());
 		this.clock = clock;
 		this.db = db;
+		this.listener = listener;
 	}
 
 	@Override
@@ -173,7 +181,7 @@ public final class Transaction extends DAO implements Tx {
 			return Changes.EMPTY; // empty changesets have serial 0 and can be discarded/ignored
 		if (actor == null)
 			throw new IllegalStateException("Acting user has to be updated during a transaction!");
-		try (TxRW tx = db.write()) {
+		try (Write tx = db.write()) {
 			WRITE_BUF.clear();
 			Changes.Entry<?>[] log = writeEntities(tx, WRITE_BUF);
 			long timestamp = clock.time();
@@ -181,21 +189,18 @@ public final class Transaction extends DAO implements Tx {
 			tx.commit();
 			// serial is fetched within the TX write() but after commit() so we know this is successful
 			// also only one thread can enter the write block
-			return new Changes(timestamp, serial.incrementAndGet(), log);
+			return publish(changes(timestamp, log));
 		}
 	}
 
-	/**
-	 * Each {@link Changes} change-set get a incrementing serial attached.
-	 * This serial is unique within a run of the application. It is not
-	 * persisted but it helps further processing to reorder {@link Changes}
-	 * if necessary as they can identify (and wait) missing sets.
-	 */
-	private static final AtomicLong serial = new AtomicLong();
-
+	private Changes publish(Changes changes) {
+		if (listener != null)
+			try { listener.accept(changes); } catch (RuntimeException e) { /* just ignore this */ }
+		return changes;
+	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private Changes.Entry<?>[] writeEntities(TxRW tx, ByteBuffer buf) {
+	private Changes.Entry<?>[] writeEntities(Write tx, ByteBuffer buf) {
 		Changes.Entry<?>[] res = new Changes.Entry[changed.size()];
 		int i = 0;
 		for (Entry<ID,Entity<?>> e : changed.entrySet()) {
@@ -218,7 +223,7 @@ public final class Transaction extends DAO implements Tx {
 		return res;
 	}
 
-	private void writeHistoryAndEvent(TxRW tx, Changes.Entry<?>[] changes, long timestamp, ByteBuffer buf) {
+	private void writeHistoryAndEvent(Write tx, Changes.Entry<?>[] changes, long timestamp, ByteBuffer buf) {
 		final Transition[] transitions = new Transition[changes.length];
 		int i = 0;
 		for (Changes.Entry<?> e : changes) {
@@ -244,7 +249,7 @@ public final class Transaction extends DAO implements Tx {
 		write(tx, e.uniqueID() , e, Bincoder.event2bin, buf);
 	}
 
-	private static <T> void write(TxRW tx, ID id, T e, Bincoder<T, ByteBuffer> encoder, ByteBuffer buf) {
+	private static <T> void write(Write tx, ID id, T e, Bincoder<T, ByteBuffer> encoder, ByteBuffer buf) {
 		if (e instanceof Transitory && ((Transitory) e).obsolete()) {
 			tx.delete(id);
 		} else {

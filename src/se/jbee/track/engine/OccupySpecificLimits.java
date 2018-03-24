@@ -6,22 +6,21 @@ import java.util.Set;
 /**
  * This {@link Limits} will {@link Limits#occupy(Limit, Clock)} all
  * {@link Limit#isSpecific()} {@link Limits}.
- * 
+ *
  * This is e.g. useful to detect colliding changes for multiple transaction
  * before we even try to store.
- * 
+ *
  * Use {@link Limits#free(Limit)} with <code>null</code> to free all
  * {@link Limits} occupied so far.
- * 
+ *
  * @author jan
  */
 public final class OccupySpecificLimits implements Limits {
 
 	private final Set<Limit> occupied = new HashSet<>();
 	private final Limits limits;
-	
+
 	public OccupySpecificLimits(Limits limits) {
-		super();
 		this.limits = limits;
 	}
 
@@ -31,7 +30,7 @@ public final class OccupySpecificLimits implements Limits {
 		}
 		occupied.clear();
 	}
-	
+
 	@Override
 	public boolean stress(Limit limit, Clock clock) throws ConcurrentUsage {
 		if (!limit.isSpecific()) {
@@ -50,7 +49,7 @@ public final class OccupySpecificLimits implements Limits {
 		}
 		return false;
 	}
-	
+
 	@Override
 	public void free(Limit l) {
 		if (l == null) {

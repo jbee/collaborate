@@ -20,10 +20,7 @@ import se.jbee.track.model.ID;
  * A wrapper around the java LMDB library to decouple all code from the library.
  *
  * A {@link LMDB} instance usually is constructed on application startup and
- * used by multiple threads to create read {@link TxR} or write {@link TxRW}
- * transactions.
- *
- * @author jan
+ * used by multiple threads to create {@link Read} or {@link Write} transactions.
  */
 public final class LMDB implements DB {
 
@@ -31,7 +28,6 @@ public final class LMDB implements DB {
 	private final AtomicReferenceArray<Dbi<ByteBuffer>> collections = new AtomicReferenceArray<>(ID.Type.values().length);
 
 	public LMDB(Builder<ByteBuffer> envBuilder, File path) {
-		super();
 		this.env = envBuilder.setMaxDbs(10).open(path);
 		for (ID.Type t : ID.Type.values()) {
 			collections.set(t.ordinal(), env.openDbi(t.name(), DbiFlags.MDB_CREATE));
@@ -46,29 +42,29 @@ public final class LMDB implements DB {
 	}
 
 	@Override
-	public TxR read() {
-		return new LMDB_TxR(env);
+	public Read read() {
+		return new LMDBRead(env);
 	}
 
 	@Override
-	public TxRW write() {
-		return new LMDB_TxRW(env);
+	public Write write() {
+		return new LMDBWrite(env);
 	}
 
 	Dbi<ByteBuffer> collection(ID.Type type) {
 		return collections.get(type.ordinal());
 	}
 
-	private class LMDB_TxR implements TxR {
+	private class LMDBRead implements Read {
 
 		final Txn<ByteBuffer> txn;
 		final ByteBuffer key;
 
-		public LMDB_TxR(Env<ByteBuffer> env) {
+		public LMDBRead(Env<ByteBuffer> env) {
 			this(env.txnRead());
 		}
 
-		LMDB_TxR(Txn<ByteBuffer> txn) {
+		LMDBRead(Txn<ByteBuffer> txn) {
 			this.txn = txn;
 			this.key = ByteBuffer.allocateDirect(env.getMaxKeySize());
 		}
@@ -112,9 +108,9 @@ public final class LMDB implements DB {
 		}
 	}
 
-	private class LMDB_TxRW extends LMDB_TxR implements TxRW {
+	private final class LMDBWrite extends LMDBRead implements Write {
 
-		public LMDB_TxRW(Env<ByteBuffer> env) {
+		public LMDBWrite(Env<ByteBuffer> env) {
 			super(env.txnWrite());
 		}
 

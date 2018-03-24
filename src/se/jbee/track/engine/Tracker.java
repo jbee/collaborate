@@ -66,7 +66,6 @@ public final class Tracker {
 	private final Server server;
 
 	public Tracker(Server server) {
-		super();
 		this.server = server;
 	}
 

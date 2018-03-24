@@ -24,7 +24,6 @@ public class HttpUserInterface implements UserInterface {
 	private final Map<Class<?>, HtmlRenderer<?>> renderers;
 
 	public HttpUserInterface(ViewService views, Map<Class<?>, HtmlRenderer<?>> renderers) {
-		super();
 		this.views = views;
 		this.renderers = renderers;
 	}

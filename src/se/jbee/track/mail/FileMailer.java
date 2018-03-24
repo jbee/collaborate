@@ -21,7 +21,7 @@ import se.jbee.track.model.Mail.Delivery;
 public class FileMailer implements Mailer {
 
 	private static final Set<File> runningMailers = new ConcurrentHashSet<>();
-	
+
 	private final Mailer delegate;
 	private final ArrayBlockingQueue<Mail> confirmations = new ArrayBlockingQueue<>(20);
 	private final ArrayBlockingQueue<Mail> informations = new ArrayBlockingQueue<>(20);
@@ -32,7 +32,6 @@ public class FileMailer implements Mailer {
 	private final AtomicBoolean run = new AtomicBoolean(true);
 
 	public FileMailer(File dataDir, Mailer delegate) {
-		super();
 		checkDir(dataDir);
 		runningMailers.add(dataDir);
 		this.delegate = delegate;
@@ -55,7 +54,7 @@ public class FileMailer implements Mailer {
 				throw new IllegalStateException("Cannot start a mailer in a subdirectory of another mailer");
 		}
 	}
-	
+
 	@Override
 	protected void finalize() {
 		run.set(false);
@@ -66,17 +65,17 @@ public class FileMailer implements Mailer {
 		if (!dir.exists())
 			dir.mkdirs();
 	}
-	
+
 	private static void clearLocks(File dir) {
 		for (File f : dir.listFiles()) {
 			if (f.isFile() && f.getName().endsWith(".lock"))
 				f.delete();
 		}
 	}
-	
+
 	/**
 	 * Step 1: add files to input queues.
-	 * 
+	 *
 	 * (This will be called by worker threads that process requests)
 	 */
 	@Override
@@ -95,25 +94,25 @@ public class FileMailer implements Mailer {
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Step 2: Main loop of the thread that writes incoming mails to files.
 	 */
 	private void mail2file() {
 		while (run.get()) {
-			
+
 		}
 	}
-	
+
 	/**
 	 * Step 3: Main loop of the thread that reads files to send them (outgoing mails).
 	 */
 	private void file2mail() {
 		while (run.get()) {
-			
+
 		}
 	}
-	
+
 	private static boolean tryToLock(File lock) {
 		try {
 			return lock.createNewFile();
@@ -125,11 +124,11 @@ public class FileMailer implements Mailer {
 	private static boolean unlock(File lock) {
 		return lock.delete();
 	}
-	
+
 	private void appendToFile(Mail mail) {
 		try {
-			Files.write(mailFileFor(mail).toPath(), 
-					mail.text.getBytes(StandardCharsets.UTF_8), 
+			Files.write(mailFileFor(mail).toPath(),
+					mail.text.getBytes(StandardCharsets.UTF_8),
 					StandardOpenOption.CREATE, StandardOpenOption.APPEND);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -140,13 +139,13 @@ public class FileMailer implements Mailer {
 	private File mailFileFor(Mail mail) {
 		return new File(mailDir, mail.to.toString()+".mail");
 	}
-	
+
 	private File lockFileFor(Mail mail) {
 		return new File(lockDir, mail.to.toString()+".lock");
 	}
-	
+
 	private File ageFileFor(Mail mail) {
 		return new File(ageDir, mail.to.toString()+".age");
 	}
-	
+
 }

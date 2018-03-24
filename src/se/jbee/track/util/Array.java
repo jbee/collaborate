@@ -4,6 +4,8 @@ import static java.lang.System.arraycopy;
 import static java.util.Arrays.copyOf;
 import static java.util.Arrays.copyOfRange;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -31,6 +33,15 @@ public final class Array {
 
 	public static <T> boolean any(T[] arr, Predicate<T> eq) {
 		return indexOf(arr, eq) >= 0;
+	}
+
+	public static <T, V> int indexOf(T[] arr, BiPredicate<T, V> swap, V init) {
+		V candidate = init;
+		int res = -1;
+		for (int i = 0; i < arr.length; i++)
+			if (swap.test(arr[i], candidate))
+				res = i;
+		return res;
 	}
 
 	public static <T> boolean contains(T[] arr, T e, BiPredicate<T, T> eq) {
@@ -83,6 +94,20 @@ public final class Array {
 		return res;
 	}
 
+	public static <A> A[] fold(A[][] a) {
+		int len = 0;
+		for (A[] e : a)
+			len += e.length;
+		@SuppressWarnings("unchecked")
+		A[] res = (A[]) java.lang.reflect.Array.newInstance(a[0].getClass().getComponentType(), len);
+		int s = 0;
+		for (A[] e : a) {
+			System.arraycopy(e, 0, res, s, e.length);
+			s+=e.length;
+		}
+		return res;
+	}
+
 	public static <A> A[] refine(A[] a, Function<A, A> f) {
 		return a.length == 0 ? a : map(a, f);
 	}
@@ -94,6 +119,20 @@ public final class Array {
 		b[0] = b0;
 		for (int i = 1; i < a.length; i++)
 			b[i] = f.apply(a[i]);
+		return b;
+	}
+
+	public static <A, B> B[] map(Collection<A> a, Function<A, B> f) {
+		Iterator<A> iter = a.iterator();
+		if (!iter.hasNext())
+			throw new IllegalArgumentException("Source must not be empty");
+		B b0 = f.apply(iter.next());
+		@SuppressWarnings("unchecked")
+		B[] b = (B[]) java.lang.reflect.Array.newInstance(b0.getClass(), a.size());
+		b[0] = b0;
+		int i = 1;
+		while (iter.hasNext())
+			b[i++] = f.apply(iter.next());
 		return b;
 	}
 

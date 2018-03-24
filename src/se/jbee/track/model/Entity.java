@@ -18,7 +18,6 @@ public abstract class Entity<T extends Entity<T>> implements Cloneable, Comparab
 	public abstract Name output();
 
 	public Entity(int initalVersion) {
-		super();
 		this.initalVersion = initalVersion;
 		this.version = initalVersion;
 	}

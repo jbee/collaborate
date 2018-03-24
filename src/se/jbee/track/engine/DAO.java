@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import se.jbee.track.db.DB;
-import se.jbee.track.db.DB.TxR;
+import se.jbee.track.db.DB.Read;
 import se.jbee.track.model.Area;
 import se.jbee.track.model.Entity;
 import se.jbee.track.model.ID;
@@ -43,10 +43,9 @@ public class DAO implements Repository {
 
 	protected final HashMap<ID, Entity<?>> loaded = new HashMap<>();
 
-	private final DB.TxR txr;
+	private final DB.Read txr;
 
-	public DAO(TxR txr) {
-		super();
+	public DAO(Read txr) {
 		this.txr = txr;
 	}
 

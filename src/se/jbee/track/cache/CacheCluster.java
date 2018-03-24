@@ -5,9 +5,12 @@ import static se.jbee.track.model.Criteria.Operator.in;
 import static se.jbee.track.model.Criteria.Operator.neq;
 import static se.jbee.track.model.Criteria.Operator.nin;
 import static se.jbee.track.model.Criteria.Property.output;
+import static se.jbee.track.util.Array.fold;
+import static se.jbee.track.util.Array.map;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -65,16 +68,20 @@ public class CacheCluster implements Cache {
 	}
 
 	@Override
-	public void shutdown() {
+	public void close() {
 		es.shutdown();
-		for (Cache c : outputCaches.values()) c.shutdown();
+		closeAndClearCaches();
+	}
+
+	private void closeAndClearCaches() {
+		for (Cache c : outputCaches.values()) c.close();
 		outputCaches.clear();
 	}
 
 	private Thread factory(Runnable target) {
 		Thread t = new Thread(target);
 		t.setDaemon(true);
-		t.setName("cache-cluster");
+		t.setName("task-cache: *");
 		return t;
 	}
 
@@ -84,12 +91,8 @@ public class CacheCluster implements Cache {
 		Date before = cacheValidity.get();
 		Date today = Date.date(clock.time());
 		if (today.after(before)) {
-			if (cacheValidity.compareAndSet(before, today)) { // make sure only one thread does the shutdown
-				for (Cache cache : outputCaches.values()) {
-					cache.shutdown();
-				}
-				outputCaches.clear();
-			}
+			if (cacheValidity.compareAndSet(before, today)) // make sure only one thread does the shutdown
+				closeAndClearCaches();
 		}
 		// might be a indexing request
 		if (criteria.isIndexRequest()) {
@@ -111,7 +114,7 @@ public class CacheCluster implements Cache {
 			return readyFuture(Matches.none()); // if no outputs are involved there cannot be any matches
 		criteria = criteria.without(output);
 		if (outputs.count() == 1) {
-			Cache cache = outputCaches.get(outputs.first());
+			Cache cache = cacheFor(outputs.first());
 			if (cache == null)
 				return readyFuture(Matches.none().exlcuded(outputs)); // there was just 1 output but it was not cached yet
 			return cache.matchesFor(actor, criteria);
@@ -133,33 +136,27 @@ public class CacheCluster implements Cache {
 	private Matches lookup(User actor, Names outputs, Criteria criteria) {
 		Criteria filterCriteria = criteria.without(Property.order, Property.length, Property.offset);
 		Names uncached = Names.empty();
-		List<Future<Matches>> futures = new ArrayList<>();
-		for (Name p : outputs) {
-			Cache cache = outputCaches.get(p);
+		Names erroneous = Names.empty();
+		Map<Name, Future<Matches>> futures = new LinkedHashMap<>();
+		for (Name o : outputs) {
+			Cache cache = cacheFor(o);
 			if (cache == null) {
-				uncached = uncached.add(p);
+				uncached = uncached.add(o);
 			} else {
-				futures.add(cache.matchesFor(actor, filterCriteria));
+				futures.put(o, cache.matchesFor(actor, filterCriteria));
 			}
 		}
 		List<Matches> outputMatches = new ArrayList<>();
-		for (Future<Matches> f : futures) {
+		for (java.util.Map.Entry<Name, Future<Matches>> o : futures.entrySet()) {
 			try {
-				outputMatches.add(f.get());
+				outputMatches.add(o.getValue().get());
 			} catch (Exception e) {
-				throw new RuntimeException(e);
+				erroneous.add(o.getKey());
 			}
 		}
-		int len = 0;
-		for (Matches m : outputMatches)
-			len += m.tasks.length;
-		Task[] tmp = new Task[len];
-		int s = 0;
-		for (Matches m : outputMatches) {
-			System.arraycopy(m.tasks, 0, tmp, s, m.tasks.length);
-			s+=m.tasks.length;
-		}
-		return CacheWorker.orderAndSlice(tmp, criteria, cacheValidity.get()).exlcuded(uncached);
+		Task[] mergedMatches = outputMatches.isEmpty() ? new Task[0] : fold(map(outputMatches, m -> m.tasks));
+		//TODO add erroneous
+		return CacheWorker.orderAndSlice(mergedMatches, criteria, cacheValidity.get()).exlcuded(uncached);
 	}
 
 	@Override
@@ -169,11 +166,15 @@ public class CacheCluster implements Cache {
 		while (iter.hasNext() && output.isOrigin())
 			output = iter.next().after.output();
 		if (!output.isOrigin()) {
-			Cache cache = outputCaches.get(output);
+			Cache cache = cacheFor(output);
 			if (cache != null)
 				return cache.invalidate(changes);
 		}
 		return readyFuture(null);
+	}
+
+	private Cache cacheFor(Name output) {
+		return outputCaches.get(output);
 	}
 
 	private static <T> Future<T> readyFuture(T res) {

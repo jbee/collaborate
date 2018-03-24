@@ -95,7 +95,6 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 	public final boolean unbound;
 
 	public Criteria(Criterium... criteria) {
-		super();
 		this.criteria = criteria;
 		this.unbound = any(criteria, c -> c.unbound);
 	}
@@ -323,7 +322,6 @@ public final class Criteria implements Iterable<Criteria.Criterium> {
 		public final boolean unbound;
 
 		public Criterium(Property prop, Operator op, Object... values) {
-			super();
 			this.left = prop;
 			this.op = op;
 			this.rvalues = values;
