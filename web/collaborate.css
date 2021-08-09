@@ -145,20 +145,21 @@ a.vn { float: right; }
 .scheme-heat .heat-hot           td { background-color: #ffddaa; } 
 .scheme-heat .heat-burning       td { background-color: #ffccaa; } 
 
-.scheme-goal .goal-clarification td { background-color: #ffddff; } 
-.scheme-goal .goal-modification  td { background-color: #ffffbb; } 
+.scheme-goal .goal-elaboration   td { background-color: #ffddff; }
+.scheme-goal .goal-adaptation    td { background-color: #ffffbb; } 
+.scheme-goal .goal-contribution  td { background-color: #ffeeaa; }
 .scheme-goal .goal-verification  td { background-color: #ddddff; } 
-.scheme-goal .goal-publication   td { background-color: #ddffcc; } 
+.scheme-goal .goal-propagation   td { background-color: #ddffcc; } 
 
 .scheme-status .status-unsolved    td { background-color: #ffddff; } 
 .scheme-status .status-absolved    td { background-color: #ffffbb; } 
 .scheme-status .status-resolved    td { background-color: #ddddff; } 
 .scheme-status .status-dissolved   td { background-color: #ddffcc; } 
 
-.scheme-motive .motive-necessity   td { background-color: #ffddff; }
-.scheme-motive .motive-proposal    td { background-color: #ddddff; } 
-.scheme-motive .motive-reminder    td { background-color: #ffffbb; } 
-.scheme-motive .motive-defect      td { background-color: #ffddcc; } 
+.scheme-cause .cause-finding     td { background-color: #ffddff; }
+.scheme-cause .cause-aid         td { background-color: #ffffbb; } 
+.scheme-cause .cause-direction   td { background-color: #ddddff; } 
+.scheme-cause .cause-idea        td { background-color: #ddffcc; } 
 
 .menu { margin: 0 0 5px 0; padding: 2px 20px; }
 .menu * { display: inline-block; }
